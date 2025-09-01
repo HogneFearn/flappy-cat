@@ -86,6 +86,29 @@ body {
     display: none;
 }
 
+/* Name input field */
+#nameInput {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 15px 20px;
+    font-size: 18px;
+    border: 3px solid #2196F3;
+    border-radius: 25px;
+    background: white;
+    text-align: center;
+    outline: none;
+    z-index: 1000;
+    max-width: 280px;
+    width: 80%;
+}
+
+#nameInput:focus {
+    border-color: #1976D2;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
     #gameContainer {

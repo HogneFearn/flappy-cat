@@ -32,8 +32,8 @@ let keys = {};
 document.addEventListener("keydown", (e) => {
   keys[e.code] = true;
 
-  // Handle text input when name input is active
-  if (nameInputActive) {
+  // Handle text input when name input is active (desktop only)
+  if (nameInputActive && !isMobile) {
     if (e.key === "Enter") {
       // Confirm name entry
       if (inputName.trim() !== "") {
@@ -71,6 +71,7 @@ const jumpBtn = document.getElementById("jumpBtn");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
 const switchPlayerBtn = document.getElementById("switchPlayerBtn");
 const restartBtn = document.getElementById("restartBtn");
+const nameInput = document.getElementById("nameInput");
 
 // Hold-to-jump functionality
 let isJumpHeld = false;
@@ -114,6 +115,39 @@ canvas.addEventListener("touchend", (e) => {
   e.preventDefault();
   isJumpHeld = false;
 });
+
+// Mobile name input event listeners
+nameInput.addEventListener("input", (e) => {
+  inputName = e.target.value;
+});
+
+nameInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    confirmPlayerName();
+  }
+});
+
+nameInput.addEventListener("blur", () => {
+  if (inputName.trim().length > 0) {
+    confirmPlayerName();
+  }
+});
+
+function confirmPlayerName() {
+  if (inputName.trim().length > 0) {
+    playerName = inputName.trim();
+  } else {
+    playerName = "Anonymous";
+  }
+
+  // Load this player's wallet
+  totalCoinsWallet = loadPlayerWallet(playerName);
+
+  gameNameEntered = true;
+  nameInputActive = false;
+  nameInput.style.display = "none";
+  resetGame();
+}
 
 function handleJump() {
   if (!gameNameEntered) {
@@ -290,6 +324,13 @@ function handleGameOver() {
 function getPlayerName() {
   nameInputActive = true;
   inputName = "";
+
+  // Show and focus the input field for mobile
+  if (isMobile) {
+    nameInput.style.display = "block";
+    nameInput.value = "";
+    nameInput.focus();
+  }
 }
 
 function resetGame() {
@@ -317,6 +358,7 @@ function switchPlayer() {
   switchingPlayer = false;
   inputName = "";
   playerName = "";
+  nameInput.style.display = "none"; // Hide mobile input field
   resetGame();
 }
 
@@ -576,17 +618,26 @@ function draw() {
 
     if (!nameInputActive) {
       ctx.font = "20px Arial";
-      ctx.fillText(
-        "Press SPACE to enter your name",
-        canvas.width / 2,
-        canvas.height / 2 - 20
-      );
+      if (isMobile) {
+        ctx.fillText(
+          "Tap 'Enter Name' to start",
+          canvas.width / 2,
+          canvas.height / 2 - 20
+        );
+      } else {
+        ctx.fillText(
+          "Press SPACE to enter your name",
+          canvas.width / 2,
+          canvas.height / 2 - 20
+        );
+      }
       ctx.fillText(
         "and join the leaderboard!",
         canvas.width / 2,
         canvas.height / 2 + 10
       );
-    } else {
+    } else if (!isMobile) {
+      // Only show canvas input for desktop users
       ctx.font = "20px Arial";
       ctx.fillText(
         "Enter your name:",
