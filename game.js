@@ -1,6 +1,49 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// Declare groundY before resizeCanvas function
+let groundY = 520; // Default value, will be updated by resizeCanvas
+
+// Responsive canvas sizing
+function resizeCanvas() {
+  const isMobileDevice =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+  if (isMobileDevice) {
+    // For mobile, use full screen dimensions
+    const maxWidth = Math.min(window.innerWidth, 414); // Max iPhone Pro Max width
+    const maxHeight = Math.min(window.innerHeight, 896); // Max iPhone Pro Max height
+
+    // Maintain aspect ratio similar to original (400x600)
+    const aspectRatio = 400 / 600;
+
+    if (maxWidth / maxHeight > aspectRatio) {
+      // Screen is wider than our ratio, constrain by height
+      canvas.height = maxHeight;
+      canvas.width = maxHeight * aspectRatio;
+    } else {
+      // Screen is taller than our ratio, constrain by width
+      canvas.width = maxWidth;
+      canvas.height = maxWidth / aspectRatio;
+    }
+  } else {
+    // For desktop, keep reasonable size
+    canvas.width = 600;
+    canvas.height = 800;
+  }
+
+  // Update ground position based on new height
+  groundY = canvas.height - 80;
+}
+
+// Initialize canvas size
+resizeCanvas();
+
+// Resize on window resize
+window.addEventListener("resize", resizeCanvas);
+
 // Load cat image
 const catImage = new Image();
 catImage.src = "cat.png"; // You'll need to provide this file
@@ -67,7 +110,6 @@ let isMobile =
   );
 
 // Mobile button elements
-const jumpBtn = document.getElementById("jumpBtn");
 const leaderboardBtn = document.getElementById("leaderboardBtn");
 const switchPlayerBtn = document.getElementById("switchPlayerBtn");
 const restartBtn = document.getElementById("restartBtn");
@@ -78,20 +120,6 @@ let isJumpHeld = false;
 let jumpHoldTimer = 0;
 
 // Touch/click handlers for mobile buttons
-jumpBtn.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  isJumpHeld = true;
-  jumpHoldTimer = 0;
-  handleJump();
-});
-
-jumpBtn.addEventListener("touchend", (e) => {
-  e.preventDefault();
-  isJumpHeld = false;
-});
-
-jumpBtn.addEventListener("click", handleJump);
-
 leaderboardBtn.addEventListener("touchstart", handleLeaderboard);
 leaderboardBtn.addEventListener("click", handleLeaderboard);
 
@@ -101,7 +129,7 @@ switchPlayerBtn.addEventListener("click", handleSwitchPlayer);
 restartBtn.addEventListener("touchstart", handleRestart);
 restartBtn.addEventListener("click", handleRestart);
 
-// Canvas touch handler for jumping with hold support
+// Canvas touch handler for all game interactions
 canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
   if (!showLeaderboard && !nameInputActive) {
@@ -114,6 +142,13 @@ canvas.addEventListener("touchstart", (e) => {
 canvas.addEventListener("touchend", (e) => {
   e.preventDefault();
   isJumpHeld = false;
+});
+
+// Canvas click handler for desktop
+canvas.addEventListener("click", (e) => {
+  if (!showLeaderboard && !nameInputActive) {
+    handleJump();
+  }
 });
 
 // Mobile name input event listeners
@@ -185,37 +220,34 @@ function handleRestart() {
 // Update button visibility based on game state
 function updateMobileButtons() {
   if (!gameNameEntered || nameInputActive) {
-    // During name entry
-    jumpBtn.textContent = nameInputActive ? "Type your name..." : "Enter Name";
-    jumpBtn.disabled = nameInputActive;
+    // During name entry - hide all buttons
     leaderboardBtn.style.display = "none";
     switchPlayerBtn.style.display = "none";
     restartBtn.style.display = "none";
   } else if (!gameRunning) {
-    // Game over
-    jumpBtn.textContent = "Play Again";
-    jumpBtn.disabled = false;
+    // Game over - show leaderboard and switch player buttons
     leaderboardBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
   } else if (!gameStarted) {
-    // Ready screen
-    jumpBtn.textContent = "Start Game";
-    jumpBtn.disabled = false;
+    // Ready screen - show leaderboard and switch player buttons
     leaderboardBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
   } else {
-    // During gameplay
-    jumpBtn.textContent = "Jump";
-    jumpBtn.disabled = false;
-    leaderboardBtn.style.display = "block";
+    // During gameplay - hide all buttons since canvas handles everything
+    leaderboardBtn.style.display = "none";
     switchPlayerBtn.style.display = "none";
     restartBtn.style.display = "none";
   }
-}
 
-// Prevent default touch behaviors
+  // Always ensure buttons are properly styled when visible
+  [leaderboardBtn, switchPlayerBtn, restartBtn].forEach((btn) => {
+    if (btn.style.display !== "none") {
+      btn.style.display = "block";
+    }
+  });
+} // Prevent default touch behaviors
 document.addEventListener(
   "touchmove",
   (e) => {
@@ -230,8 +262,8 @@ document.addEventListener("touchstart", (e) => {
   }
 });
 
-// Platform
-const groundY = 550;
+// Platform (groundY is set dynamically in resizeCanvas function)
+// groundY is declared at the top of the file
 
 // Coin generator
 function spawnCoin() {
@@ -497,7 +529,13 @@ function update() {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Fill entire canvas with black background
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Draw sky area (playable area background)
+  ctx.fillStyle = "#87ceeb";
+  ctx.fillRect(0, 0, canvas.width, groundY);
 
   // Draw ground
   ctx.fillStyle = "#654321";
@@ -583,21 +621,29 @@ function draw() {
     );
 
     ctx.font = "16px Arial";
-    ctx.fillText(
-      "SPACE - Play Again",
-      canvas.width / 2,
-      canvas.height / 2 + 40
-    );
-    ctx.fillText(
-      "N - Switch/New Player",
-      canvas.width / 2,
-      canvas.height / 2 + 60
-    );
-    ctx.fillText(
-      "L - View Leaderboard",
-      canvas.width / 2,
-      canvas.height / 2 + 80
-    );
+    if (isMobile) {
+      ctx.fillText(
+        "Tap screen to Play Again",
+        canvas.width / 2,
+        canvas.height / 2 + 40
+      );
+    } else {
+      ctx.fillText(
+        "SPACE - Play Again",
+        canvas.width / 2,
+        canvas.height / 2 + 40
+      );
+      ctx.fillText(
+        "N - Switch/New Player",
+        canvas.width / 2,
+        canvas.height / 2 + 60
+      );
+      ctx.fillText(
+        "L - View Leaderboard",
+        canvas.width / 2,
+        canvas.height / 2 + 80
+      );
+    }
 
     ctx.textAlign = "left";
   }
@@ -620,7 +666,7 @@ function draw() {
       ctx.font = "20px Arial";
       if (isMobile) {
         ctx.fillText(
-          "Tap 'Enter Name' to start",
+          "Tap screen to enter your name",
           canvas.width / 2,
           canvas.height / 2 - 20
         );
@@ -697,21 +743,31 @@ function draw() {
       canvas.height / 2 - 20
     );
     ctx.font = "20px Arial";
-    ctx.fillText(
-      "Press SPACE to Start!",
-      canvas.width / 2,
-      canvas.height / 2 + 20
-    );
-    ctx.fillText(
-      "Press L to view Leaderboard",
-      canvas.width / 2,
-      canvas.height / 2 + 45
-    );
-    ctx.fillText(
-      "Press N to Switch Player",
-      canvas.width / 2,
-      canvas.height / 2 + 70
-    );
+    if (isMobile) {
+      ctx.fillText(
+        "Tap screen to Start!",
+        canvas.width / 2,
+        canvas.height / 2 + 20
+      );
+    } else {
+      ctx.fillText(
+        "Press SPACE to Start!",
+        canvas.width / 2,
+        canvas.height / 2 + 20
+      );
+    }
+    if (!isMobile) {
+      ctx.fillText(
+        "Press L to view Leaderboard",
+        canvas.width / 2,
+        canvas.height / 2 + 45
+      );
+      ctx.fillText(
+        "Press N to Switch Player",
+        canvas.width / 2,
+        canvas.height / 2 + 70
+      );
+    }
     ctx.textAlign = "left";
   }
 
@@ -756,10 +812,3 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 gameLoop();
-
-// Click to restart game
-canvas.addEventListener("click", () => {
-  if (!gameRunning) {
-    resetGame();
-  }
-});
