@@ -1,0 +1,124 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #222;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#gameContainer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#gameCanvas {
+    background: #87ceeb;
+    border: 2px solid #333;
+    max-width: 100vw;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    touch-action: none;
+}
+
+#mobileControls {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 10px;
+}
+
+.control-btn {
+    width: 100%;
+    height: 60px;
+    font-size: 24px;
+    font-weight: bold;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.control-btn:active {
+    background: #45a049;
+    transform: scale(0.95);
+}
+
+#menuButtons {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.menu-btn {
+    flex: 1;
+    height: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.menu-btn:active {
+    background: #1976D2;
+    transform: scale(0.95);
+}
+
+.menu-btn.hidden {
+    display: none;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    #gameContainer {
+        padding: 5px;
+    }
+    
+    #gameCanvas {
+        max-height: 70vh;
+    }
+    
+    .control-btn {
+        height: 70px;
+        font-size: 28px;
+    }
+    
+    .menu-btn {
+        height: 55px;
+        font-size: 14px;
+    }
+}
+
+@media (max-height: 600px) {
+    #gameCanvas {
+        max-height: 60vh;
+    }
+    
+    .control-btn {
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .menu-btn {
+        height: 40px;
+        font-size: 12px;
+    }
+}
