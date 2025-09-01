@@ -56,7 +56,6 @@ let gameSpeed = 2.5;
 let coins = [];
 let obstacles = [];
 let obstacleScore = 0;
-let coinsCollectedThisGame = 0;
 let totalCoinsWallet = 0; // Will be loaded when player name is set
 let obstacleHighscore = localStorage.getItem("flappyObstacleHighscore") || 0;
 let gameRunning = true;
@@ -269,7 +268,35 @@ document.addEventListener("touchstart", (e) => {
 function spawnCoin() {
   const x = canvas.width + Math.random() * 150;
   const y = Math.random() * (groundY - 120) + 60;
-  coins.push({ x, y, r: 10 });
+
+  // Determine coin type based on rarity
+  const rarity = Math.random();
+  let type, value, color, strokeColor, radius;
+
+  if (rarity < 0.02) {
+    // 2% chance for blue (super rare)
+    type = "blue";
+    value = 20;
+    color = "#4169e1";
+    strokeColor = "#1e3a8a";
+    radius = 10;
+  } else if (rarity < 0.1) {
+    // 8% chance for red (rare)
+    type = "red";
+    value = 5;
+    color = "#dc2626";
+    strokeColor = "#991b1b";
+    radius = 10;
+  } else {
+    // 90% chance for gold (common)
+    type = "gold";
+    value = 1;
+    color = "#ffd700";
+    strokeColor = "#b8860b";
+    radius = 10; // Normal size
+  }
+
+  coins.push({ x, y, r: radius, type, value, color, strokeColor });
 }
 
 // Obstacle generator
@@ -337,10 +364,6 @@ function addToLeaderboard(name, score) {
 function handleGameOver() {
   gameRunning = false;
 
-  // Add coins to player's persistent wallet
-  totalCoinsWallet += coinsCollectedThisGame;
-  savePlayerWallet(playerName, totalCoinsWallet);
-
   // Use obstacle score for leaderboard (pipes cleared)
   if (obstacleScore > 0) {
     addToLeaderboard(playerName, obstacleScore);
@@ -372,7 +395,6 @@ function resetGame() {
   player.vy = 0;
   player.onGround = false;
   obstacleScore = 0;
-  coinsCollectedThisGame = 0;
   coins = [];
   obstacles = [];
   gameRunning = true;
@@ -500,7 +522,9 @@ function update() {
       let dy = player.y + player.h / 2 - coin.y;
       if (Math.sqrt(dx * dx + dy * dy) < coin.r + player.w / 2) {
         coins.splice(i, 1);
-        coinsCollectedThisGame += 1;
+        // Add coin value directly to wallet
+        totalCoinsWallet += coin.value;
+        savePlayerWallet(playerName, totalCoinsWallet);
         spawnCoin();
       }
     }
@@ -578,13 +602,22 @@ function draw() {
 
   // Draw coins
   for (let coin of coins) {
+    // Add glow effect for rare coins
+    if (coin.type === "red" || coin.type === "blue") {
+      ctx.shadowColor = coin.color;
+      ctx.shadowBlur = 10;
+    }
+
     ctx.beginPath();
     ctx.arc(coin.x, coin.y, coin.r, 0, Math.PI * 2);
-    ctx.fillStyle = "#ffd700";
+    ctx.fillStyle = coin.color;
     ctx.fill();
-    ctx.strokeStyle = "#b8860b";
+    ctx.strokeStyle = coin.strokeColor;
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    // Reset shadow
+    ctx.shadowBlur = 0;
   }
 
   // Draw UI
@@ -596,7 +629,6 @@ function draw() {
 
   ctx.textAlign = "left";
   ctx.fillText("Score: " + obstacleScore, 20, 25);
-  ctx.fillText("Coins: " + coinsCollectedThisGame, 20, 45);
 
   // Game over message
   if (!gameRunning) {
@@ -615,7 +647,7 @@ function draw() {
       canvas.height / 2 - 20
     );
     ctx.fillText(
-      `Coins Collected: ${coinsCollectedThisGame}`,
+      `💰 Total Wallet: ${totalCoinsWallet}`,
       canvas.width / 2,
       canvas.height / 2 + 5
     );
