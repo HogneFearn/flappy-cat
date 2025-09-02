@@ -183,6 +183,11 @@ function confirmPlayerName() {
     hasMagnet = magnetRoundsLeft > 0;
   });
 
+  // Load this player's high score
+  loadPlayerHighScore(playerName).then((highScore) => {
+    playerHighScore = highScore;
+  });
+
   gameNameEntered = true;
   nameInputActive = false;
   nameInput.style.display = "none";

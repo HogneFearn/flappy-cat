@@ -66,6 +66,14 @@ function initDatabase() {
     magnet_rounds_left INTEGER DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  // Player high scores table
+  db.run(`CREATE TABLE IF NOT EXISTS player_high_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_name TEXT UNIQUE NOT NULL,
+    high_score INTEGER DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 }
 
 // API Routes
@@ -168,6 +176,57 @@ app.post("/api/player/:name/inventory", (req, res) => {
         return;
       }
       res.json({ success: true, magnetRoundsLeft: magnetRoundsLeft });
+    }
+  );
+});
+
+// Get player high score
+app.get("/api/player/:name/highscore", (req, res) => {
+  const playerName = req.params.name;
+
+  db.get(
+    "SELECT high_score FROM player_high_scores WHERE player_name = ?",
+    [playerName],
+    (err, row) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+
+      if (row) {
+        res.json({ score: row.high_score });
+      } else {
+        // Create new player high score entry with 0
+        db.run(
+          "INSERT INTO player_high_scores (player_name, high_score) VALUES (?, 0)",
+          [playerName],
+          function (err) {
+            if (err) {
+              res.status(500).json({ error: err.message });
+              return;
+            }
+            res.json({ score: 0 });
+          }
+        );
+      }
+    }
+  );
+});
+
+// Update player high score
+app.post("/api/player/:name/highscore", (req, res) => {
+  const playerName = req.params.name;
+  const { score } = req.body;
+
+  db.run(
+    "INSERT OR REPLACE INTO player_high_scores (player_name, high_score, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+    [playerName, score],
+    function (err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json({ success: true, score: score });
     }
   );
 });

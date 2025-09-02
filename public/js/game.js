@@ -69,10 +69,10 @@ async function handleGameOver() {
     await addToLeaderboard(playerName, obstacleScore);
   }
 
-  // Update obstacle highscore (main highscore)
-  if (obstacleScore > obstacleHighscore) {
-    obstacleHighscore = obstacleScore;
-    await saveHighScore(obstacleHighscore);
+  // Update player's personal high score
+  if (obstacleScore > playerHighScore) {
+    playerHighScore = obstacleScore;
+    await savePlayerHighScore(playerName, playerHighScore);
   }
 }
 
@@ -118,6 +118,7 @@ function switchPlayer() {
   inputName = "";
   playerName = "";
   totalCoinsWallet = 0;
+  playerHighScore = 0;
   hasMagnet = false;
   magnetRoundsLeft = 0;
 

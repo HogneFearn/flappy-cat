@@ -84,6 +84,21 @@ async function saveHighScore(score) {
   });
 }
 
+// Player-specific high score functions
+async function loadPlayerHighScore(playerName) {
+  const result = await apiRequest(
+    `/api/player/${encodeURIComponent(playerName)}/highscore`
+  );
+  return result ? result.score : 0;
+}
+
+async function savePlayerHighScore(playerName, score) {
+  await apiRequest(`/api/player/${encodeURIComponent(playerName)}/highscore`, {
+    method: "POST",
+    body: JSON.stringify({ score }),
+  });
+}
+
 // Shop/inventory functions
 async function loadPlayerInventory(playerName) {
   const result = await apiRequest(
@@ -116,6 +131,5 @@ async function buyMagnet(playerName, currentWallet) {
 
 // Initialize game data from API
 async function initializeGameData() {
-  obstacleHighscore = await loadHighScore();
   leaderboard = await loadLeaderboard();
 }

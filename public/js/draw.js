@@ -70,7 +70,7 @@ function draw() {
   ctx.fillStyle = "#fff";
   ctx.font = "16px Arial";
   ctx.textAlign = "right";
-  ctx.fillText("High Score: " + obstacleHighscore, canvas.width - 20, 25);
+  ctx.fillText("High Score: " + playerHighScore, canvas.width - 20, 25);
   ctx.fillText("💰 Wallet: " + totalCoinsWallet, canvas.width - 20, 45);
 
   // Show magnet status if active
