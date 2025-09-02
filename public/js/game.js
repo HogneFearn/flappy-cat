@@ -247,7 +247,7 @@ function update() {
         distance > coin.r + player.w / 2
       ) {
         // Pull coin towards player
-        const pullStrength = 0.3;
+        const pullStrength = 0.5;
         const angle = Math.atan2(dy, dx);
         coin.x += Math.cos(angle) * pullStrength * gameSpeed;
         coin.y += Math.sin(angle) * pullStrength * gameSpeed;

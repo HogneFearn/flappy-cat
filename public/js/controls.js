@@ -207,7 +207,7 @@ function handleJump() {
 function handleLeaderboard() {
   if (gameNameEntered) {
     // Always allow closing the leaderboard, but only allow opening if game is not running or not started
-    if (showLeaderboard || (!gameRunning || !gameStarted)) {
+    if (showLeaderboard || !gameRunning || !gameStarted) {
       showLeaderboard = !showLeaderboard;
       showShop = false; // Close shop when opening leaderboard
     }
@@ -217,7 +217,7 @@ function handleLeaderboard() {
 function handleShop() {
   if (gameNameEntered) {
     // Always allow closing the shop, but only allow opening if game is not running or not started
-    if (showShop || (!gameRunning || !gameStarted)) {
+    if (showShop || !gameRunning || !gameStarted) {
       showShop = !showShop;
       showLeaderboard = false; // Close leaderboard when opening shop
     }
@@ -241,7 +241,7 @@ function updateMobileButtons() {
   // Reset all button classes first
   [leaderboardBtn, shopBtn, switchPlayerBtn, restartBtn].forEach((btn) => {
     if (btn) {
-      btn.classList.remove('active');
+      btn.classList.remove("active");
     }
   });
 
@@ -257,30 +257,30 @@ function updateMobileButtons() {
     shopBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
-    
+
     // Apply active state to open overlays
-    if (showLeaderboard) leaderboardBtn.classList.add('active');
-    if (showShop) shopBtn.classList.add('active');
+    if (showLeaderboard) leaderboardBtn.classList.add("active");
+    if (showShop) shopBtn.classList.add("active");
   } else if (!gameStarted) {
     // Ready screen - show leaderboard, shop, and switch player buttons
     leaderboardBtn.style.display = "block";
     shopBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
-    
+
     // Apply active state to open overlays
-    if (showLeaderboard) leaderboardBtn.classList.add('active');
-    if (showShop) shopBtn.classList.add('active');
+    if (showLeaderboard) leaderboardBtn.classList.add("active");
+    if (showShop) shopBtn.classList.add("active");
   } else if (showShop || showLeaderboard) {
     // During gameplay but with overlays open - show relevant buttons for closing
     leaderboardBtn.style.display = showLeaderboard ? "block" : "none";
     shopBtn.style.display = showShop ? "block" : "none";
     switchPlayerBtn.style.display = "none";
     restartBtn.style.display = "none";
-    
+
     // Apply active state to open overlays
-    if (showLeaderboard) leaderboardBtn.classList.add('active');
-    if (showShop) shopBtn.classList.add('active');
+    if (showLeaderboard) leaderboardBtn.classList.add("active");
+    if (showShop) shopBtn.classList.add("active");
   } else {
     // During normal gameplay - hide all buttons since canvas handles everything
     leaderboardBtn.style.display = "none";

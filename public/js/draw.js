@@ -294,7 +294,11 @@ function draw() {
 
     ctx.font = "18px Arial";
     if (isMobile) {
-      ctx.fillText("Tap the Leaderboard button to close", canvas.width / 2, canvas.height - 50);
+      ctx.fillText(
+        "Tap the Leaderboard button to close",
+        canvas.width / 2,
+        canvas.height - 50
+      );
     } else {
       ctx.fillText("Press L to close", canvas.width / 2, canvas.height - 50);
     }
@@ -356,7 +360,11 @@ function draw() {
 
     ctx.font = "18px Arial";
     if (isMobile) {
-      ctx.fillText("Tap the Shop button to close", canvas.width / 2, canvas.height - 50);
+      ctx.fillText(
+        "Tap the Shop button to close",
+        canvas.width / 2,
+        canvas.height - 50
+      );
     } else {
       ctx.fillText("Press S to close", canvas.width / 2, canvas.height - 50);
     }
