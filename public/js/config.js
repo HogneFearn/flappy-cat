@@ -19,6 +19,12 @@ let showLeaderboard = false;
 let switchingPlayer = false;
 let leaderboard = []; // Will be loaded from API instead of localStorage
 
+// Shop variables
+let showShop = false;
+let hasMagnet = false;
+let magnetRoundsLeft = 0;
+let magnetRadius = 105; // 3x the player collision box (35 * 3)
+
 // Cat image
 const catImage = new Image();
 catImage.src = "cat.png";

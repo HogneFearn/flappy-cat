@@ -52,6 +52,18 @@ function spawnObstacle() {
 async function handleGameOver() {
   gameRunning = false;
 
+  // Decrease magnet rounds if player has magnet
+  if (hasMagnet) {
+    magnetRoundsLeft--;
+    if (magnetRoundsLeft <= 0) {
+      hasMagnet = false;
+      magnetRoundsLeft = 0;
+    }
+    // Save updated inventory
+    const inventory = { magnetRoundsLeft };
+    await savePlayerInventory(playerName, inventory);
+  }
+
   // Use obstacle score for leaderboard (pipes cleared)
   if (obstacleScore > 0) {
     await addToLeaderboard(playerName, obstacleScore);
@@ -88,6 +100,7 @@ function resetGame() {
   gameRunning = true;
   gameStarted = false;
   showLeaderboard = false;
+  showShop = false;
   switchingPlayer = false;
   obstacleSpawnTimer = 0;
   isJumpHeld = false;
@@ -101,9 +114,12 @@ function switchPlayer() {
   nameInputActive = false;
   switchingPlayer = false;
   showLeaderboard = false;
+  showShop = false;
   inputName = "";
   playerName = "";
   totalCoinsWallet = 0;
+  hasMagnet = false;
+  magnetRoundsLeft = 0;
 
   if (isMobile) {
     nameInput.style.display = "block";
@@ -125,7 +141,23 @@ function update() {
     if (keys["KeyL"]) {
       if (gameNameEntered) {
         showLeaderboard = !showLeaderboard;
+        showShop = false; // Close shop when opening leaderboard
         keys["KeyL"] = false; // Prevent key repeat
+      }
+    }
+
+    if (keys["KeyS"]) {
+      if (gameNameEntered && (!gameRunning || !gameStarted)) {
+        showShop = !showShop;
+        showLeaderboard = false; // Close leaderboard when opening shop
+        keys["KeyS"] = false; // Prevent key repeat
+      }
+    }
+
+    if (keys["KeyB"]) {
+      if (showShop) {
+        buyMagnetItem();
+        keys["KeyB"] = false; // Prevent key repeat
       }
     }
 
@@ -206,7 +238,23 @@ function update() {
       let coin = coins[i];
       let dx = player.x + player.w / 2 - coin.x;
       let dy = player.y + player.h / 2 - coin.y;
-      if (Math.sqrt(dx * dx + dy * dy) < coin.r + player.w / 2) {
+      let distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Magnet attraction
+      if (
+        hasMagnet &&
+        distance < magnetRadius &&
+        distance > coin.r + player.w / 2
+      ) {
+        // Pull coin towards player
+        const pullStrength = 0.3;
+        const angle = Math.atan2(dy, dx);
+        coin.x += Math.cos(angle) * pullStrength * gameSpeed;
+        coin.y += Math.sin(angle) * pullStrength * gameSpeed;
+      }
+
+      // Collision detection
+      if (distance < coin.r + player.w / 2) {
         coins.splice(i, 1);
         // Add coin value directly to wallet
         totalCoinsWallet += coin.value;
@@ -247,4 +295,14 @@ function update() {
       spawnCoin();
     }
   } // End of gameStarted condition
+}
+
+// Shop functions
+async function buyMagnetItem() {
+  const result = await buyMagnet(playerName, totalCoinsWallet);
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    magnetRoundsLeft = result.inventory.magnetRoundsLeft;
+    hasMagnet = magnetRoundsLeft > 0;
+  }
 }

@@ -58,6 +58,14 @@ function initDatabase() {
       }
     }
   );
+
+  // Player inventory table
+  db.run(`CREATE TABLE IF NOT EXISTS player_inventory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_name TEXT UNIQUE NOT NULL,
+    magnet_rounds_left INTEGER DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 }
 
 // API Routes
@@ -109,6 +117,57 @@ app.post("/api/player/:name/wallet", (req, res) => {
         return;
       }
       res.json({ success: true, wallet: wallet });
+    }
+  );
+});
+
+// Get player inventory
+app.get("/api/player/:name/inventory", (req, res) => {
+  const playerName = req.params.name;
+
+  db.get(
+    "SELECT magnet_rounds_left FROM player_inventory WHERE player_name = ?",
+    [playerName],
+    (err, row) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+
+      if (row) {
+        res.json({ magnetRoundsLeft: row.magnet_rounds_left });
+      } else {
+        // Create new inventory with default values
+        db.run(
+          "INSERT INTO player_inventory (player_name, magnet_rounds_left) VALUES (?, 0)",
+          [playerName],
+          function (err) {
+            if (err) {
+              res.status(500).json({ error: err.message });
+              return;
+            }
+            res.json({ magnetRoundsLeft: 0 });
+          }
+        );
+      }
+    }
+  );
+});
+
+// Update player inventory
+app.post("/api/player/:name/inventory", (req, res) => {
+  const playerName = req.params.name;
+  const { magnetRoundsLeft } = req.body;
+
+  db.run(
+    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+    [playerName, magnetRoundsLeft],
+    function (err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+        return;
+      }
+      res.json({ success: true, magnetRoundsLeft: magnetRoundsLeft });
     }
   );
 });

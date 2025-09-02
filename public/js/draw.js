@@ -73,6 +73,15 @@ function draw() {
   ctx.fillText("High Score: " + obstacleHighscore, canvas.width - 20, 25);
   ctx.fillText("💰 Wallet: " + totalCoinsWallet, canvas.width - 20, 45);
 
+  // Show magnet status if active
+  if (hasMagnet && magnetRoundsLeft > 0) {
+    ctx.fillText(
+      "🧲 Magnet: " + magnetRoundsLeft + " rounds",
+      canvas.width - 20,
+      65
+    );
+  }
+
   ctx.textAlign = "left";
   ctx.fillText("Score: " + obstacleScore, 20, 25);
 
@@ -121,6 +130,7 @@ function draw() {
         canvas.width / 2,
         canvas.height / 2 + 80
       );
+      ctx.fillText("S - Open Shop", canvas.width / 2, canvas.height / 2 + 100);
     }
 
     ctx.textAlign = "left";
@@ -245,6 +255,11 @@ function draw() {
         canvas.width / 2,
         canvas.height / 2 + 70
       );
+      ctx.fillText(
+        "Press S to open Shop",
+        canvas.width / 2,
+        canvas.height / 2 + 95
+      );
     }
     ctx.textAlign = "left";
   }
@@ -279,6 +294,64 @@ function draw() {
 
     ctx.font = "18px Arial";
     ctx.fillText("Press L to close", canvas.width / 2, canvas.height - 50);
+    ctx.textAlign = "left";
+  }
+
+  // Shop overlay
+  if (showShop) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🛒 SHOP 🛒", canvas.width / 2, 50);
+
+    ctx.font = "16px Arial";
+    ctx.fillText(
+      `💰 Your Wallet: ${totalCoinsWallet} coins`,
+      canvas.width / 2,
+      80
+    );
+
+    // Magnet item
+    const magnetY = 130;
+    ctx.font = "20px Arial";
+    ctx.fillText("🧲 Coin Magnet", canvas.width / 2, magnetY);
+
+    ctx.font = "16px Arial";
+    ctx.fillText(
+      "Attracts coins from 3x distance",
+      canvas.width / 2,
+      magnetY + 25
+    );
+    ctx.fillText("Lasts for 3 game rounds", canvas.width / 2, magnetY + 45);
+    ctx.fillText("💰 Cost: 200 coins", canvas.width / 2, magnetY + 65);
+
+    if (magnetRoundsLeft > 0) {
+      ctx.fillStyle = "#90EE90";
+      ctx.fillText(
+        `✓ Owned (${magnetRoundsLeft} rounds left)`,
+        canvas.width / 2,
+        magnetY + 85
+      );
+      ctx.fillStyle = "#fff";
+    } else if (totalCoinsWallet >= 200) {
+      ctx.fillStyle = "#90EE90";
+      if (isMobile) {
+        ctx.fillText("Tap here to Buy!", canvas.width / 2, magnetY + 85);
+      } else {
+        ctx.fillText("Press B to Buy!", canvas.width / 2, magnetY + 85);
+      }
+      ctx.fillStyle = "#fff";
+    } else {
+      ctx.fillStyle = "#FF6B6B";
+      ctx.fillText("Not enough coins", canvas.width / 2, magnetY + 85);
+      ctx.fillStyle = "#fff";
+    }
+
+    ctx.font = "18px Arial";
+    ctx.fillText("Press S to close", canvas.width / 2, canvas.height - 50);
     ctx.textAlign = "left";
   }
 }

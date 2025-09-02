@@ -84,6 +84,36 @@ async function saveHighScore(score) {
   });
 }
 
+// Shop/inventory functions
+async function loadPlayerInventory(playerName) {
+  const result = await apiRequest(
+    `/api/player/${encodeURIComponent(playerName)}/inventory`
+  );
+  return result || { magnetRoundsLeft: 0 };
+}
+
+async function savePlayerInventory(playerName, inventory) {
+  await apiRequest(`/api/player/${encodeURIComponent(playerName)}/inventory`, {
+    method: "POST",
+    body: JSON.stringify(inventory),
+  });
+}
+
+async function buyMagnet(playerName, currentWallet) {
+  const magnetCost = 200;
+  if (currentWallet >= magnetCost) {
+    const newWallet = currentWallet - magnetCost;
+    const inventory = await loadPlayerInventory(playerName);
+    inventory.magnetRoundsLeft = (inventory.magnetRoundsLeft || 0) + 3;
+
+    await savePlayerWallet(playerName, newWallet);
+    await savePlayerInventory(playerName, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 // Initialize game data from API
 async function initializeGameData() {
   obstacleHighscore = await loadHighScore();

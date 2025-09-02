@@ -35,6 +35,7 @@ document.addEventListener("keyup", (e) => (keys[e.code] = false));
 
 // Mobile Controls
 const leaderboardBtn = document.getElementById("leaderboardBtn");
+const shopBtn = document.getElementById("shopBtn");
 const switchPlayerBtn = document.getElementById("switchPlayerBtn");
 const restartBtn = document.getElementById("restartBtn");
 const nameInput = document.getElementById("nameInput");
@@ -47,6 +48,9 @@ let jumpHoldTimer = 0;
 leaderboardBtn.addEventListener("touchstart", handleLeaderboard);
 leaderboardBtn.addEventListener("click", handleLeaderboard);
 
+shopBtn.addEventListener("touchstart", handleShop);
+shopBtn.addEventListener("click", handleShop);
+
 switchPlayerBtn.addEventListener("touchstart", handleSwitchPlayer);
 switchPlayerBtn.addEventListener("click", handleSwitchPlayer);
 
@@ -56,7 +60,29 @@ restartBtn.addEventListener("click", handleRestart);
 // Canvas touch handler for all game interactions
 canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
-  if (!showLeaderboard && !nameInputActive) {
+  if (showShop) {
+    // Check if touch is in shop buy button area (rough approximation)
+    const rect = canvas.getBoundingClientRect();
+    const touchX = e.touches[0].clientX - rect.left;
+    const touchY = e.touches[0].clientY - rect.top;
+
+    // Scale touch coordinates to canvas coordinates
+    const canvasX = (touchX / rect.width) * canvas.width;
+    const canvasY = (touchY / rect.height) * canvas.height;
+
+    // Check if touch is in magnet buy area (around where "Press B to Buy!" text is)
+    const magnetBuyY = 215; // magnetY (130) + 85
+    if (
+      canvasY >= magnetBuyY - 20 &&
+      canvasY <= magnetBuyY + 20 &&
+      canvasX >= canvas.width / 4 &&
+      canvasX <= (3 * canvas.width) / 4 &&
+      totalCoinsWallet >= 200 &&
+      magnetRoundsLeft === 0
+    ) {
+      buyMagnetItem();
+    }
+  } else if (!showLeaderboard && !nameInputActive) {
     isJumpHeld = true;
     jumpHoldTimer = 0;
     handleJump();
@@ -70,7 +96,7 @@ canvas.addEventListener("touchend", (e) => {
 
 // Canvas click handler for desktop
 canvas.addEventListener("click", (e) => {
-  if (!showLeaderboard && !nameInputActive) {
+  if (!showLeaderboard && !showShop && !nameInputActive) {
     handleJump();
   }
 });
@@ -104,6 +130,12 @@ function confirmPlayerName() {
     totalCoinsWallet = wallet;
   });
 
+  // Load this player's inventory
+  loadPlayerInventory(playerName).then((inventory) => {
+    magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
+    hasMagnet = magnetRoundsLeft > 0;
+  });
+
   gameNameEntered = true;
   nameInputActive = false;
   nameInput.style.display = "none";
@@ -128,6 +160,14 @@ function handleJump() {
 function handleLeaderboard() {
   if (gameNameEntered) {
     showLeaderboard = !showLeaderboard;
+    showShop = false; // Close shop when opening leaderboard
+  }
+}
+
+function handleShop() {
+  if (gameNameEntered && (!gameRunning || !gameStarted)) {
+    showShop = !showShop;
+    showLeaderboard = false; // Close leaderboard when opening shop
   }
 }
 
@@ -148,27 +188,31 @@ function updateMobileButtons() {
   if (!gameNameEntered || nameInputActive) {
     // During name entry - hide all buttons
     leaderboardBtn.style.display = "none";
+    shopBtn.style.display = "none";
     switchPlayerBtn.style.display = "none";
     restartBtn.style.display = "none";
   } else if (!gameRunning) {
-    // Game over - show leaderboard and switch player buttons
+    // Game over - show leaderboard, shop, and switch player buttons
     leaderboardBtn.style.display = "block";
+    shopBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
   } else if (!gameStarted) {
-    // Ready screen - show leaderboard and switch player buttons
+    // Ready screen - show leaderboard, shop, and switch player buttons
     leaderboardBtn.style.display = "block";
+    shopBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
   } else {
     // During gameplay - hide all buttons since canvas handles everything
     leaderboardBtn.style.display = "none";
+    shopBtn.style.display = "none";
     switchPlayerBtn.style.display = "none";
     restartBtn.style.display = "none";
   }
 
   // Always ensure buttons are properly styled when visible
-  [leaderboardBtn, switchPlayerBtn, restartBtn].forEach((btn) => {
+  [leaderboardBtn, shopBtn, switchPlayerBtn, restartBtn].forEach((btn) => {
     if (btn.style.display !== "none") {
       btn.style.display = "block";
     }
