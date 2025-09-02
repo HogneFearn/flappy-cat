@@ -13,6 +13,7 @@ let gameStarted = false;
 let gameNameEntered = false;
 let nameInputActive = false;
 let obstacleSpawnTimer = 0;
+let validationTimer = 0;
 let playerName = "";
 let inputName = "";
 let showLeaderboard = false;
@@ -23,7 +24,7 @@ let leaderboard = []; // Will be loaded from API instead of localStorage
 let showShop = false;
 let hasMagnet = false;
 let magnetRoundsLeft = 0;
-let magnetRadius = 105; // 3x the player collision box (35 * 3)
+let magnetRadius = 250;
 
 // Cat image
 const catImage = new Image();

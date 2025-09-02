@@ -1,10 +1,12 @@
 function spawnCoin() {
-  const x = canvas.width + Math.random() * 150;
-  const y = Math.random() * (groundY - 120) + 60;
+  let x, y, radius;
+  let attempts = 0;
+  const maxAttempts = 30; // Increased attempts
+  let validPosition = false;
 
-  // Determine coin type based on rarity
+  // Determine coin type based on rarity first
   const rarity = Math.random();
-  let type, value, color, strokeColor, radius;
+  let type, value, color, strokeColor;
 
   if (rarity < 0.02) {
     // 2% chance for blue (super rare)
@@ -26,10 +28,119 @@ function spawnCoin() {
     value = 1;
     color = "#ffd700";
     strokeColor = "#b8860b";
-    radius = 10; // Normal size
+    radius = 10;
+  }
+
+  // Try to find a position that doesn't collide with pipes
+  while (!validPosition && attempts < maxAttempts) {
+    x = canvas.width + Math.random() * 300; // Even wider spawn range
+    y = Math.random() * (groundY - 140) + 70; // More conservative Y range
+    attempts++;
+
+    let collides = false;
+
+    // Check collision with all existing obstacles
+    for (let obstacle of obstacles) {
+      // Add safety margin to collision detection
+      const safetyMargin = 15;
+
+      // Check if coin overlaps with top pipe (with safety margin)
+      if (
+        x + radius + safetyMargin > obstacle.x &&
+        x - radius - safetyMargin < obstacle.x + obstacle.width &&
+        y - radius - safetyMargin < obstacle.topHeight
+      ) {
+        collides = true;
+        break;
+      }
+
+      // Check if coin overlaps with bottom pipe (with safety margin)
+      if (
+        x + radius + safetyMargin > obstacle.x &&
+        x - radius - safetyMargin < obstacle.x + obstacle.width &&
+        y + radius + safetyMargin > obstacle.bottomY
+      ) {
+        collides = true;
+        break;
+      }
+    }
+
+    // Additional check: ensure coin is not too close to ground or ceiling
+    if (y - radius < 30 || y + radius > groundY - 30) {
+      collides = true;
+    }
+
+    if (!collides) {
+      validPosition = true;
+    }
+
+    // If we've tried many times, try a simpler approach
+    if (attempts > 20 && !validPosition) {
+      // Place coin far to the right where there are likely no obstacles
+      x = canvas.width + 200 + Math.random() * 200;
+      y = groundY / 2 + (Math.random() - 0.5) * 100; // Center area
+
+      // Final collision check
+      collides = false;
+      for (let obstacle of obstacles) {
+        if (
+          x + radius > obstacle.x &&
+          x - radius < obstacle.x + obstacle.width &&
+          (y - radius < obstacle.topHeight || y + radius > obstacle.bottomY)
+        ) {
+          collides = true;
+          break;
+        }
+      }
+
+      if (!collides) {
+        validPosition = true;
+      }
+    }
+  }
+
+  // If we still couldn't find a valid position, place it very far right
+  if (!validPosition) {
+    x = canvas.width + 400;
+    y = groundY / 2;
   }
 
   coins.push({ x, y, r: radius, type, value, color, strokeColor });
+}
+
+// Function to check and fix coins that ended up inside pipes
+function validateCoinPositions() {
+  for (let i = coins.length - 1; i >= 0; i--) {
+    let coin = coins[i];
+    let isInsidePipe = false;
+
+    for (let obstacle of obstacles) {
+      // Check if coin is inside top pipe
+      if (
+        coin.x + coin.r > obstacle.x &&
+        coin.x - coin.r < obstacle.x + obstacle.width &&
+        coin.y - coin.r < obstacle.topHeight
+      ) {
+        isInsidePipe = true;
+        break;
+      }
+
+      // Check if coin is inside bottom pipe
+      if (
+        coin.x + coin.r > obstacle.x &&
+        coin.x - coin.r < obstacle.x + obstacle.width &&
+        coin.y + coin.r > obstacle.bottomY
+      ) {
+        isInsidePipe = true;
+        break;
+      }
+    }
+
+    if (isInsidePipe) {
+      // Remove the problematic coin - don't immediately respawn to avoid loops
+      coins.splice(i, 1);
+    }
+  }
 }
 
 // Obstacle generator
@@ -103,6 +214,7 @@ function resetGame() {
   showShop = false;
   switchingPlayer = false;
   obstacleSpawnTimer = 0;
+  validationTimer = 0;
   isJumpHeld = false;
   jumpHoldTimer = 0;
   for (let i = 0; i < 3; i++) spawnCoin();
@@ -226,6 +338,13 @@ function update() {
     // Remove off-screen coins
     coins = coins.filter((coin) => coin.x > -coin.r);
 
+    // Validate coin positions occasionally (every 60 frames = 1 second at 60fps)
+    validationTimer++;
+    if (validationTimer > 60) {
+      validateCoinPositions();
+      validationTimer = 0;
+    }
+
     // Spawn obstacles
     obstacleSpawnTimer++;
     if (obstacleSpawnTimer > 120) {
@@ -248,7 +367,7 @@ function update() {
         distance > coin.r + player.w / 2
       ) {
         // Pull coin towards player
-        const pullStrength = 0.5;
+        const pullStrength = 0.7;
         const angle = Math.atan2(dy, dx);
         coin.x += Math.cos(angle) * pullStrength * gameSpeed;
         coin.y += Math.sin(angle) * pullStrength * gameSpeed;
