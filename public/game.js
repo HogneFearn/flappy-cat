@@ -386,14 +386,14 @@ function spawnCoin() {
     value = 20;
     color = "#4169e1";
     strokeColor = "#1e3a8a";
-    radius = 10; // Larger for super rare
+    radius = 10;
   } else if (rarity < 0.1) {
     // 8% chance for red (rare)
     type = "red";
     value = 5;
     color = "#dc2626";
     strokeColor = "#991b1b";
-    radius = 10; // Slightly larger for rare
+    radius = 10;
   } else {
     // 90% chance for gold (common)
     type = "gold";
