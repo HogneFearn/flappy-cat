@@ -45,17 +45,50 @@ let isJumpHeld = false;
 let jumpHoldTimer = 0;
 
 // Touch/click handlers for mobile buttons
-leaderboardBtn.addEventListener("touchstart", handleLeaderboard);
-leaderboardBtn.addEventListener("click", handleLeaderboard);
+// Use only touchend for mobile to avoid double triggering
+leaderboardBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleLeaderboard();
+});
+leaderboardBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleLeaderboard();
+});
 
-shopBtn.addEventListener("touchstart", handleShop);
-shopBtn.addEventListener("click", handleShop);
+shopBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleShop();
+});
+shopBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleShop();
+});
 
-switchPlayerBtn.addEventListener("touchstart", handleSwitchPlayer);
-switchPlayerBtn.addEventListener("click", handleSwitchPlayer);
+switchPlayerBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleSwitchPlayer();
+});
+switchPlayerBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleSwitchPlayer();
+});
 
-restartBtn.addEventListener("touchstart", handleRestart);
-restartBtn.addEventListener("click", handleRestart);
+restartBtn.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleRestart();
+});
+restartBtn.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  handleRestart();
+});
 
 // Canvas touch handler for all game interactions
 canvas.addEventListener("touchstart", (e) => {
@@ -81,8 +114,18 @@ canvas.addEventListener("touchstart", (e) => {
       magnetRoundsLeft === 0
     ) {
       buyMagnetItem();
+    } else {
+      // If tapping outside the shop content area, close the shop
+      const shopContentTop = 50;
+      const shopContentBottom = canvas.height - 50;
+      if (canvasY < shopContentTop || canvasY > shopContentBottom) {
+        showShop = false;
+      }
     }
-  } else if (!showLeaderboard && !nameInputActive) {
+  } else if (showLeaderboard) {
+    // Close leaderboard when tapping on canvas
+    showLeaderboard = false;
+  } else if (!nameInputActive) {
     isJumpHeld = true;
     jumpHoldTimer = 0;
     handleJump();
@@ -96,7 +139,11 @@ canvas.addEventListener("touchend", (e) => {
 
 // Canvas click handler for desktop
 canvas.addEventListener("click", (e) => {
-  if (!showLeaderboard && !showShop && !nameInputActive) {
+  if (showShop || showLeaderboard) {
+    // Close overlays when clicking on canvas
+    showShop = false;
+    showLeaderboard = false;
+  } else if (!nameInputActive) {
     handleJump();
   }
 });
@@ -159,15 +206,21 @@ function handleJump() {
 
 function handleLeaderboard() {
   if (gameNameEntered) {
-    showLeaderboard = !showLeaderboard;
-    showShop = false; // Close shop when opening leaderboard
+    // Always allow closing the leaderboard, but only allow opening if game is not running or not started
+    if (showLeaderboard || (!gameRunning || !gameStarted)) {
+      showLeaderboard = !showLeaderboard;
+      showShop = false; // Close shop when opening leaderboard
+    }
   }
 }
 
 function handleShop() {
-  if (gameNameEntered && (!gameRunning || !gameStarted)) {
-    showShop = !showShop;
-    showLeaderboard = false; // Close leaderboard when opening shop
+  if (gameNameEntered) {
+    // Always allow closing the shop, but only allow opening if game is not running or not started
+    if (showShop || (!gameRunning || !gameStarted)) {
+      showShop = !showShop;
+      showLeaderboard = false; // Close leaderboard when opening shop
+    }
   }
 }
 
@@ -185,6 +238,13 @@ function handleRestart() {
 
 // Update button visibility based on game state
 function updateMobileButtons() {
+  // Reset all button classes first
+  [leaderboardBtn, shopBtn, switchPlayerBtn, restartBtn].forEach((btn) => {
+    if (btn) {
+      btn.classList.remove('active');
+    }
+  });
+
   if (!gameNameEntered || nameInputActive) {
     // During name entry - hide all buttons
     leaderboardBtn.style.display = "none";
@@ -197,24 +257,44 @@ function updateMobileButtons() {
     shopBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
+    
+    // Apply active state to open overlays
+    if (showLeaderboard) leaderboardBtn.classList.add('active');
+    if (showShop) shopBtn.classList.add('active');
   } else if (!gameStarted) {
     // Ready screen - show leaderboard, shop, and switch player buttons
     leaderboardBtn.style.display = "block";
     shopBtn.style.display = "block";
     switchPlayerBtn.style.display = "block";
     restartBtn.style.display = "none";
+    
+    // Apply active state to open overlays
+    if (showLeaderboard) leaderboardBtn.classList.add('active');
+    if (showShop) shopBtn.classList.add('active');
+  } else if (showShop || showLeaderboard) {
+    // During gameplay but with overlays open - show relevant buttons for closing
+    leaderboardBtn.style.display = showLeaderboard ? "block" : "none";
+    shopBtn.style.display = showShop ? "block" : "none";
+    switchPlayerBtn.style.display = "none";
+    restartBtn.style.display = "none";
+    
+    // Apply active state to open overlays
+    if (showLeaderboard) leaderboardBtn.classList.add('active');
+    if (showShop) shopBtn.classList.add('active');
   } else {
-    // During gameplay - hide all buttons since canvas handles everything
+    // During normal gameplay - hide all buttons since canvas handles everything
     leaderboardBtn.style.display = "none";
     shopBtn.style.display = "none";
     switchPlayerBtn.style.display = "none";
     restartBtn.style.display = "none";
   }
 
-  // Always ensure buttons are properly styled when visible
+  // Ensure visible buttons are properly styled
   [leaderboardBtn, shopBtn, switchPlayerBtn, restartBtn].forEach((btn) => {
-    if (btn.style.display !== "none") {
-      btn.style.display = "block";
+    if (btn && btn.style.display === "block") {
+      // Make sure the button is actually visible and clickable
+      btn.style.pointerEvents = "auto";
+      btn.style.opacity = "1";
     }
   });
 }
