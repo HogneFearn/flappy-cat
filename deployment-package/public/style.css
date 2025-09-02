@@ -12,6 +12,122 @@ body {
     width: 100vw;
 }
 
+/* Authentication form styles */
+#authForm {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #333;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    min-width: 280px;
+    z-index: 1000;
+}
+
+#authForm input[type="text"],
+#authForm input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    background: white;
+    outline: none;
+}
+
+#authForm input[type="text"]:focus,
+#authForm input[type="password"]:focus {
+    border-color: #45a049;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
+#authButtons {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.auth-btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.auth-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.auth-btn:active {
+    transform: translateY(0);
+}
+
+.auth-btn:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#authToggle {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+#authToggleText {
+    color: #666;
+    font-size: 14px;
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: #4CAF50;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 5px;
+}
+
+.link-btn:hover {
+    color: #45a049;
+}
+
+.error-message {
+    color: #f44336;
+    font-size: 14px;
+    margin: 10px 0;
+    min-height: 20px;
+    font-weight: bold;
+}
+
+/* Mobile responsiveness for auth form */
+@media (max-width: 480px) {
+    #authForm {
+        min-width: 90%;
+        padding: 15px;
+    }
+    
+    #authForm input[type="text"],
+    #authForm input[type="password"] {
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+}
+
 #gameContainer {
     position: relative;
     display: flex;
@@ -86,6 +202,18 @@ body {
 
 .menu-btn:active {
     background: #1976D2;
+    transform: scale(0.95);
+}
+
+.menu-btn.active {
+    background: #FF9800;
+    color: white;
+    border: 2px solid #F57C00;
+    box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+}
+
+.menu-btn.active:active {
+    background: #F57C00;
     transform: scale(0.95);
 }
 

@@ -588,7 +588,6 @@ function update() {
 
   // Only move world objects if game has started
   if (gameStarted) {
-
     // Move obstacles
     for (let obstacle of obstacles) {
       obstacle.x -= gameSpeed;
@@ -798,7 +797,7 @@ function draw() {
     ctx.font = "30px Arial";
     ctx.textAlign = "center";
     ctx.fillText(
-      "Welcome to Cat Flappy!",
+      "Welcome to Flappy Cat!",
       canvas.width / 2,
       canvas.height / 2 - 100
     );

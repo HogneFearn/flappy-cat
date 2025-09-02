@@ -6,14 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Cat Flappy - Mobile Game</title>
+    <title>Flappy Cat - Mobile Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+        <!-- Authentication form -->
+        <div id="authForm" style="display: none;">
+            <input type="text" id="usernameInput" placeholder="Username (3+ characters)" maxlength="20">
+            <input type="password" id="passwordInput" placeholder="Password (6+ characters)" maxlength="50">
+            <div id="authButtons">
+                <button id="loginBtn" class="auth-btn">Login</button>
+                <button id="signupBtn" class="auth-btn">Sign Up</button>
+            </div>
+            <div id="authError" class="error-message"></div>
+            <div id="authToggle">
+                <span id="authToggleText">Don't have an account?</span>
+                <button id="authToggleBtn" class="link-btn">Sign up here</button>
+            </div>
+        </div>
+
+        <!-- Legacy name input (hidden) -->
         <input type="text" id="nameInput" placeholder="Enter your name" maxlength="15" style="display: none;">
+
         <div id="mobileControls">
             <div id="menuButtons">
                 <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
