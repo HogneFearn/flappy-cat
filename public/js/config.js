@@ -3,6 +3,7 @@ let player = { x: 70, y: 300, w: 35, h: 35, vx: 0, vy: 0, onGround: false };
 let gravity = 0.2;
 let jumpPower = -3.5;
 let gameSpeed = 2.5;
+let baseGameSpeed = 2.5; // Store the original game speed
 let coins = [];
 let obstacles = [];
 let obstacleScore = 0;

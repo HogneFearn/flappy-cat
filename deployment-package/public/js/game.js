@@ -189,6 +189,14 @@ async function handleGameOver() {
 
 // Legacy function removed - authentication handles player identification
 
+// Function to calculate dynamic game speed based on score
+function calculateGameSpeed() {
+  // Increase speed by 0.3 for every 75 points from the start
+  const speedIncreaseIntervals = Math.floor(obstacleScore / 75);
+  const speedIncrease = speedIncreaseIntervals * 0.3;
+  return baseGameSpeed + speedIncrease;
+}
+
 function resetGame() {
   player.x = 70;
   player.y = 300;
@@ -196,6 +204,7 @@ function resetGame() {
   player.vy = 0;
   player.onGround = false;
   obstacleScore = 0;
+  gameSpeed = baseGameSpeed; // Reset game speed to base speed
   coins = [];
   obstacles = [];
   gameRunning = true;
@@ -382,6 +391,8 @@ function update() {
       if (!obstacle.passed && player.x > obstacle.x + obstacle.width) {
         obstacle.passed = true;
         obstacleScore += 5;
+        // Update game speed based on new score
+        gameSpeed = calculateGameSpeed();
       }
     }
 
