@@ -44,3 +44,6 @@ const isMobile =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
   );
+
+// In-canvas button system for game over screen
+let gameOverButtons = [];

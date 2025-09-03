@@ -1,3 +1,21 @@
+// Function to draw a button
+function drawButton(text, x, y, width, height, color) {
+  // Button background
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
+
+  // Button border
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, width, height);
+
+  // Button text
+  ctx.fillStyle = "#fff";
+  ctx.font = "14px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(text, x + width / 2, y + height / 2 + 5);
+}
+
 function draw() {
   // Fill entire canvas with black background
   ctx.fillStyle = "#000";
@@ -84,16 +102,6 @@ function draw() {
 
   ctx.textAlign = "left";
   ctx.fillText("Score: " + obstacleScore, 20, 25);
-  // Debug: log the onlineCount value being drawn
-  if (Math.random() < 0.01) {
-    // Only log 1% of the time to avoid spam
-    console.log(
-      "Drawing onlineCount:",
-      onlineCount,
-      "Type:",
-      typeof onlineCount
-    );
-  }
   ctx.fillText("👥 Online: " + onlineCount, 20, groundY - 10); // Bottom left corner
 
   // Game over message
@@ -118,31 +126,86 @@ function draw() {
       canvas.height / 2 + 5
     );
 
-    ctx.font = "16px Arial";
-    if (isMobile) {
-      ctx.fillText(
-        "Tap screen to Play Again",
-        canvas.width / 2,
-        canvas.height / 2 + 40
-      );
-    } else {
-      ctx.fillText(
-        "SPACE - Play Again",
-        canvas.width / 2,
-        canvas.height / 2 + 40
-      );
-      ctx.fillText(
-        "N - Switch/New Player",
-        canvas.width / 2,
-        canvas.height / 2 + 60
-      );
-      ctx.fillText(
-        "L - View Leaderboard",
-        canvas.width / 2,
-        canvas.height / 2 + 80
-      );
-      ctx.fillText("S - Open Shop", canvas.width / 2, canvas.height / 2 + 100);
-    }
+    // Clear previous buttons
+    gameOverButtons = [];
+
+    // Draw in-canvas buttons
+    const buttonWidth = 140;
+    const buttonHeight = 35;
+    const buttonSpacing = 50;
+    const startY = canvas.height / 2 + 50;
+
+    // Play Again button
+    const playAgainY = startY;
+    drawButton(
+      "🔄 Play Again",
+      canvas.width / 2 - buttonWidth / 2,
+      playAgainY,
+      buttonWidth,
+      buttonHeight,
+      "#4CAF50"
+    );
+    gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: playAgainY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "playAgain",
+    });
+
+    // Leaderboard button
+    const leaderboardY = startY + buttonSpacing;
+    drawButton(
+      "🏆 Leaderboard",
+      canvas.width / 2 - buttonWidth / 2,
+      leaderboardY,
+      buttonWidth,
+      buttonHeight,
+      "#2196F3"
+    );
+    gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: leaderboardY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "leaderboard",
+    });
+
+    // Shop button
+    const shopY = startY + buttonSpacing * 2;
+    drawButton(
+      "🛒 Shop",
+      canvas.width / 2 - buttonWidth / 2,
+      shopY,
+      buttonWidth,
+      buttonHeight,
+      "#FF9800"
+    );
+    gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: shopY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "shop",
+    });
+
+    // Switch Player button
+    const switchPlayerY = startY + buttonSpacing * 3;
+    drawButton(
+      "👤 Switch Player",
+      canvas.width / 2 - buttonWidth / 2,
+      switchPlayerY,
+      buttonWidth,
+      buttonHeight,
+      "#9C27B0"
+    );
+    gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: switchPlayerY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "switchPlayer",
+    });
 
     ctx.textAlign = "left";
   }

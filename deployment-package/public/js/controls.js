@@ -112,10 +112,55 @@ canvas.addEventListener("touchstart", (e) => {
 canvas.addEventListener("touchend", (e) => {
   e.preventDefault();
   isJumpHeld = false;
+
+  // Get touch coordinates relative to canvas
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.changedTouches[0]; // Use changedTouches for touchend
+  const touchX = touch.clientX - rect.left;
+  const touchY = touch.clientY - rect.top;
+
+  // Scale touch coordinates to canvas coordinates
+  const canvasX = (touchX / rect.width) * canvas.width;
+  const canvasY = (touchY / rect.height) * canvas.height;
+
+  // Check for in-canvas button clicks when game is over
+  if (!gameRunning && gameOverButtons.length > 0) {
+    for (const button of gameOverButtons) {
+      if (
+        canvasX >= button.x &&
+        canvasX <= button.x + button.width &&
+        canvasY >= button.y &&
+        canvasY <= button.y + button.height
+      ) {
+        handleGameOverButtonClick(button.action);
+        return;
+      }
+    }
+  }
 });
 
 // Canvas click handler for desktop
 canvas.addEventListener("click", (e) => {
+  // Get click coordinates relative to canvas
+  const rect = canvas.getBoundingClientRect();
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
+
+  // Check for in-canvas button clicks when game is over
+  if (!gameRunning && gameOverButtons.length > 0) {
+    for (const button of gameOverButtons) {
+      if (
+        clickX >= button.x &&
+        clickX <= button.x + button.width &&
+        clickY >= button.y &&
+        clickY <= button.y + button.height
+      ) {
+        handleGameOverButtonClick(button.action);
+        return;
+      }
+    }
+  }
+
   if (showShop || showLeaderboard) {
     // Close overlays when clicking on canvas
     showShop = false;
@@ -124,6 +169,24 @@ canvas.addEventListener("click", (e) => {
     handleJump();
   }
 });
+
+// Handle in-canvas button clicks
+function handleGameOverButtonClick(action) {
+  switch (action) {
+    case "playAgain":
+      resetGame();
+      break;
+    case "leaderboard":
+      handleLeaderboard();
+      break;
+    case "shop":
+      handleShop();
+      break;
+    case "switchPlayer":
+      switchPlayer();
+      break;
+  }
+}
 
 // Legacy mobile name input handling - removed in favor of authentication
 
