@@ -156,6 +156,78 @@ function validateSession(req, res, next) {
   );
 }
 
+// Track online users
+let onlineUsers = new Map(); // sessionToken -> { username, lastSeen }
+const ONLINE_TIMEOUT = 3 * 60 * 1000; // 3 minutes in milliseconds
+
+// Cleanup offline users periodically
+setInterval(() => {
+  const now = Date.now();
+  let cleanedCount = 0;
+  for (const [sessionToken, userData] of onlineUsers.entries()) {
+    if (now - userData.lastSeen > ONLINE_TIMEOUT) {
+      onlineUsers.delete(sessionToken);
+      cleanedCount++;
+      console.log(`User ${userData.username} is now offline (timeout)`);
+    }
+  }
+  if (cleanedCount > 0) {
+    console.log(
+      `Cleaned up ${cleanedCount} offline users. Currently online: ${onlineUsers.size}`
+    );
+  }
+}, 60000); // Check every minute
+
+// Enhanced session validation middleware that tracks online status
+function validateSessionAndTrackOnline(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "No valid session token provided" });
+  }
+
+  const sessionToken = authHeader.substring(7);
+
+  db.get(
+    `SELECT s.user_id, u.username FROM sessions s 
+     JOIN users u ON s.user_id = u.id 
+     WHERE s.session_token = ? AND s.expires_at > datetime('now')`,
+    [sessionToken],
+    (err, row) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (!row) {
+        // Remove from online users if session is invalid
+        onlineUsers.delete(sessionToken);
+        return res.status(401).json({ error: "Invalid or expired session" });
+      }
+
+      // Update online status
+      onlineUsers.set(sessionToken, {
+        username: row.username,
+        lastSeen: Date.now(),
+      });
+
+      req.user = { id: row.user_id, username: row.username };
+      next();
+    }
+  );
+}
+
+// Add heartbeat endpoint for keeping users online
+app.post("/api/heartbeat", validateSessionAndTrackOnline, (req, res) => {
+  res.json({
+    success: true,
+    onlineCount: onlineUsers.size,
+    message: "Heartbeat received",
+  });
+});
+
+// Get online user count (public endpoint)
+app.get("/api/online-count", (req, res) => {
+  res.json({ count: onlineUsers.size });
+});
+
 // API Routes
 
 // Authentication routes
@@ -169,12 +241,10 @@ app.post("/api/auth/signup", (req, res) => {
   }
 
   if (username.length < 3 || password.length < 6) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Username must be at least 3 characters and password at least 6 characters",
-      });
+    return res.status(400).json({
+      error:
+        "Username must be at least 3 characters and password at least 6 characters",
+    });
   }
 
   const salt = generateSalt();
@@ -258,6 +328,23 @@ app.post("/api/auth/login", (req, res) => {
       const sessionToken = generateSessionToken();
       const expiresAt = getExpirationDate();
 
+      // Clean up any existing online sessions for this user
+      // Remove from onlineUsers map
+      for (const [token, userData] of onlineUsers.entries()) {
+        if (userData.username === row.username) {
+          onlineUsers.delete(token);
+          console.log(
+            `Removed existing online session for user: ${row.username}`
+          );
+        }
+      }
+
+      // Also clean up old sessions from database (optional - keeps DB clean)
+      db.run(
+        "DELETE FROM sessions WHERE user_id = ? AND expires_at < datetime('now')",
+        [row.id]
+      );
+
       db.run(
         "INSERT INTO sessions (user_id, session_token, expires_at) VALUES (?, ?, ?)",
         [row.id, sessionToken, expiresAt],
@@ -307,8 +394,44 @@ app.post("/api/auth/validate", (req, res) => {
   );
 });
 
+// Logout endpoint
+app.post("/api/auth/logout", validateSessionAndTrackOnline, (req, res) => {
+  const authHeader = req.headers.authorization;
+  const sessionToken = authHeader.substring(7);
+
+  // Remove from online users
+  onlineUsers.delete(sessionToken);
+  console.log(`User ${req.user.username} logged out`);
+
+  // Optionally, you could also remove the session from database
+  // For now, we'll just let it expire naturally
+  // db.run("DELETE FROM sessions WHERE session_token = ?", [sessionToken]);
+
+  res.json({ success: true, message: "Logged out successfully" });
+});
+
+// Logout endpoint for sendBeacon (no auth header validation needed)
+app.post("/api/auth/logout-beacon", (req, res) => {
+  const { sessionToken } = req.body;
+
+  if (!sessionToken) {
+    return res
+      .status(200)
+      .json({ success: false, message: "No session token provided" });
+  }
+
+  // Find and remove from online users
+  if (onlineUsers.has(sessionToken)) {
+    const userData = onlineUsers.get(sessionToken);
+    onlineUsers.delete(sessionToken);
+    console.log(`User ${userData.username} logged out via beacon`);
+  }
+
+  res.json({ success: true, message: "Logged out successfully" });
+});
+
 // Get player wallet
-app.get("/api/player/wallet", validateSession, (req, res) => {
+app.get("/api/player/wallet", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
   db.get(
@@ -341,7 +464,7 @@ app.get("/api/player/wallet", validateSession, (req, res) => {
 });
 
 // Update player wallet
-app.post("/api/player/wallet", validateSession, (req, res) => {
+app.post("/api/player/wallet", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
   const { wallet } = req.body;
 
@@ -359,7 +482,7 @@ app.post("/api/player/wallet", validateSession, (req, res) => {
 });
 
 // Get player inventory
-app.get("/api/player/inventory", validateSession, (req, res) => {
+app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
   db.get(
@@ -392,7 +515,7 @@ app.get("/api/player/inventory", validateSession, (req, res) => {
 });
 
 // Update player inventory
-app.post("/api/player/inventory", validateSession, (req, res) => {
+app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
   const { magnetRoundsLeft } = req.body;
 
@@ -410,7 +533,7 @@ app.post("/api/player/inventory", validateSession, (req, res) => {
 });
 
 // Get player high score
-app.get("/api/player/highscore", validateSession, (req, res) => {
+app.get("/api/player/highscore", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
   db.get(
@@ -443,7 +566,7 @@ app.get("/api/player/highscore", validateSession, (req, res) => {
 });
 
 // Update player high score
-app.post("/api/player/highscore", validateSession, (req, res) => {
+app.post("/api/player/highscore", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
   const { score } = req.body;
 
@@ -511,7 +634,7 @@ app.post(
     });
     next();
   },
-  validateSession,
+  validateSessionAndTrackOnline,
   (req, res) => {
     const playerName = req.user.username;
     const { score } = req.body;

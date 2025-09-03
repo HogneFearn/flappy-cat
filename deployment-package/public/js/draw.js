@@ -84,6 +84,17 @@ function draw() {
 
   ctx.textAlign = "left";
   ctx.fillText("Score: " + obstacleScore, 20, 25);
+  // Debug: log the onlineCount value being drawn
+  if (Math.random() < 0.01) {
+    // Only log 1% of the time to avoid spam
+    console.log(
+      "Drawing onlineCount:",
+      onlineCount,
+      "Type:",
+      typeof onlineCount
+    );
+  }
+  ctx.fillText("👥 Online: " + onlineCount, 20, groundY - 10); // Bottom left corner
 
   // Game over message
   if (!gameRunning) {

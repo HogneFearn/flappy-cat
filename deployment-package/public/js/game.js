@@ -412,3 +412,14 @@ async function buyMagnetItem() {
     hasMagnet = magnetRoundsLeft > 0;
   }
 }
+
+// Draw UI
+ctx.fillStyle = "#fff";
+ctx.font = "16px Arial";
+ctx.textAlign = "right";
+ctx.fillText("High Score: " + playerHighScore, canvas.width - 20, 25);
+ctx.fillText("💰 Wallet: " + totalCoinsWallet, canvas.width - 20, 45);
+ctx.fillText("👥 Online: " + onlineCount, canvas.width - 20, 65); // Add this line
+
+ctx.textAlign = "left";
+ctx.fillText("Score: " + obstacleScore, 20, 25);

@@ -274,3 +274,86 @@ async function initializeGameData() {
     console.error("Failed to initialize game data:", error);
   }
 }
+
+// Online user tracking
+let heartbeatInterval;
+
+async function startHeartbeat(sessionToken) {
+  console.log("startHeartbeat called with sessionToken:", sessionToken);
+
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+  }
+
+  // Send initial heartbeat immediately
+  try {
+    console.log("Sending initial heartbeat...");
+    const result = await apiRequest("/api/heartbeat", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${sessionToken}`,
+      },
+    });
+    console.log("Initial heartbeat successful:", result);
+    // Update online count from heartbeat response
+    if (result.onlineCount !== undefined) {
+      console.log(
+        "Updating onlineCount from",
+        onlineCount,
+        "to",
+        result.onlineCount
+      );
+      onlineCount = result.onlineCount;
+      console.log("onlineCount is now:", onlineCount);
+    }
+  } catch (error) {
+    console.error("Initial heartbeat failed:", error);
+  }
+
+  // Send heartbeat every 2 minutes
+  heartbeatInterval = setInterval(async () => {
+    try {
+      console.log("Sending periodic heartbeat...");
+      const result = await apiRequest("/api/heartbeat", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+      console.log("Periodic heartbeat successful:", result);
+      // Update online count from heartbeat response
+      if (result.onlineCount !== undefined) {
+        onlineCount = result.onlineCount;
+      }
+    } catch (error) {
+      console.error("Heartbeat failed:", error);
+    }
+  }, 2 * 60 * 1000); // 2 minutes
+}
+
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+}
+
+async function getOnlineCount() {
+  const result = await apiRequest("/api/online-count");
+  return result ? result.count : 0;
+}
+
+async function logout(sessionToken) {
+  if (!sessionToken) return;
+
+  stopHeartbeat();
+
+  await apiRequest("/api/auth/logout", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+    },
+  });
+
+  clearSession();
+}

@@ -8,6 +8,7 @@ let coins = [];
 let obstacles = [];
 let obstacleScore = 0;
 let totalCoinsWallet = 0; // Will be loaded when player name is set
+let onlineCount = 0; // Online users count
 let playerHighScore = 0; // Will be loaded from API for current player
 let gameRunning = true;
 let gameStarted = false;

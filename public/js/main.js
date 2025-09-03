@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         nameInputActive = false;
 
         await initializeGameData();
+        startHeartbeat(session.sessionToken); // Start tracking online status
         startGame();
         return;
       } else {
@@ -37,7 +38,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     authMode = "login";
     showAuthForm();
   }
+
+  // Update online count periodically
+  updateOnlineCount();
+  setInterval(updateOnlineCount, 30000); // Update every 30 seconds
 });
+
+// Add window close detection to properly log out user
+window.addEventListener("beforeunload", (event) => {
+  if (currentSession && currentSession.sessionToken) {
+    // Use sendBeacon with proper content type for logout on page close
+    const blob = new Blob(
+      [
+        JSON.stringify({
+          sessionToken: currentSession.sessionToken,
+        }),
+      ],
+      { type: "application/json" }
+    );
+
+    navigator.sendBeacon("/api/auth/logout-beacon", blob);
+  }
+});
+
+// Also handle visibility change (tab switching, minimizing)
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && currentSession) {
+    // Tab became visible again, send heartbeat
+    updateOnlineCount();
+  }
+});
+
+async function updateOnlineCount() {
+  try {
+    console.log("Calling getOnlineCount...");
+    const count = await getOnlineCount();
+    onlineCount = count;
+    console.log("Updated onlineCount to:", onlineCount);
+  } catch (error) {
+    console.error("Failed to get online count:", error);
+  }
+}
 
 function setupAuthentication() {
   const authForm = document.getElementById("authForm");
@@ -90,6 +131,7 @@ function setupAuthentication() {
 
         hideAuthForm();
         await initializeGameData();
+        startHeartbeat(session.sessionToken); // Start heartbeat
         startGame();
       }
     } catch (error) {
@@ -241,8 +283,11 @@ function startGame() {
 // Updated switch player function for authentication
 async function switchPlayerWithAuth() {
   try {
-    // Clear current session
-    clearSession();
+    // Logout current session properly
+    if (currentSession && currentSession.sessionToken) {
+      await logout(currentSession.sessionToken);
+    }
+
     currentSession = null;
 
     // Reset game state
