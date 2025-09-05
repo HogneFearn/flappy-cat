@@ -191,10 +191,28 @@ async function handleGameOver() {
 
 // Function to calculate dynamic game speed based on score
 function calculateGameSpeed() {
+  // Ensure obstacleScore is valid and within reasonable bounds
+  const safeScore = Math.max(0, Math.min(obstacleScore, 1500)); // Cap at 1500 points for safety
+
   // Increase speed by 0.3 for every 75 points from the start
-  const speedIncreaseIntervals = Math.floor(obstacleScore / 75);
+  const speedIncreaseIntervals = Math.floor(safeScore / 75);
   const speedIncrease = speedIncreaseIntervals * 0.3;
-  return baseGameSpeed + speedIncrease;
+  const calculatedSpeed = baseGameSpeed + speedIncrease;
+
+  // Add maximum speed cap to prevent unplayable speeds
+  const maxGameSpeed = baseGameSpeed + 10.0; // Increased cap for more challenge
+  const finalSpeed = Math.min(calculatedSpeed, maxGameSpeed);
+
+  // Debug logging for speed spikes
+  if (finalSpeed > baseGameSpeed + 2.0) {
+    console.log(
+      `Warning: High game speed detected. Score: ${obstacleScore}, Speed: ${finalSpeed.toFixed(
+        2
+      )}`
+    );
+  }
+
+  return finalSpeed;
 }
 
 function resetGame() {
@@ -205,6 +223,16 @@ function resetGame() {
   player.onGround = false;
   obstacleScore = 0;
   gameSpeed = baseGameSpeed; // Reset game speed to base speed
+
+  // Extra safety check to ensure baseGameSpeed is valid
+  if (baseGameSpeed <= 0 || baseGameSpeed > 10) {
+    console.warn(
+      `Invalid baseGameSpeed detected: ${baseGameSpeed}, resetting to 2.5`
+    );
+    baseGameSpeed = 2.5;
+    gameSpeed = 2.5;
+  }
+
   coins = [];
   obstacles = [];
   gameRunning = true;
@@ -391,8 +419,16 @@ function update() {
       if (!obstacle.passed && player.x > obstacle.x + obstacle.width) {
         obstacle.passed = true;
         obstacleScore += 5;
-        // Update game speed based on new score
-        gameSpeed = calculateGameSpeed();
+        // Update game speed based on new score with safeguards
+        const newSpeed = calculateGameSpeed();
+        // Only update if the new speed is reasonable (prevent sudden spikes)
+        if (newSpeed <= gameSpeed + 0.5) {
+          gameSpeed = newSpeed;
+        } else {
+          console.warn(
+            `Prevented speed spike: ${gameSpeed} → ${newSpeed}, keeping current speed`
+          );
+        }
       }
     }
 
