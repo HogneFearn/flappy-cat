@@ -21,37 +21,33 @@ function draw() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Draw sky area (playable area background)
-  ctx.fillStyle = "#87ceeb";
-  ctx.fillRect(0, 0, canvas.width, groundY);
+  // Draw cloudy background image for sky area
+  if (backgroundImage.complete && backgroundImage.naturalWidth > 0) {
+    // Draw the background image tiled/stretched to fill the sky area
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, groundY);
+  } else {
+    // Fallback to solid color if image isn't loaded yet
+    ctx.fillStyle = "#87ceeb";
+    ctx.fillRect(0, 0, canvas.width, groundY);
+  }
 
   // Draw ground
   ctx.fillStyle = "#654321";
   ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
 
-  // Draw obstacles (pipes)
-  ctx.fillStyle = "#228B22";
+  // Draw obstacles (pipes) - Mario-style
   for (let obstacle of obstacles) {
+    // Mario-style pipe colors
+    const pipeGreen = "#228B22";
+    const pipeDarkGreen = "#006400";
+    const pipeHighlight = "#32CD32";
+    const pipeShadow = "#1F5F1F";
+    
     // Top pipe
-    ctx.fillRect(obstacle.x, 0, obstacle.width, obstacle.topHeight);
-    // Bottom pipe
-    ctx.fillRect(
-      obstacle.x,
-      obstacle.bottomY,
-      obstacle.width,
-      obstacle.bottomHeight
-    );
-
-    // Pipe borders
-    ctx.strokeStyle = "#006400";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(obstacle.x, 0, obstacle.width, obstacle.topHeight);
-    ctx.strokeRect(
-      obstacle.x,
-      obstacle.bottomY,
-      obstacle.width,
-      obstacle.bottomHeight
-    );
+    drawMarioPipe(obstacle.x, 0, obstacle.width, obstacle.topHeight, true);
+    
+    // Bottom pipe  
+    drawMarioPipe(obstacle.x, obstacle.bottomY, obstacle.width, obstacle.bottomHeight, false);
   }
 
   // Draw player
@@ -102,7 +98,18 @@ function draw() {
 
   ctx.textAlign = "left";
   ctx.fillText("Score: " + obstacleScore, 20, 25);
+  
+  // Add shadow to online count for better contrast
+  ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
   ctx.fillText("👥 Online: " + onlineCount, 20, groundY - 10); // Bottom left corner
+  
+  // Reset shadow
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
 
   // Game over message
   if (!gameRunning) {
@@ -413,5 +420,66 @@ function draw() {
       ctx.fillText("Press S to close", canvas.width / 2, canvas.height - 50);
     }
     ctx.textAlign = "left";
+  }
+}
+
+// Mario-style pipe drawing function
+function drawMarioPipe(x, y, width, height, isTop) {
+  const rimHeight = 20;
+  const pipeBodyHeight = isTop ? height - rimHeight : height - rimHeight;
+  const pipeBodyY = isTop ? y : y + rimHeight;
+  const rimY = isTop ? height - rimHeight : y;
+  const rimWidth = width + 8; // Slightly wider rim
+  const rimX = x - 4;
+  
+  // Main pipe colors
+  const pipeGreen = "#228B22";
+  const pipeDarkGreen = "#006400";
+  const pipeHighlight = "#32CD32";
+  const pipeShadow = "#1F5F1F";
+  
+  // Draw pipe rim (the lip/opening)
+  ctx.fillStyle = pipeGreen;
+  ctx.fillRect(rimX, rimY, rimWidth, rimHeight);
+  
+  // Rim highlights and shadows for 3D effect
+  ctx.fillStyle = pipeHighlight;
+  ctx.fillRect(rimX, rimY, rimWidth, 3); // Top highlight
+  ctx.fillRect(rimX, rimY, 3, rimHeight); // Left highlight
+  
+  ctx.fillStyle = pipeShadow;
+  ctx.fillRect(rimX, rimY + rimHeight - 3, rimWidth, 3); // Bottom shadow
+  ctx.fillRect(rimX + rimWidth - 3, rimY, 3, rimHeight); // Right shadow
+  
+  // Draw main pipe body
+  ctx.fillStyle = pipeGreen;
+  ctx.fillRect(x, pipeBodyY, width, pipeBodyHeight);
+  
+  // Pipe body highlights and shadows
+  ctx.fillStyle = pipeHighlight;
+  ctx.fillRect(x, pipeBodyY, 4, pipeBodyHeight); // Left highlight strip
+  
+  ctx.fillStyle = pipeShadow;
+  ctx.fillRect(x + width - 4, pipeBodyY, 4, pipeBodyHeight); // Right shadow strip
+  
+  // Add vertical highlight lines for texture
+  ctx.fillStyle = pipeHighlight;
+  for (let i = 12; i < width - 12; i += 8) {
+    ctx.fillRect(x + i, pipeBodyY, 1, pipeBodyHeight);
+  }
+  
+  // Dark border around everything
+  ctx.strokeStyle = pipeDarkGreen;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(rimX, rimY, rimWidth, rimHeight); // Rim border
+  ctx.strokeRect(x, pipeBodyY, width, pipeBodyHeight); // Body border
+  
+  // Inner rim shadow for depth
+  if (isTop) {
+    ctx.fillStyle = pipeShadow;
+    ctx.fillRect(rimX + 2, rimY + rimHeight - 6, rimWidth - 4, 4);
+  } else {
+    ctx.fillStyle = pipeHighlight;
+    ctx.fillRect(rimX + 2, rimY + 2, rimWidth - 4, 4);
   }
 }

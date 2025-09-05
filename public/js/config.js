@@ -39,6 +39,10 @@ let magnetRadius = 250;
 const catImage = new Image();
 catImage.src = "cat.png";
 
+// Background image
+const backgroundImage = new Image();
+backgroundImage.src = "cloudy-background.png";
+
 // Mobile detection
 const isMobile =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
