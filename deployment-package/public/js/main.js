@@ -274,7 +274,6 @@ function startGame() {
   function gameLoop() {
     update();
     draw();
-    updateMobileButtons();
     requestAnimationFrame(gameLoop);
   }
   gameLoop();

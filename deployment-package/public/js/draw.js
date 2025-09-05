@@ -131,9 +131,12 @@ function draw() {
 
     // Draw in-canvas buttons
     const buttonWidth = 140;
-    const buttonHeight = 35;
-    const buttonSpacing = 50;
-    const startY = canvas.height / 2 + 50;
+    const buttonHeight = isMobile ? 55 : 35; // Even taller buttons on mobile
+    const buttonSpacing = isMobile ? 55 : 50; // Spacing = height to eliminate gaps
+
+    // Position buttons to match visual expectations on mobile
+    // Move buttons UP significantly to align with where they visually appear
+    const startY = isMobile ? 250 : canvas.height / 2 + 10;
 
     // Play Again button
     const playAgainY = startY;
