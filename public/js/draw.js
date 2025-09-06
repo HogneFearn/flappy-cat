@@ -74,13 +74,37 @@ function draw() {
       ctx.shadowBlur = 10;
     }
 
-    ctx.beginPath();
-    ctx.arc(coin.x, coin.y, coin.r, 0, Math.PI * 2);
-    ctx.fillStyle = coin.color;
-    ctx.fill();
-    ctx.strokeStyle = coin.strokeColor;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    // Get the appropriate coin image based on type
+    let coinImage;
+    if (coin.type === "blue") {
+      coinImage = blueCoinImage;
+    } else if (coin.type === "red") {
+      coinImage = redCoinImage;
+    } else {
+      coinImage = yellowCoinImage; // gold/yellow
+    }
+
+    // Draw coin image if loaded, otherwise fallback to circle
+    if (coinImage.complete && coinImage.naturalWidth > 0) {
+      // Calculate image size (twice the radius for diameter)
+      const imageSize = coin.r * 2;
+      ctx.drawImage(
+        coinImage,
+        coin.x - coin.r, // Center the image
+        coin.y - coin.r,
+        imageSize,
+        imageSize
+      );
+    } else {
+      // Fallback to circle if image not loaded
+      ctx.beginPath();
+      ctx.arc(coin.x, coin.y, coin.r, 0, Math.PI * 2);
+      ctx.fillStyle = coin.color;
+      ctx.fill();
+      ctx.strokeStyle = coin.strokeColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
 
     // Reset shadow
     ctx.shadowBlur = 0;

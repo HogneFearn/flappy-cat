@@ -43,6 +43,16 @@ catImage.src = "cat.png";
 const backgroundImage = new Image();
 backgroundImage.src = "cloudy-background.png";
 
+// Coin images
+const yellowCoinImage = new Image();
+yellowCoinImage.src = "yellow_coin.png";
+
+const redCoinImage = new Image();
+redCoinImage.src = "red_coin.png";
+
+const blueCoinImage = new Image();
+blueCoinImage.src = "blue_coin.png";
+
 // Mobile detection
 const isMobile =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(

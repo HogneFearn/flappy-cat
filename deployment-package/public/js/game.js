@@ -14,21 +14,21 @@ function spawnCoin() {
     value = 20;
     color = "#4169e1";
     strokeColor = "#1e3a8a";
-    radius = 10;
+    radius = 13;
   } else if (rarity < 0.1) {
     // 8% chance for red (rare)
     type = "red";
     value = 5;
     color = "#dc2626";
     strokeColor = "#991b1b";
-    radius = 10;
+    radius = 13;
   } else {
     // 90% chance for gold (common)
     type = "gold";
     value = 1;
     color = "#ffd700";
     strokeColor = "#b8860b";
-    radius = 10;
+    radius = 13;
   }
 
   // Try to find a position that doesn't collide with pipes
