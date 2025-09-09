@@ -261,7 +261,11 @@ async function initializeGameData() {
     // Load player data using session token
     totalCoinsWallet = await loadPlayerWallet(currentSession.sessionToken);
     playerHighScore = await getPlayerHighScore(currentSession.sessionToken);
-    hasMagnet = await checkPlayerHasMagnet(currentSession.sessionToken);
+
+    // Load inventory to get magnet rounds
+    const inventory = await loadPlayerInventory(currentSession.sessionToken);
+    magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
+    hasMagnet = magnetRoundsLeft > 0; // Set hasMagnet based on rounds left
 
     // Load leaderboard
     leaderboard = await loadLeaderboard();

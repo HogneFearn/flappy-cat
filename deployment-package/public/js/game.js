@@ -162,6 +162,7 @@ function spawnObstacle() {
 
 async function handleGameOver() {
   gameRunning = false;
+  showGameOverButtons = false; // Start with just the game over message
 
   // Decrease magnet rounds if player has magnet
   if (hasMagnet) {
@@ -239,6 +240,7 @@ function resetGame() {
   gameStarted = false;
   showLeaderboard = false;
   showShop = false;
+  showGameOverButtons = false; // Reset game over button state
   switchingPlayer = false;
   obstacleSpawnTimer = 0;
   validationTimer = 0;
@@ -292,12 +294,27 @@ function update() {
         // Wait for authentication to complete - do nothing
         return;
       } else if (!gameRunning) {
-        resetGame();
+        // If game is over but buttons aren't shown yet, show them
+        if (!showGameOverButtons) {
+          showGameOverButtons = true;
+        }
+        // Don't restart the game automatically when buttons are shown
+        // Player must click the "Play Again" button instead
       } else if (!gameStarted) {
         gameStarted = true;
         player.vy = jumpPower;
       } else {
         player.vy = jumpPower;
+      }
+    }
+
+    // Handle any other key press to show game over buttons
+    if (!gameRunning && !showGameOverButtons && gameNameEntered) {
+      const anyKeyPressed = Object.values(keys).some((key) => key);
+      if (anyKeyPressed) {
+        showGameOverButtons = true;
+        // Clear all keys to prevent immediate actions
+        Object.keys(keys).forEach((key) => (keys[key] = false));
       }
     }
   }

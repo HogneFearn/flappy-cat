@@ -30,7 +30,7 @@ canvas.addEventListener("touchstart", (e) => {
   const canvasY = touchY * scaleY;
 
   // Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
-  if (!gameRunning && gameOverButtons.length > 0) {
+  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
     // Find the clicked button by checking from bottom to top (reverse order)
     // to handle any potential overlaps
     for (let i = gameOverButtons.length - 1; i >= 0; i--) {
@@ -45,6 +45,12 @@ canvas.addEventListener("touchstart", (e) => {
         return;
       }
     }
+  }
+
+  // If game is over but buttons aren't shown yet, show them on tap
+  if (!gameRunning && !showGameOverButtons) {
+    showGameOverButtons = true;
+    return;
   }
 
   if (showShop) {
@@ -105,7 +111,7 @@ canvas.addEventListener("click", (e) => {
   const canvasY = clickY * scaleY;
 
   // Check for in-canvas button clicks when game is over
-  if (!gameRunning && gameOverButtons.length > 0) {
+  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
     for (const button of gameOverButtons) {
       if (
         canvasX >= button.x &&
@@ -117,6 +123,12 @@ canvas.addEventListener("click", (e) => {
         return;
       }
     }
+  }
+
+  // If game is over but buttons aren't shown yet, show them on click
+  if (!gameRunning && !showGameOverButtons) {
+    showGameOverButtons = true;
+    return;
   }
 
   if (showShop) {
@@ -186,7 +198,12 @@ function handleJump() {
     // Wait for authentication to complete - do nothing
     return;
   } else if (!gameRunning) {
-    resetGame();
+    // If game is over but buttons aren't shown yet, show them
+    if (!showGameOverButtons) {
+      showGameOverButtons = true;
+    }
+    // Don't restart the game automatically when buttons are shown
+    // Player must click the "Play Again" button instead
   } else if (!gameStarted) {
     gameStarted = true;
     player.vy = jumpPower;

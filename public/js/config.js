@@ -22,6 +22,7 @@ let inputPassword = "";
 let showLeaderboard = false;
 let switchingPlayer = false;
 let leaderboard = []; // Will be loaded from API instead of localStorage
+let showGameOverButtons = false; // Controls whether to show buttons after game over screen
 
 // Authentication variables
 let authMode = "login"; // "login", "signup", or "authenticated"
