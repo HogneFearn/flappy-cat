@@ -267,6 +267,9 @@ async function initializeGameData() {
     magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
     hasMagnet = magnetRoundsLeft > 0; // Set hasMagnet based on rounds left
 
+    // Load color preference
+    selectedCatColor = await getPlayerColor(currentSession.sessionToken);
+
     // Load leaderboard
     leaderboard = await loadLeaderboard();
 
@@ -360,4 +363,24 @@ async function logout(sessionToken) {
   });
 
   clearSession();
+}
+
+// Color preference functions
+async function getPlayerColor(sessionToken) {
+  const result = await apiRequest("/api/player/color", {
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+    },
+  });
+  return result.selectedColor;
+}
+
+async function savePlayerColor(sessionToken, selectedColor) {
+  await apiRequest("/api/player/color", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sessionToken}`,
+    },
+    body: JSON.stringify({ selectedColor }),
+  });
 }

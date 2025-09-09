@@ -57,9 +57,19 @@ function draw() {
   }
 
   // Draw player
-  if (catImage.complete && catImage.naturalHeight !== 0) {
+  if (
+    catImages[selectedCatColor] &&
+    catImages[selectedCatColor].complete &&
+    catImages[selectedCatColor].naturalHeight !== 0
+  ) {
     // Draw cat image if loaded
-    ctx.drawImage(catImage, player.x, player.y, player.w, player.h);
+    ctx.drawImage(
+      catImages[selectedCatColor],
+      player.x,
+      player.y,
+      player.w,
+      player.h
+    );
   } else {
     // Fallback to colored rectangle if image not loaded
     ctx.fillStyle = gameRunning ? "#ff0" : "#f00";
@@ -246,8 +256,26 @@ function draw() {
         action: "shop",
       });
 
+      // Color Palette button
+      const colorPaletteY = startY + buttonSpacing * 3;
+      drawButton(
+        "🎨 Colors",
+        canvas.width / 2 - buttonWidth / 2,
+        colorPaletteY,
+        buttonWidth,
+        buttonHeight,
+        "#E91E63"
+      );
+      gameOverButtons.push({
+        x: canvas.width / 2 - buttonWidth / 2,
+        y: colorPaletteY,
+        width: buttonWidth,
+        height: buttonHeight,
+        action: "colorPalette",
+      });
+
       // Switch Player button
-      const switchPlayerY = startY + buttonSpacing * 3;
+      const switchPlayerY = startY + buttonSpacing * 4;
       drawButton(
         "👤 Switch Player",
         canvas.width / 2 - buttonWidth / 2,
@@ -359,6 +387,11 @@ function draw() {
         canvas.width / 2,
         canvas.height / 2 + 95
       );
+      ctx.fillText(
+        "Press C for Color Palette",
+        canvas.width / 2,
+        canvas.height / 2 + 120
+      );
     }
     ctx.textAlign = "left";
   }
@@ -376,6 +409,7 @@ function draw() {
     ctx.font = "16px Arial";
     const startY = 90;
     const lineHeight = 25;
+    const catSize = 18; // Small cat icon size
 
     for (let i = 0; i < Math.min(leaderboard.length, 20); i++) {
       const entry = leaderboard[i];
@@ -384,13 +418,39 @@ function draw() {
       const medal =
         rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
 
-      ctx.fillText(
-        `${medal} ${entry.name} - ${entry.score}`,
-        canvas.width / 2,
-        y
-      );
+      // Get player's cat color (default to gray if not available)
+      const playerColor = entry.color || "gray";
+
+      // Calculate positions for medal, cat, and text
+      const centerX = canvas.width / 2;
+      const textWidth = ctx.measureText(
+        `${medal} ${entry.name} - ${entry.score}`
+      ).width;
+      const startX = centerX - textWidth / 2;
+
+      // Draw medal first
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "left";
+      ctx.fillText(medal, startX, y);
+
+      // Measure medal width to position cat after it
+      const medalWidth = ctx.measureText(medal + " ").width;
+
+      // Draw tiny cat icon after the medal
+      if (catImages[playerColor] && catImages[playerColor].complete) {
+        const catX = startX + medalWidth;
+        const catY = y - catSize / 2 - 5; // Center vertically with text
+        ctx.drawImage(catImages[playerColor], catX, catY, catSize, catSize);
+      }
+
+      // Draw the rest of the text (name and score) after the cat
+      const nameScoreText = ` ${entry.name} - ${entry.score}`;
+      const nameX = startX + medalWidth + catSize + 4; // 4px padding after cat
+      ctx.fillText(nameScoreText, nameX, y);
     }
 
+    // Reset text alignment for the close instruction
+    ctx.textAlign = "center";
     ctx.font = "18px Arial";
     if (isMobile) {
       // No text on mobile for leaderboard close instruction
@@ -465,6 +525,124 @@ function draw() {
     }
     ctx.textAlign = "left";
   }
+
+  // Color palette overlay
+  if (showColorPalette) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "24px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🎨 COLOR PALETTE 🎨", canvas.width / 2, 50);
+
+    // Draw close button (X) in top right corner - bigger for mobile
+    const closeButtonSize = isMobile ? 50 : 30; // Even bigger for mobile
+    const closeButtonX = canvas.width - closeButtonSize - 10;
+    const closeButtonY = 10;
+
+    // Store close button coordinates for click detection
+    closeButtonCoords = {
+      x: closeButtonX,
+      y: closeButtonY,
+      size: closeButtonSize,
+    };
+
+    // Close button background
+    ctx.fillStyle = "#ff4444";
+    ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+
+    // Close button border
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      closeButtonX,
+      closeButtonY,
+      closeButtonSize,
+      closeButtonSize
+    );
+
+    // Close button X
+    ctx.fillStyle = "#fff";
+    ctx.font = isMobile ? "30px Arial" : "20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "✕",
+      closeButtonX + closeButtonSize / 2,
+      closeButtonY + closeButtonSize / 2 + (isMobile ? 10 : 7)
+    );
+
+    ctx.font = "16px Arial";
+    ctx.fillText("Choose your cat color", canvas.width / 2, 80);
+
+    // Draw color grid with fixed positioning for consistent coordinates
+    const colorsPerRow = 4;
+
+    // Use fixed canvas dimensions for calculation (mobile = 400px wide)
+    const baseCanvasWidth = isMobile ? 400 : canvas.width;
+    const colorSize = isMobile ? 65 : 60;
+    const spacing = isMobile ? 85 : 80;
+    const touchPadding = isMobile ? 15 : 5; // Generous touch area on mobile
+
+    // Calculate grid positioning based on logical canvas size
+    const totalGridWidth = colorsPerRow * spacing;
+    const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacing / 2;
+    const startY = 120;
+
+    // Clear the color grid coordinates array
+    colorGridCoords = [];
+
+    for (let i = 0; i < availableColors.length; i++) {
+      const color = availableColors[i];
+      const row = Math.floor(i / colorsPerRow);
+      const col = i % colorsPerRow;
+
+      // Calculate exact positions
+      const x = startX + col * spacing - colorSize / 2;
+      const y = startY + row * spacing - colorSize / 2;
+
+      // Store coordinates for click detection with larger touch area
+      colorGridCoords.push({
+        color: color.name,
+        x: x - touchPadding,
+        y: y - touchPadding,
+        width: colorSize + touchPadding * 2,
+        height: colorSize + touchPadding * 2,
+      });
+
+      // Draw color preview box
+      if (catImages[color.name] && catImages[color.name].complete) {
+        // Draw cat image as preview
+        ctx.drawImage(catImages[color.name], x, y, colorSize, colorSize);
+      } else {
+        // Fallback colored rectangle
+        ctx.fillStyle = getColorHex(color.name);
+        ctx.fillRect(x, y, colorSize, colorSize);
+      }
+
+      // Draw selection border
+      if (selectedCatColor === color.name) {
+        ctx.strokeStyle = "#FFD700";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x - 2, y - 2, colorSize + 4, colorSize + 4);
+      } else {
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, colorSize, colorSize);
+      }
+
+      // Draw color name
+      ctx.fillStyle = "#fff";
+      ctx.font = isMobile ? "12px Arial" : "12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(color.displayName, x + colorSize / 2, y + colorSize + 15);
+    }
+
+    ctx.font = "18px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("Tap a color to select", canvas.width / 2, canvas.height - 50);
+    ctx.textAlign = "left";
+  }
 }
 
 // Mario-style pipe drawing function
@@ -526,4 +704,27 @@ function drawMarioPipe(x, y, width, height, isTop) {
     ctx.fillStyle = pipeHighlight;
     ctx.fillRect(rimX + 2, rimY + 2, rimWidth - 4, 4);
   }
+}
+
+// Helper function to get hex color for fallback rectangles
+function getColorHex(colorName) {
+  const colorMap = {
+    gray: "#808080",
+    blue: "#0066FF",
+    brown: "#8B4513",
+    cyan: "#00FFFF",
+    fire: "#FF4500",
+    galaxy: "#663399",
+    green: "#00FF00",
+    ice: "#B0E0E6",
+    lime: "#32CD32",
+    magenta: "#FF00FF",
+    orange: "#FFA500",
+    pink: "#FFC0CB",
+    purple: "#800080",
+    rainbow: "#FF69B4",
+    red: "#FF0000",
+    yellow: "#FFFF00",
+  };
+  return colorMap[colorName] || "#808080";
 }

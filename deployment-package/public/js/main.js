@@ -308,10 +308,12 @@ function resetGameForNewPlayer() {
   playerHighScore = 0;
   hasMagnet = false;
   magnetRoundsLeft = 0;
+  selectedCatColor = "gray"; // Reset to default color
 
   // Reset UI states
   showLeaderboard = false;
   showShop = false;
+  showColorPalette = false;
   switchingPlayer = false;
 
   // Clear leaderboard data

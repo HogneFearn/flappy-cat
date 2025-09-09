@@ -36,9 +36,39 @@ let hasMagnet = false;
 let magnetRoundsLeft = 0;
 let magnetRadius = 250;
 
-// Cat image
-const catImage = new Image();
-catImage.src = "cat.png";
+// Color palette variables
+let showColorPalette = false;
+let selectedCatColor = "gray"; // Default color
+let colorGridCoords = []; // Will store the exact coordinates of each color button
+let closeButtonCoords = { x: 0, y: 0, size: 0 }; // Will store close button coordinates
+let availableColors = [
+  { name: "gray", displayName: "Gray", filename: "cat.png" },
+  { name: "blue", displayName: "Blue", filename: "cat_blue.png" },
+  { name: "brown", displayName: "Brown", filename: "cat_brown.png" },
+  { name: "cyan", displayName: "Cyan", filename: "cat_cyan.png" },
+  { name: "fire", displayName: "Fire", filename: "cat_fire.png" },
+  { name: "galaxy", displayName: "Galaxy", filename: "cat_galaxy.png" },
+  { name: "green", displayName: "Green", filename: "cat_green.png" },
+  { name: "ice", displayName: "Ice", filename: "cat_ice.png" },
+  { name: "lime", displayName: "Lime", filename: "cat_lime.png" },
+  { name: "magenta", displayName: "Magenta", filename: "cat_magenta.png" },
+  { name: "orange", displayName: "Orange", filename: "cat_orange.png" },
+  { name: "pink", displayName: "Pink", filename: "cat_pink.png" },
+  { name: "purple", displayName: "Purple", filename: "cat_purple.png" },
+  { name: "rainbow", displayName: "Rainbow", filename: "cat_rainbow.png" },
+  { name: "red", displayName: "Red", filename: "cat_red.png" },
+  { name: "yellow", displayName: "Yellow", filename: "cat_yellow.png" },
+];
+
+// Cat images - load all color variants
+const catImages = {};
+availableColors.forEach((color) => {
+  catImages[color.name] = new Image();
+  catImages[color.name].src = color.filename;
+});
+
+// For backward compatibility
+const catImage = catImages.gray;
 
 // Background image
 const backgroundImage = new Image();

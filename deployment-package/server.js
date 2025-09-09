@@ -89,6 +89,14 @@ function initDatabase() {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // Player color preferences table
+  db.run(`CREATE TABLE IF NOT EXISTS player_colors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_name TEXT UNIQUE NOT NULL,
+    selected_color TEXT DEFAULT 'gray',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
   // Authentication tables
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -533,6 +541,7 @@ app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
 });
 
 // Get player high score
+// Get player high score
 app.get("/api/player/highscore", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
@@ -541,25 +550,71 @@ app.get("/api/player/highscore", validateSessionAndTrackOnline, (req, res) => {
     [playerName],
     (err, row) => {
       if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-
-      if (row) {
-        res.json({ score: row.high_score });
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Database error" });
       } else {
-        // Create new player high score entry with 0
-        db.run(
-          "INSERT INTO player_high_scores (player_name, high_score) VALUES (?, 0)",
-          [playerName],
-          function (err) {
-            if (err) {
-              res.status(500).json({ error: err.message });
-              return;
-            }
-            res.json({ score: 0 });
-          }
-        );
+        res.json({ highScore: row ? row.high_score : 0 });
+      }
+    }
+  );
+});
+
+// Get player color preference
+app.get("/api/player/color", validateSessionAndTrackOnline, (req, res) => {
+  const playerName = req.user.username;
+
+  db.get(
+    "SELECT selected_color FROM player_colors WHERE player_name = ?",
+    [playerName],
+    (err, row) => {
+      if (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Database error" });
+      } else {
+        res.json({ selectedColor: row ? row.selected_color : "gray" });
+      }
+    }
+  );
+});
+
+// Update player color preference
+app.post("/api/player/color", validateSessionAndTrackOnline, (req, res) => {
+  const playerName = req.user.username;
+  const { selectedColor } = req.body;
+
+  // Validate the color is in the allowed list
+  const validColors = [
+    "gray",
+    "blue",
+    "brown",
+    "cyan",
+    "fire",
+    "galaxy",
+    "green",
+    "ice",
+    "lime",
+    "magenta",
+    "orange",
+    "pink",
+    "purple",
+    "rainbow",
+    "red",
+    "yellow",
+  ];
+
+  if (!validColors.includes(selectedColor)) {
+    return res.status(400).json({ error: "Invalid color selection" });
+  }
+
+  db.run(
+    "INSERT OR REPLACE INTO player_colors (player_name, selected_color, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
+    [playerName, selectedColor],
+    function (err) {
+      if (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Database error" });
+      } else {
+        res.json({ success: true, selectedColor });
       }
     }
   );
@@ -604,11 +659,13 @@ app.post("/api/player/:name/highscore", (req, res) => {
 // Get leaderboard
 app.get("/api/leaderboard", (req, res) => {
   db.all(
-    `SELECT player_name, MAX(score) as score 
-          FROM leaderboard 
-          GROUP BY player_name 
-          ORDER BY score DESC 
-          LIMIT 100`,
+    `SELECT l.player_name, MAX(l.score) as score, 
+            COALESCE(pc.selected_color, 'gray') as selected_color
+     FROM leaderboard l
+     LEFT JOIN player_colors pc ON l.player_name = pc.player_name
+     GROUP BY l.player_name 
+     ORDER BY score DESC 
+     LIMIT 100`,
     [],
     (err, rows) => {
       if (err) {
@@ -616,7 +673,11 @@ app.get("/api/leaderboard", (req, res) => {
         return;
       }
       res.json(
-        rows.map((row) => ({ name: row.player_name, score: row.score }))
+        rows.map((row) => ({
+          name: row.player_name,
+          score: row.score,
+          color: row.selected_color,
+        }))
       );
     }
   );
