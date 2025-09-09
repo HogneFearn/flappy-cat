@@ -240,6 +240,7 @@ function resetGame() {
   gameStarted = false;
   showLeaderboard = false;
   showShop = false;
+  showColorPalette = false; // Reset color palette state
   showGameOverButtons = false; // Reset game over button state
   switchingPlayer = false;
   obstacleSpawnTimer = 0;
@@ -265,6 +266,7 @@ function update() {
       if (gameNameEntered) {
         showLeaderboard = !showLeaderboard;
         showShop = false; // Close shop when opening leaderboard
+        showColorPalette = false; // Close color palette when opening leaderboard
         keys["KeyL"] = false; // Prevent key repeat
       }
     }
@@ -273,6 +275,7 @@ function update() {
       if (gameNameEntered && (!gameRunning || !gameStarted)) {
         showShop = !showShop;
         showLeaderboard = false; // Close leaderboard when opening shop
+        showColorPalette = false; // Close color palette when opening shop
         keys["KeyS"] = false; // Prevent key repeat
       }
     }
@@ -281,6 +284,15 @@ function update() {
       if (showShop) {
         buyMagnetItem();
         keys["KeyB"] = false; // Prevent key repeat
+      }
+    }
+
+    if (keys["KeyC"]) {
+      if (gameNameEntered && (!gameRunning || !gameStarted)) {
+        showColorPalette = !showColorPalette;
+        showLeaderboard = false; // Close other menus
+        showShop = false;
+        keys["KeyC"] = false; // Prevent key repeat
       }
     }
 
@@ -463,6 +475,17 @@ async function buyMagnetItem() {
     totalCoinsWallet = result.newWallet;
     magnetRoundsLeft = result.inventory.magnetRoundsLeft;
     hasMagnet = magnetRoundsLeft > 0;
+  }
+}
+
+// Color palette functions
+async function selectCatColor(colorName) {
+  try {
+    selectedCatColor = colorName;
+    await savePlayerColor(currentSession.sessionToken, colorName);
+    console.log("Color saved:", colorName);
+  } catch (error) {
+    console.error("Failed to save color:", error);
   }
 }
 

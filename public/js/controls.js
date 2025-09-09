@@ -82,6 +82,40 @@ canvas.addEventListener("touchstart", (e) => {
         showShop = false;
       }
     }
+  } else if (showColorPalette) {
+    // Handle color selection touches
+    const colorsPerRow = 4;
+    const colorSize = 60;
+    const spacing = 80;
+    const startX =
+      canvas.width / 2 - (colorsPerRow * spacing) / 2 + spacing / 2;
+    const startY = 120;
+
+    // Check if touch is on a color
+    let colorTouched = false;
+    for (let i = 0; i < availableColors.length; i++) {
+      const color = availableColors[i];
+      const row = Math.floor(i / colorsPerRow);
+      const col = i % colorsPerRow;
+      const x = startX + col * spacing - colorSize / 2;
+      const y = startY + row * spacing - colorSize / 2;
+
+      if (
+        canvasX >= x &&
+        canvasX <= x + colorSize &&
+        canvasY >= y &&
+        canvasY <= y + colorSize
+      ) {
+        selectCatColor(color.name);
+        colorTouched = true;
+        break;
+      }
+    }
+
+    // If tapping outside color grid, close the palette
+    if (!colorTouched) {
+      showColorPalette = false;
+    }
   } else if (showLeaderboard) {
     // Close leaderboard when tapping on canvas
     showLeaderboard = false;
@@ -160,6 +194,40 @@ canvas.addEventListener("click", (e) => {
         showShop = false;
       }
     }
+  } else if (showColorPalette) {
+    // Handle color selection clicks
+    const colorsPerRow = 4;
+    const colorSize = 60;
+    const spacing = 80;
+    const startX =
+      canvas.width / 2 - (colorsPerRow * spacing) / 2 + spacing / 2;
+    const startY = 120;
+
+    // Check if click is on a color
+    let colorClicked = false;
+    for (let i = 0; i < availableColors.length; i++) {
+      const color = availableColors[i];
+      const row = Math.floor(i / colorsPerRow);
+      const col = i % colorsPerRow;
+      const x = startX + col * spacing - colorSize / 2;
+      const y = startY + row * spacing - colorSize / 2;
+
+      if (
+        canvasX >= x &&
+        canvasX <= x + colorSize &&
+        canvasY >= y &&
+        canvasY <= y + colorSize
+      ) {
+        selectCatColor(color.name);
+        colorClicked = true;
+        break;
+      }
+    }
+
+    // If clicking outside color grid, close the palette
+    if (!colorClicked) {
+      showColorPalette = false;
+    }
   } else if (showLeaderboard) {
     // Close leaderboard when clicking on canvas
     showLeaderboard = false;
@@ -179,6 +247,9 @@ function handleGameOverButtonClick(action) {
       break;
     case "shop":
       handleShop();
+      break;
+    case "colorPalette":
+      handleColorPalette();
       break;
     case "switchPlayer":
       handleSwitchPlayer();
@@ -218,6 +289,7 @@ function handleLeaderboard() {
     if (showLeaderboard || !gameRunning || !gameStarted) {
       showLeaderboard = !showLeaderboard;
       showShop = false; // Close shop when opening leaderboard
+      showColorPalette = false; // Close color palette when opening leaderboard
     }
   }
 }
@@ -228,6 +300,18 @@ function handleShop() {
     if (showShop || !gameRunning || !gameStarted) {
       showShop = !showShop;
       showLeaderboard = false; // Close leaderboard when opening shop
+      showColorPalette = false; // Close color palette when opening shop
+    }
+  }
+}
+
+function handleColorPalette() {
+  if (gameNameEntered) {
+    // Always allow closing the color palette, but only allow opening if game is not running or not started
+    if (showColorPalette || !gameRunning || !gameStarted) {
+      showColorPalette = !showColorPalette;
+      showLeaderboard = false; // Close leaderboard when opening color palette
+      showShop = false; // Close shop when opening color palette
     }
   }
 }
