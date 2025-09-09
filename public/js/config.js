@@ -39,6 +39,8 @@ let magnetRadius = 250;
 // Color palette variables
 let showColorPalette = false;
 let selectedCatColor = "gray"; // Default color
+let colorGridCoords = []; // Will store the exact coordinates of each color button
+let closeButtonCoords = { x: 0, y: 0, size: 0 }; // Will store close button coordinates
 let availableColors = [
   { name: "gray", displayName: "Gray", filename: "cat.png" },
   { name: "blue", displayName: "Blue", filename: "cat_blue.png" },

@@ -18,42 +18,44 @@ let jumpHoldTimer = 0;
 canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
 
-  // Get touch coordinates
-  const rect = canvas.getBoundingClientRect();
-  const touchX = e.touches[0].clientX - rect.left;
-  const touchY = e.touches[0].clientY - rect.top;
+  // Get accurate canvas coordinates
+  const coords = getCanvasCoordinates(
+    e.touches[0].clientX,
+    e.touches[0].clientY
+  );
+  const canvasX = coords.x;
+  const canvasY = coords.y;
 
-  // Use direct coordinate mapping accounting for canvas scaling
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const canvasX = touchX * scaleX;
-  const canvasY = touchY * scaleY;
+  // Priority 1: Handle overlay screens (these should block all other interactions)
+  if (showColorPalette) {
+    // Check if touch is on close button using stored coordinates
+    if (
+      canvasX >= closeButtonCoords.x &&
+      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
+      canvasY >= closeButtonCoords.y &&
+      canvasY <= closeButtonCoords.y + closeButtonCoords.size
+    ) {
+      showColorPalette = false;
+      return;
+    }
 
-  // Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
-  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
-    // Find the clicked button by checking from bottom to top (reverse order)
-    // to handle any potential overlaps
-    for (let i = gameOverButtons.length - 1; i >= 0; i--) {
-      const button = gameOverButtons[i];
+    // Handle color selection touches using stored coordinates
+    for (let i = 0; i < colorGridCoords.length; i++) {
+      const colorCoord = colorGridCoords[i];
+
       if (
-        canvasX >= button.x &&
-        canvasX <= button.x + button.width &&
-        canvasY >= button.y &&
-        canvasY <= button.y + button.height
+        canvasX >= colorCoord.x &&
+        canvasX <= colorCoord.x + colorCoord.width &&
+        canvasY >= colorCoord.y &&
+        canvasY <= colorCoord.y + colorCoord.height
       ) {
-        handleGameOverButtonClick(button.action);
-        return;
+        selectCatColor(colorCoord.color);
+        break;
       }
     }
-  }
 
-  // If game is over but buttons aren't shown yet, show them on tap
-  if (!gameRunning && !showGameOverButtons) {
-    showGameOverButtons = true;
-    return;
-  }
-
-  if (showShop) {
+    return; // Important: prevent any other touch handling when color palette is open
+  } else if (showShop) {
     // Check if touch is in magnet buy area (around where "Press B to Buy!" text is)
     const magnetBuyY = 215; // magnetY (130) + 85
     if (
@@ -82,44 +84,39 @@ canvas.addEventListener("touchstart", (e) => {
         showShop = false;
       }
     }
-  } else if (showColorPalette) {
-    // Handle color selection touches
-    const colorsPerRow = 4;
-    const colorSize = 60;
-    const spacing = 80;
-    const startX =
-      canvas.width / 2 - (colorsPerRow * spacing) / 2 + spacing / 2;
-    const startY = 120;
-
-    // Check if touch is on a color
-    let colorTouched = false;
-    for (let i = 0; i < availableColors.length; i++) {
-      const color = availableColors[i];
-      const row = Math.floor(i / colorsPerRow);
-      const col = i % colorsPerRow;
-      const x = startX + col * spacing - colorSize / 2;
-      const y = startY + row * spacing - colorSize / 2;
-
-      if (
-        canvasX >= x &&
-        canvasX <= x + colorSize &&
-        canvasY >= y &&
-        canvasY <= y + colorSize
-      ) {
-        selectCatColor(color.name);
-        colorTouched = true;
-        break;
-      }
-    }
-
-    // If tapping outside color grid, close the palette
-    if (!colorTouched) {
-      showColorPalette = false;
-    }
+    return; // Important: prevent any other touch handling when shop is open
   } else if (showLeaderboard) {
     // Close leaderboard when tapping on canvas
     showLeaderboard = false;
-  } else if (!showAuthScreen && gameNameEntered) {
+    return; // Important: prevent any other touch handling when leaderboard is open
+  }
+
+  // Priority 2: Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
+  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
+    // Find the clicked button by checking from bottom to top (reverse order)
+    // to handle any potential overlaps
+    for (let i = gameOverButtons.length - 1; i >= 0; i--) {
+      const button = gameOverButtons[i];
+      if (
+        canvasX >= button.x &&
+        canvasX <= button.x + button.width &&
+        canvasY >= button.y &&
+        canvasY <= button.y + button.height
+      ) {
+        handleGameOverButtonClick(button.action);
+        return;
+      }
+    }
+  }
+
+  // If game is over but buttons aren't shown yet, show them on tap
+  if (!gameRunning && !showGameOverButtons) {
+    showGameOverButtons = true;
+    return;
+  }
+
+  // Priority 3: Normal game interactions (only when no overlays are open)
+  if (!showAuthScreen && gameNameEntered) {
     isJumpHeld = true;
     jumpHoldTimer = 0;
     handleJump();
@@ -133,39 +130,41 @@ canvas.addEventListener("touchend", (e) => {
 
 // Canvas click handler for desktop
 canvas.addEventListener("click", (e) => {
-  // Get click coordinates relative to canvas
-  const rect = canvas.getBoundingClientRect();
-  const clickX = e.clientX - rect.left;
-  const clickY = e.clientY - rect.top;
+  // Get accurate canvas coordinates
+  const coords = getCanvasCoordinates(e.clientX, e.clientY);
+  const canvasX = coords.x;
+  const canvasY = coords.y;
 
-  // Use direct coordinate mapping accounting for canvas scaling
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const canvasX = clickX * scaleX;
-  const canvasY = clickY * scaleY;
+  // Priority 1: Handle overlay screens (these should block all other interactions)
+  if (showColorPalette) {
+    // Check if click is on close button using stored coordinates
+    if (
+      canvasX >= closeButtonCoords.x &&
+      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
+      canvasY >= closeButtonCoords.y &&
+      canvasY <= closeButtonCoords.y + closeButtonCoords.size
+    ) {
+      showColorPalette = false;
+      return;
+    }
 
-  // Check for in-canvas button clicks when game is over
-  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
-    for (const button of gameOverButtons) {
+    // Handle color selection clicks using stored coordinates
+    for (let i = 0; i < colorGridCoords.length; i++) {
+      const colorCoord = colorGridCoords[i];
+
       if (
-        canvasX >= button.x &&
-        canvasX <= button.x + button.width &&
-        canvasY >= button.y &&
-        canvasY <= button.y + button.height
+        canvasX >= colorCoord.x &&
+        canvasX <= colorCoord.x + colorCoord.width &&
+        canvasY >= colorCoord.y &&
+        canvasY <= colorCoord.y + colorCoord.height
       ) {
-        handleGameOverButtonClick(button.action);
-        return;
+        selectCatColor(colorCoord.color);
+        break;
       }
     }
-  }
 
-  // If game is over but buttons aren't shown yet, show them on click
-  if (!gameRunning && !showGameOverButtons) {
-    showGameOverButtons = true;
-    return;
-  }
-
-  if (showShop) {
+    return; // Important: prevent any other click handling when color palette is open
+  } else if (showShop) {
     // Check if click is in magnet buy area (around where "Press B to Buy!" text is)
     const magnetBuyY = 215; // magnetY (130) + 85
     if (
@@ -194,44 +193,36 @@ canvas.addEventListener("click", (e) => {
         showShop = false;
       }
     }
-  } else if (showColorPalette) {
-    // Handle color selection clicks
-    const colorsPerRow = 4;
-    const colorSize = 60;
-    const spacing = 80;
-    const startX =
-      canvas.width / 2 - (colorsPerRow * spacing) / 2 + spacing / 2;
-    const startY = 120;
-
-    // Check if click is on a color
-    let colorClicked = false;
-    for (let i = 0; i < availableColors.length; i++) {
-      const color = availableColors[i];
-      const row = Math.floor(i / colorsPerRow);
-      const col = i % colorsPerRow;
-      const x = startX + col * spacing - colorSize / 2;
-      const y = startY + row * spacing - colorSize / 2;
-
-      if (
-        canvasX >= x &&
-        canvasX <= x + colorSize &&
-        canvasY >= y &&
-        canvasY <= y + colorSize
-      ) {
-        selectCatColor(color.name);
-        colorClicked = true;
-        break;
-      }
-    }
-
-    // If clicking outside color grid, close the palette
-    if (!colorClicked) {
-      showColorPalette = false;
-    }
+    return; // Important: prevent any other click handling when shop is open
   } else if (showLeaderboard) {
     // Close leaderboard when clicking on canvas
     showLeaderboard = false;
-  } else if (!showAuthScreen && gameNameEntered) {
+    return; // Important: prevent any other click handling when leaderboard is open
+  }
+
+  // Priority 2: Check for in-canvas button clicks when game is over
+  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
+    for (const button of gameOverButtons) {
+      if (
+        canvasX >= button.x &&
+        canvasX <= button.x + button.width &&
+        canvasY >= button.y &&
+        canvasY <= button.y + button.height
+      ) {
+        handleGameOverButtonClick(button.action);
+        return;
+      }
+    }
+  }
+
+  // If game is over but buttons aren't shown yet, show them on click
+  if (!gameRunning && !showGameOverButtons) {
+    showGameOverButtons = true;
+    return;
+  }
+
+  // Priority 3: Normal game interactions (only when no overlays are open)
+  if (!showAuthScreen && gameNameEntered) {
     handleJump();
   }
 });

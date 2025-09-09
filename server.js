@@ -659,11 +659,13 @@ app.post("/api/player/:name/highscore", (req, res) => {
 // Get leaderboard
 app.get("/api/leaderboard", (req, res) => {
   db.all(
-    `SELECT player_name, MAX(score) as score 
-          FROM leaderboard 
-          GROUP BY player_name 
-          ORDER BY score DESC 
-          LIMIT 100`,
+    `SELECT l.player_name, MAX(l.score) as score, 
+            COALESCE(pc.selected_color, 'gray') as selected_color
+     FROM leaderboard l
+     LEFT JOIN player_colors pc ON l.player_name = pc.player_name
+     GROUP BY l.player_name 
+     ORDER BY score DESC 
+     LIMIT 100`,
     [],
     (err, rows) => {
       if (err) {
@@ -671,7 +673,11 @@ app.get("/api/leaderboard", (req, res) => {
         return;
       }
       res.json(
-        rows.map((row) => ({ name: row.player_name, score: row.score }))
+        rows.map((row) => ({
+          name: row.player_name,
+          score: row.score,
+          color: row.selected_color,
+        }))
       );
     }
   );
