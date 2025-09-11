@@ -29,7 +29,7 @@ dist-ssr
 # MacOS
 *.DS_Store
 
-# ignore deploymen package and database
+# ignore deployment package and database
 deployment-package
 game.db
 cloudpanel-pw.rtf
