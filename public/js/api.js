@@ -208,6 +208,21 @@ async function buyMagnet(sessionToken, currentWallet) {
   return { success: false };
 }
 
+async function buyGoldMagnet(sessionToken, currentWallet) {
+  const goldMagnetCost = 700;
+  if (currentWallet >= goldMagnetCost) {
+    const newWallet = currentWallet - goldMagnetCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.goldMagnetRoundsLeft = (inventory.goldMagnetRoundsLeft || 0) + 1; // Only 1 round for gold magnet
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 // Player-specific high score functions
 async function loadPlayerHighScore(sessionToken) {
   if (!sessionToken) {
@@ -266,6 +281,9 @@ async function initializeGameData() {
     const inventory = await loadPlayerInventory(currentSession.sessionToken);
     magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
     hasMagnet = magnetRoundsLeft > 0; // Set hasMagnet based on rounds left
+
+    goldMagnetRoundsLeft = inventory.goldMagnetRoundsLeft || 0;
+    hasGoldMagnet = goldMagnetRoundsLeft > 0; // Set hasGoldMagnet based on rounds left
 
     // Load color preference
     selectedCatColor = await getPlayerColor(currentSession.sessionToken);

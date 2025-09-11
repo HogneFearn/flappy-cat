@@ -128,12 +128,66 @@ function draw() {
   ctx.fillText("💰 Wallet: " + totalCoinsWallet, canvas.width - 20, 45);
 
   // Show magnet status if active
+  let uiLineOffset = 65;
   if (hasMagnet && magnetRoundsLeft > 0) {
-    ctx.fillText(
-      "🧲 Magnet: " + magnetRoundsLeft + " rounds",
-      canvas.width - 20,
-      65
-    );
+    // Draw red magnet image
+    if (
+      redMagnetImage &&
+      redMagnetImage.complete &&
+      redMagnetImage.naturalWidth > 0
+    ) {
+      const imageSize = 16;
+      const imageX =
+        canvas.width -
+        20 -
+        ctx.measureText(" " + magnetRoundsLeft + " rounds").width -
+        imageSize;
+      const imageY = uiLineOffset - 12; // Center vertically with text
+      ctx.drawImage(redMagnetImage, imageX, imageY, imageSize, imageSize);
+      ctx.fillText(
+        magnetRoundsLeft + " rounds",
+        canvas.width - 20,
+        uiLineOffset
+      );
+    } else {
+      // Fallback to emoji
+      ctx.fillText(
+        "🧲 " + magnetRoundsLeft + " rounds",
+        canvas.width - 20,
+        uiLineOffset
+      );
+    }
+    uiLineOffset += 20;
+  }
+
+  if (hasGoldMagnet && goldMagnetRoundsLeft > 0) {
+    // Draw gold magnet image
+    if (
+      goldMagnetImage &&
+      goldMagnetImage.complete &&
+      goldMagnetImage.naturalWidth > 0
+    ) {
+      const imageSize = 16;
+      const imageX =
+        canvas.width -
+        20 -
+        ctx.measureText(" " + goldMagnetRoundsLeft + " rounds").width -
+        imageSize;
+      const imageY = uiLineOffset - 12; // Center vertically with text
+      ctx.drawImage(goldMagnetImage, imageX, imageY, imageSize, imageSize);
+      ctx.fillText(
+        goldMagnetRoundsLeft + " rounds",
+        canvas.width - 20,
+        uiLineOffset
+      );
+    } else {
+      // Fallback to emoji
+      ctx.fillText(
+        "🟡 " + goldMagnetRoundsLeft + " rounds",
+        canvas.width - 20,
+        uiLineOffset
+      );
+    }
   }
 
   ctx.textAlign = "left";
@@ -551,7 +605,9 @@ function draw() {
 
       // Determine if item can be purchased
       const canAfford = totalCoinsWallet >= item.price;
-      const isOwned = item.id === "magnet" && magnetRoundsLeft > 0;
+      const isOwned =
+        (item.id === "magnet" && magnetRoundsLeft > 0) ||
+        (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0);
 
       // Draw item box background with better colors
       if (isOwned) {
@@ -578,20 +634,37 @@ function draw() {
         ctx.strokeRect(x, y, itemSize, itemSize);
       }
 
-      // Draw item icon (emoji) - sized for grid
-      ctx.fillStyle = "#fff";
-      ctx.font = isMobile ? "32px Arial" : "36px Arial";
-      ctx.textAlign = "center";
-      const iconText = item.name.split(" ")[0]; // Get the emoji part
-      ctx.fillText(
-        iconText,
-        x + itemSize / 2,
-        y + itemSize / 2 + (isMobile ? 10 : 12)
-      );
+      // Draw item icon (image instead of emoji)
+      let magnetImage = null;
+      if (item.id === "magnet") {
+        magnetImage = redMagnetImage;
+      } else if (item.id === "goldMagnet") {
+        magnetImage = goldMagnetImage;
+      }
+
+      if (magnetImage && magnetImage.complete && magnetImage.naturalWidth > 0) {
+        // Draw magnet image
+        const imageSize = isMobile ? 24 : 28; // Smaller than the full box
+        const imageX = x + itemSize / 2 - imageSize / 2;
+        const imageY = y + itemSize / 2 - imageSize / 2;
+        ctx.drawImage(magnetImage, imageX, imageY, imageSize, imageSize);
+      } else {
+        // Fallback to emoji if image not loaded
+        ctx.fillStyle = "#fff";
+        ctx.font = isMobile ? "32px Arial" : "36px Arial";
+        ctx.textAlign = "center";
+        const iconText = item.name.split(" ")[0]; // Get the emoji part
+        ctx.fillText(
+          iconText,
+          x + itemSize / 2,
+          y + itemSize / 2 + (isMobile ? 10 : 12)
+        );
+      }
 
       // Draw item name below the box
       ctx.fillStyle = "#fff";
       ctx.font = isMobile ? "10px Arial" : "12px Arial";
+      ctx.textAlign = "center";
       ctx.fillText(
         item.name.substring(2), // Remove emoji from name
         x + itemSize / 2,
@@ -606,8 +679,10 @@ function draw() {
       if (isOwned) {
         ctx.fillStyle = "#4CAF50";
         ctx.font = isMobile ? "8px Arial" : "9px Arial";
+        const roundsLeft =
+          item.id === "magnet" ? magnetRoundsLeft : goldMagnetRoundsLeft;
         ctx.fillText(
-          `✓ ${magnetRoundsLeft} left`,
+          `✓ ${roundsLeft} left`,
           x + itemSize / 2,
           y + itemSize + 40
         );

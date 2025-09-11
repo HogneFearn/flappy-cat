@@ -271,12 +271,22 @@ function startGame() {
   // Initialize game with authentication complete
   for (let i = 0; i < 3; i++) spawnCoin();
 
-  function gameLoop() {
+  // Initialize delta time
+  lastTime = performance.now();
+
+  function gameLoop(currentTime) {
+    // Calculate delta time
+    deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+
+    // Normalize delta time to target frame time (prevents huge jumps)
+    deltaTime = Math.min(deltaTime, targetFrameTime * 3);
+
     update();
     draw();
     requestAnimationFrame(gameLoop);
   }
-  gameLoop();
+  requestAnimationFrame(gameLoop);
 }
 
 // Updated switch player function for authentication

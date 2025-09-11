@@ -477,51 +477,158 @@ function draw() {
       80
     );
 
-    // Magnet item
-    const magnetY = 130;
-    ctx.font = "20px Arial";
-    ctx.fillText("🧲 Coin Magnet", canvas.width / 2, magnetY);
+    // Draw close button (X) in top right corner - bigger for mobile
+    const closeButtonSize = isMobile ? 50 : 30;
+    const closeButtonX = canvas.width - closeButtonSize - 10;
+    const closeButtonY = 10;
 
-    ctx.font = "16px Arial";
-    ctx.fillText(
-      "Attracts coins from 7x distance",
-      canvas.width / 2,
-      magnetY + 25
+    // Store close button coordinates for click detection
+    closeButtonCoords = {
+      x: closeButtonX,
+      y: closeButtonY,
+      size: closeButtonSize,
+    };
+
+    // Close button background
+    ctx.fillStyle = "#ff4444";
+    ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+
+    // Close button border
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(
+      closeButtonX,
+      closeButtonY,
+      closeButtonSize,
+      closeButtonSize
     );
-    ctx.fillText("Lasts for 3 game rounds", canvas.width / 2, magnetY + 45);
-    ctx.fillText("💰 Cost: 200 coins", canvas.width / 2, magnetY + 65);
 
-    if (magnetRoundsLeft > 0) {
-      ctx.fillStyle = "#90EE90";
-      ctx.fillText(
-        `✓ Owned (${magnetRoundsLeft} rounds left)`,
-        canvas.width / 2,
-        magnetY + 85
-      );
-      ctx.fillStyle = "#fff";
-    } else if (totalCoinsWallet >= 200) {
-      ctx.fillStyle = "#90EE90";
-      if (isMobile) {
-        ctx.fillText("Tap here to Buy!", canvas.width / 2, magnetY + 85);
+    // Close button X
+    ctx.fillStyle = "#fff";
+    ctx.font = isMobile ? "30px Arial" : "20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "✕",
+      closeButtonX + closeButtonSize / 2,
+      closeButtonY + closeButtonSize / 2 + (isMobile ? 10 : 7)
+    );
+
+    // Draw shop items grid with 4-column layout like color palette
+    // Grid configuration - exactly like color palette
+    const itemsPerRow = 4;
+
+    // Use fixed canvas dimensions for calculation (mobile = 400px wide)
+    const baseCanvasWidth = isMobile ? 400 : canvas.width;
+    const itemSize = isMobile ? 65 : 60;
+    const spacing = isMobile ? 85 : 80;
+    const touchPadding = isMobile ? 15 : 5;
+
+    // Calculate grid positioning based on logical canvas size
+    const totalGridWidth = itemsPerRow * spacing;
+    const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacing / 2;
+    const startY = 120;
+
+    // Clear the shop grid coordinates array
+    shopGridCoords = [];
+
+    for (let i = 0; i < availableShopItems.length; i++) {
+      const item = availableShopItems[i];
+      const row = Math.floor(i / itemsPerRow);
+      const col = i % itemsPerRow;
+
+      // Calculate exact positions
+      const x = startX + col * spacing - itemSize / 2;
+      const y = startY + row * spacing - itemSize / 2;
+
+      // Store coordinates for click detection with larger touch area
+      shopGridCoords.push({
+        itemId: item.id,
+        x: x - touchPadding,
+        y: y - touchPadding,
+        width: itemSize + touchPadding * 2,
+        height: itemSize + touchPadding * 2,
+      });
+
+      // Determine if item can be purchased
+      const canAfford = totalCoinsWallet >= item.price;
+      const isOwned = item.id === "magnet" && magnetRoundsLeft > 0;
+
+      // Draw item box background with better colors
+      if (isOwned) {
+        ctx.fillStyle = "#4CAF50"; // Green if owned
+      } else if (canAfford) {
+        ctx.fillStyle = "#2196F3"; // Blue if affordable
       } else {
-        ctx.fillText("Press B to Buy!", canvas.width / 2, magnetY + 85);
+        ctx.fillStyle = "#424242"; // Dark gray if can't afford
       }
+      ctx.fillRect(x, y, itemSize, itemSize);
+
+      // Draw selection/status border
+      if (isOwned) {
+        ctx.strokeStyle = "#4CAF50";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(x - 2, y - 2, itemSize + 4, itemSize + 4);
+      } else if (canAfford) {
+        ctx.strokeStyle = "#FFD700"; // Gold border if can afford
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x - 1, y - 1, itemSize + 2, itemSize + 2);
+      } else {
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, itemSize, itemSize);
+      }
+
+      // Draw item icon (emoji) - sized for grid
       ctx.fillStyle = "#fff";
-    } else {
-      ctx.fillStyle = "#FF6B6B";
-      ctx.fillText("Not enough coins", canvas.width / 2, magnetY + 85);
+      ctx.font = isMobile ? "32px Arial" : "36px Arial";
+      ctx.textAlign = "center";
+      const iconText = item.name.split(" ")[0]; // Get the emoji part
+      ctx.fillText(
+        iconText,
+        x + itemSize / 2,
+        y + itemSize / 2 + (isMobile ? 10 : 12)
+      );
+
+      // Draw item name below the box
       ctx.fillStyle = "#fff";
+      ctx.font = isMobile ? "10px Arial" : "12px Arial";
+      ctx.fillText(
+        item.name.substring(2), // Remove emoji from name
+        x + itemSize / 2,
+        y + itemSize + 15
+      );
+
+      // Draw price below name
+      ctx.font = isMobile ? "9px Arial" : "10px Arial";
+      ctx.fillText(`💰 ${item.price}`, x + itemSize / 2, y + itemSize + 28);
+
+      // Draw status indicator
+      if (isOwned) {
+        ctx.fillStyle = "#4CAF50";
+        ctx.font = isMobile ? "8px Arial" : "9px Arial";
+        ctx.fillText(
+          `✓ ${magnetRoundsLeft} left`,
+          x + itemSize / 2,
+          y + itemSize + 40
+        );
+      } else if (!canAfford) {
+        ctx.fillStyle = "#FF6B6B";
+        ctx.font = isMobile ? "8px Arial" : "9px Arial";
+        ctx.fillText("Need more coins", x + itemSize / 2, y + itemSize + 40);
+      }
     }
 
     ctx.font = "18px Arial";
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
     if (isMobile) {
-      //   ctx.fillText(
-      //     "Tap the Shop button to close",
-      //     canvas.width / 2,
-      //     canvas.height - 50
-      //   );
+      ctx.fillText("Tap an item to buy", canvas.width / 2, canvas.height - 50);
     } else {
-      ctx.fillText("Press S to close", canvas.width / 2, canvas.height - 50);
+      ctx.fillText(
+        "Click an item to buy",
+        canvas.width / 2,
+        canvas.height - 50
+      );
     }
     ctx.textAlign = "left";
   }

@@ -334,21 +334,26 @@ function update() {
   if (gameRunning && gameStarted) {
     // Mobile hold-to-jump logic
     if (isMobile && isJumpHeld) {
-      jumpHoldTimer++;
-      if (jumpHoldTimer % 5 === 0) {
-        // Apply jump every 5 frames when holding
+      jumpHoldTimer += deltaTime;
+      if (jumpHoldTimer >= 83.33) {
+        // Every ~83ms (equivalent to every 5 frames at 60fps)
+        // Apply jump when holding
         player.vy = jumpPower * 0.8; // Slightly less powerful for continuous jumps
+        jumpHoldTimer = 0;
       }
     }
   }
 
   if (!gameRunning) return;
 
+  // Calculate delta time multiplier (1.0 at 60fps)
+  const deltaMultiplier = deltaTime / targetFrameTime;
+
   // Only apply gravity and movement if game has started
   if (gameStarted) {
-    // Gravity
-    player.vy += gravity;
-    player.y += player.vy;
+    // Gravity (frame-rate independent)
+    player.vy += gravity * deltaMultiplier;
+    player.y += player.vy * deltaMultiplier;
   }
 
   // Ground collision
@@ -363,14 +368,14 @@ function update() {
 
   // Only move world objects if game has started
   if (gameStarted) {
-    // Move obstacles
+    // Move obstacles (frame-rate independent)
     for (let obstacle of obstacles) {
-      obstacle.x -= gameSpeed;
+      obstacle.x -= gameSpeed * deltaMultiplier;
     }
 
-    // Move coins
+    // Move coins (frame-rate independent)
     for (let coin of coins) {
-      coin.x -= gameSpeed;
+      coin.x -= gameSpeed * deltaMultiplier;
     }
 
     // Remove off-screen obstacles
@@ -379,17 +384,18 @@ function update() {
     // Remove off-screen coins
     coins = coins.filter((coin) => coin.x > -coin.r);
 
-    // Validate coin positions occasionally (every 60 frames = 1 second at 60fps)
-    validationTimer++;
-    if (validationTimer > 60) {
+    // Validate coin positions occasionally (every 1 second in real time)
+    validationTimer += deltaTime;
+    if (validationTimer > 1000) {
+      // 1000ms = 1 second
       validateCoinPositions();
       validationTimer = 0;
     }
 
-    // Spawn obstacles
-    obstacleSpawnTimer++;
-    if (obstacleSpawnTimer > 120) {
-      // Spawn every 2 seconds at 60fps
+    // Spawn obstacles (every 2 seconds in real time)
+    obstacleSpawnTimer += deltaTime;
+    if (obstacleSpawnTimer > 2000) {
+      // 2000ms = 2 seconds
       spawnObstacle();
       obstacleSpawnTimer = 0;
     }
@@ -401,7 +407,7 @@ function update() {
       let dy = player.y + player.h / 2 - coin.y;
       let distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Magnet attraction
+      // Magnet attraction (frame-rate independent)
       if (
         hasMagnet &&
         distance < magnetRadius &&
@@ -410,8 +416,8 @@ function update() {
         // Pull coin towards player
         const pullStrength = 0.7;
         const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * gameSpeed;
-        coin.y += Math.sin(angle) * pullStrength * gameSpeed;
+        coin.x += Math.cos(angle) * pullStrength * gameSpeed * deltaMultiplier;
+        coin.y += Math.sin(angle) * pullStrength * gameSpeed * deltaMultiplier;
       }
 
       // Collision detection
