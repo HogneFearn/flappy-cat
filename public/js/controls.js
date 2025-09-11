@@ -114,7 +114,23 @@ canvas.addEventListener("touchstart", (e) => {
     return; // Important: prevent any other touch handling when leaderboard is open
   }
 
-  // Priority 2: Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
+  // Priority 2: Check for pause button click
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    pauseButtonCoords.x &&
+    canvasX >= pauseButtonCoords.x &&
+    canvasX <= pauseButtonCoords.x + pauseButtonCoords.width &&
+    canvasY >= pauseButtonCoords.y &&
+    canvasY <= pauseButtonCoords.y + pauseButtonCoords.height
+  ) {
+    togglePause();
+    return;
+  }
+
+  // Priority 3: Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
   if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
     // Find the clicked button by checking from bottom to top (reverse order)
     // to handle any potential overlaps
@@ -247,7 +263,23 @@ canvas.addEventListener("click", (e) => {
     return; // Important: prevent any other click handling when leaderboard is open
   }
 
-  // Priority 2: Check for in-canvas button clicks when game is over
+  // Priority 2: Check for pause button click
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    pauseButtonCoords.x &&
+    canvasX >= pauseButtonCoords.x &&
+    canvasX <= pauseButtonCoords.x + pauseButtonCoords.width &&
+    canvasY >= pauseButtonCoords.y &&
+    canvasY <= pauseButtonCoords.y + pauseButtonCoords.height
+  ) {
+    togglePause();
+    return;
+  }
+
+  // Priority 3: Check for in-canvas button clicks when game is over
   if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
     for (const button of gameOverButtons) {
       if (

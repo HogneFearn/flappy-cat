@@ -30,6 +30,8 @@ let showLeaderboard = false;
 let switchingPlayer = false;
 let leaderboard = []; // Will be loaded from API instead of localStorage
 let showGameOverButtons = false; // Controls whether to show buttons after game over screen
+let gamePaused = false; // Controls whether the game is paused
+let pauseButtonCoords = {}; // Store pause button coordinates for click detection
 
 // Authentication variables
 let authMode = "login"; // "login", "signup", or "authenticated"

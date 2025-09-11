@@ -188,6 +188,36 @@ function draw() {
         uiLineOffset
       );
     }
+    uiLineOffset += 20;
+  }
+
+  // Draw pause button (only when game is running and started)
+  if (gameRunning && gameStarted && gameNameEntered && !showAuthScreen) {
+    const buttonSize = 30; // Size for the emoji area
+    const buttonX = canvas.width - buttonSize - 15;
+    const buttonY = uiLineOffset;
+
+    // Store button coordinates for click detection
+    pauseButtonCoords = {
+      x: buttonX,
+      y: buttonY,
+      width: buttonSize,
+      height: buttonSize,
+    };
+
+    // Just draw the emoji (no background or border)
+    ctx.fillStyle = "#fff";
+    ctx.font = "32px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      gamePaused ? "▶️" : "⏸️",
+      buttonX + buttonSize / 2,
+      buttonY + buttonSize / 2 + 8
+    );
+
+    // Reset text alignment and font size
+    ctx.textAlign = "right";
+    ctx.font = "16px Arial"; // Reset font size back to normal
   }
 
   ctx.textAlign = "left";
@@ -204,6 +234,35 @@ function draw() {
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
+
+  // Pause overlay
+  if (gamePaused && gameRunning) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "40px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 20);
+
+    ctx.font = "18px Arial";
+    if (isMobile) {
+      ctx.fillText(
+        "Tap the Resume button to continue",
+        canvas.width / 2,
+        canvas.height / 2 + 20
+      );
+    } else {
+      ctx.fillText(
+        "Press P or click Resume to continue",
+        canvas.width / 2,
+        canvas.height / 2 + 20
+      );
+    }
+
+    ctx.textAlign = "left";
+    return; // Don't draw other overlays when paused
+  }
 
   // Game over message
   if (!gameRunning) {

@@ -252,6 +252,7 @@ function resetGame() {
   obstacles = [];
   gameRunning = true;
   gameStarted = false;
+  gamePaused = false; // Reset pause state
   showLeaderboard = false;
   showShop = false;
   showColorPalette = false; // Reset color palette state
@@ -310,6 +311,13 @@ function update() {
       }
     }
 
+    if (keys["KeyP"]) {
+      if (gameNameEntered && gameRunning && gameStarted) {
+        togglePause();
+        keys["KeyP"] = false; // Prevent key repeat
+      }
+    }
+
     if (keys["Space"] || keys["ArrowUp"]) {
       // Skip if authentication screen is showing
       if (showAuthScreen) {
@@ -359,6 +367,9 @@ function update() {
   }
 
   if (!gameRunning) return;
+
+  // Check if game is paused
+  if (gamePaused) return;
 
   // Calculate delta time multiplier (1.0 at 60fps)
   const deltaMultiplier = deltaTime / targetFrameTime;
@@ -536,13 +547,9 @@ async function selectCatColor(colorName) {
   }
 }
 
-// Draw UI
-ctx.fillStyle = "#fff";
-ctx.font = "16px Arial";
-ctx.textAlign = "right";
-ctx.fillText("High Score: " + playerHighScore, canvas.width - 20, 25);
-ctx.fillText("💰 Wallet: " + totalCoinsWallet, canvas.width - 20, 45);
-ctx.fillText("👥 Online: " + onlineCount, canvas.width - 20, 65); // Add this line
-
-ctx.textAlign = "left";
-ctx.fillText("Score: " + obstacleScore, 20, 25);
+// Pause function
+function togglePause() {
+  if (gameRunning && gameStarted) {
+    gamePaused = !gamePaused;
+  }
+}
