@@ -221,7 +221,7 @@ async function loadPlayerHighScore(sessionToken) {
       Authorization: `Bearer ${sessionToken}`,
     },
   });
-  return result ? result.score : 0;
+  return result ? result.highScore : 0;
 }
 
 async function savePlayerHighScore(sessionToken, score) {
