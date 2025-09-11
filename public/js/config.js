@@ -42,6 +42,18 @@ let showShop = false;
 let hasMagnet = false;
 let magnetRoundsLeft = 0;
 let magnetRadius = 250;
+let shopGridCoords = []; // Will store the exact coordinates of each shop item button
+
+// Shop items configuration
+let availableShopItems = [
+  {
+    id: "magnet",
+    name: "🧲 Coin Magnet",
+    price: 200,
+    description: "Attracts coins from 7x distance",
+    duration: "3 rounds",
+  },
+];
 
 // Color palette variables
 let showColorPalette = false;

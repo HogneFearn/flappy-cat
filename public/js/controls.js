@@ -55,33 +55,53 @@ canvas.addEventListener("touchstart", (e) => {
 
     return; // Important: prevent any other touch handling when color palette is open
   } else if (showShop) {
-    // Check if touch is in magnet buy area (around where "Press B to Buy!" text is)
-    const magnetBuyY = 215; // magnetY (130) + 85
+    // Check if touch is on close button
     if (
-      canvasY >= magnetBuyY - 20 &&
-      canvasY <= magnetBuyY + 20 &&
-      canvasX >= canvas.width / 4 &&
-      canvasX <= (3 * canvas.width) / 4 &&
-      totalCoinsWallet >= 200 &&
-      magnetRoundsLeft === 0
+      canvasX >= closeButtonCoords.x &&
+      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
+      canvasY >= closeButtonCoords.y &&
+      canvasY <= closeButtonCoords.y + closeButtonCoords.size
     ) {
-      buyMagnetItem();
-    } else {
-      // If tapping outside the shop content area, close the shop
-      // Shop content spans roughly from y=30 to y=230
-      const shopContentTop = 30;
-      const shopContentBottom = 250;
-      const shopContentLeft = canvas.width / 4;
-      const shopContentRight = (3 * canvas.width) / 4;
+      showShop = false;
+      return;
+    }
+
+    // Handle shop item selection touches using stored coordinates
+    for (let i = 0; i < shopGridCoords.length; i++) {
+      const shopCoord = shopGridCoords[i];
 
       if (
-        canvasY < shopContentTop ||
-        canvasY > shopContentBottom ||
-        canvasX < shopContentLeft ||
-        canvasX > shopContentRight
+        canvasX >= shopCoord.x &&
+        canvasX <= shopCoord.x + shopCoord.width &&
+        canvasY >= shopCoord.y &&
+        canvasY <= shopCoord.y + shopCoord.height
       ) {
-        showShop = false;
+        // Find the item and check if it can be purchased
+        const item = availableShopItems.find(
+          (item) => item.id === shopCoord.itemId
+        );
+        if (item && shopCoord.itemId === "magnet") {
+          if (totalCoinsWallet >= item.price && magnetRoundsLeft === 0) {
+            buyMagnetItem();
+          }
+        }
+        break;
       }
+    }
+
+    // If tapping outside the shop content area, close the shop
+    const shopContentTop = 30;
+    const shopContentBottom = 380; // Adjusted for new centered layout
+    const shopContentLeft = canvas.width / 4;
+    const shopContentRight = (3 * canvas.width) / 4;
+
+    if (
+      canvasY < shopContentTop ||
+      canvasY > shopContentBottom ||
+      canvasX < shopContentLeft ||
+      canvasX > shopContentRight
+    ) {
+      showShop = false;
     }
     return; // Important: prevent any other touch handling when shop is open
   } else if (showLeaderboard) {
@@ -164,33 +184,53 @@ canvas.addEventListener("click", (e) => {
 
     return; // Important: prevent any other click handling when color palette is open
   } else if (showShop) {
-    // Check if click is in magnet buy area (around where "Press B to Buy!" text is)
-    const magnetBuyY = 215; // magnetY (130) + 85
+    // Check if click is on close button
     if (
-      canvasY >= magnetBuyY - 20 &&
-      canvasY <= magnetBuyY + 20 &&
-      canvasX >= canvas.width / 4 &&
-      canvasX <= (3 * canvas.width) / 4 &&
-      totalCoinsWallet >= 200 &&
-      magnetRoundsLeft === 0
+      canvasX >= closeButtonCoords.x &&
+      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
+      canvasY >= closeButtonCoords.y &&
+      canvasY <= closeButtonCoords.y + closeButtonCoords.size
     ) {
-      buyMagnetItem();
-    } else {
-      // If clicking outside the shop content area, close the shop
-      // Shop content spans roughly from y=30 to y=230
-      const shopContentTop = 30;
-      const shopContentBottom = 250;
-      const shopContentLeft = canvas.width / 4;
-      const shopContentRight = (3 * canvas.width) / 4;
+      showShop = false;
+      return;
+    }
+
+    // Handle shop item selection clicks using stored coordinates
+    for (let i = 0; i < shopGridCoords.length; i++) {
+      const shopCoord = shopGridCoords[i];
 
       if (
-        canvasY < shopContentTop ||
-        canvasY > shopContentBottom ||
-        canvasX < shopContentLeft ||
-        canvasX > shopContentRight
+        canvasX >= shopCoord.x &&
+        canvasX <= shopCoord.x + shopCoord.width &&
+        canvasY >= shopCoord.y &&
+        canvasY <= shopCoord.y + shopCoord.height
       ) {
-        showShop = false;
+        // Find the item and check if it can be purchased
+        const item = availableShopItems.find(
+          (item) => item.id === shopCoord.itemId
+        );
+        if (item && shopCoord.itemId === "magnet") {
+          if (totalCoinsWallet >= item.price && magnetRoundsLeft === 0) {
+            buyMagnetItem();
+          }
+        }
+        break;
       }
+    }
+
+    // If clicking outside the shop content area, close the shop
+    const shopContentTop = 30;
+    const shopContentBottom = 380; // Adjusted for new centered layout
+    const shopContentLeft = canvas.width / 4;
+    const shopContentRight = (3 * canvas.width) / 4;
+
+    if (
+      canvasY < shopContentTop ||
+      canvasY > shopContentBottom ||
+      canvasX < shopContentLeft ||
+      canvasX > shopContentRight
+    ) {
+      showShop = false;
     }
     return; // Important: prevent any other click handling when shop is open
   } else if (showLeaderboard) {
