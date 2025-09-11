@@ -12,7 +12,6 @@ document.addEventListener("keyup", (e) => (keys[e.code] = false));
 
 // Hold-to-jump functionality
 let isJumpHeld = false;
-let jumpHoldTimer = 0;
 
 // Canvas touch handler for all game interactions
 canvas.addEventListener("touchstart", (e) => {
