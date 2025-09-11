@@ -8,7 +8,6 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-deployment-package/*
 dist
 dist-ssr
 *.local
@@ -29,3 +28,8 @@ dist-ssr
 
 # MacOS
 *.DS_Store
+
+# ignore deploymen package and database
+deployment-package
+game.db
+cloudpanel-pw.rtf
