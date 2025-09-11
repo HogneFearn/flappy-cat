@@ -42,6 +42,10 @@ let showShop = false;
 let hasMagnet = false;
 let magnetRoundsLeft = 0;
 let magnetRadius = 250;
+let hasGoldMagnet = false;
+let goldMagnetRoundsLeft = 0;
+let goldMagnetRadius = 280; // Greater radius than regular magnet
+let goldMagnetPullSpeed = 2; // Faster pull speed
 let shopGridCoords = []; // Will store the exact coordinates of each shop item button
 
 // Shop items configuration
@@ -52,6 +56,13 @@ let availableShopItems = [
     price: 200,
     description: "Attracts coins from 7x distance",
     duration: "3 rounds",
+  },
+  {
+    id: "goldMagnet",
+    name: "🟡 Gold Magnet",
+    price: 700,
+    description: "Stronger magnet with faster pull",
+    duration: "1 round",
   },
 ];
 
@@ -102,6 +113,13 @@ redCoinImage.src = "red_coin.png";
 
 const blueCoinImage = new Image();
 blueCoinImage.src = "blue_coin.png";
+
+// Magnet images
+const redMagnetImage = new Image();
+redMagnetImage.src = "red-magnet.png";
+
+const goldMagnetImage = new Image();
+goldMagnetImage.src = "gold-magnet.png";
 
 // Mobile detection
 const isMobile =

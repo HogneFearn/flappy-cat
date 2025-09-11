@@ -164,15 +164,29 @@ async function handleGameOver() {
   gameRunning = false;
   showGameOverButtons = false; // Start with just the game over message
 
-  // Decrease magnet rounds if player has magnet
-  if (hasMagnet) {
-    magnetRoundsLeft--;
-    if (magnetRoundsLeft <= 0) {
-      hasMagnet = false;
-      magnetRoundsLeft = 0;
+  // Decrease magnet rounds if player has magnets
+  if (hasMagnet || hasGoldMagnet) {
+    const inventory = {};
+
+    if (hasMagnet) {
+      magnetRoundsLeft--;
+      if (magnetRoundsLeft <= 0) {
+        hasMagnet = false;
+        magnetRoundsLeft = 0;
+      }
+      inventory.magnetRoundsLeft = magnetRoundsLeft;
     }
+
+    if (hasGoldMagnet) {
+      goldMagnetRoundsLeft--;
+      if (goldMagnetRoundsLeft <= 0) {
+        hasGoldMagnet = false;
+        goldMagnetRoundsLeft = 0;
+      }
+      inventory.goldMagnetRoundsLeft = goldMagnetRoundsLeft;
+    }
+
     // Save updated inventory
-    const inventory = { magnetRoundsLeft };
     await savePlayerInventory(currentSession.sessionToken, inventory);
   }
 
@@ -408,13 +422,28 @@ function update() {
       let distance = Math.sqrt(dx * dx + dy * dy);
 
       // Magnet attraction (frame-rate independent)
+      // Check for regular magnet first
       if (
         hasMagnet &&
+        magnetRoundsLeft > 0 &&
         distance < magnetRadius &&
         distance > coin.r + player.w / 2
       ) {
-        // Pull coin towards player
+        // Pull coin towards player with regular magnet
         const pullStrength = 0.7;
+        const angle = Math.atan2(dy, dx);
+        coin.x += Math.cos(angle) * pullStrength * gameSpeed * deltaMultiplier;
+        coin.y += Math.sin(angle) * pullStrength * gameSpeed * deltaMultiplier;
+      }
+      // Check for gold magnet (stronger and wider range)
+      else if (
+        hasGoldMagnet &&
+        goldMagnetRoundsLeft > 0 &&
+        distance < goldMagnetRadius &&
+        distance > coin.r + player.w / 2
+      ) {
+        // Pull coin towards player with gold magnet (stronger pull)
+        const pullStrength = 1.4; // Double the strength of regular magnet
         const angle = Math.atan2(dy, dx);
         coin.x += Math.cos(angle) * pullStrength * gameSpeed * deltaMultiplier;
         coin.y += Math.sin(angle) * pullStrength * gameSpeed * deltaMultiplier;
@@ -481,6 +510,18 @@ async function buyMagnetItem() {
     totalCoinsWallet = result.newWallet;
     magnetRoundsLeft = result.inventory.magnetRoundsLeft;
     hasMagnet = magnetRoundsLeft > 0;
+  }
+}
+
+async function buyGoldMagnetItem() {
+  const result = await buyGoldMagnet(
+    currentSession.sessionToken,
+    totalCoinsWallet
+  );
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    goldMagnetRoundsLeft = result.inventory.goldMagnetRoundsLeft;
+    hasGoldMagnet = goldMagnetRoundsLeft > 0;
   }
 }
 

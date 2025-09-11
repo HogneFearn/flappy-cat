@@ -84,6 +84,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price && magnetRoundsLeft === 0) {
             buyMagnetItem();
           }
+        } else if (item && shopCoord.itemId === "goldMagnet") {
+          if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
+            buyGoldMagnetItem();
+          }
         }
         break;
       }
@@ -212,6 +216,10 @@ canvas.addEventListener("click", (e) => {
         if (item && shopCoord.itemId === "magnet") {
           if (totalCoinsWallet >= item.price && magnetRoundsLeft === 0) {
             buyMagnetItem();
+          }
+        } else if (item && shopCoord.itemId === "goldMagnet") {
+          if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
+            buyGoldMagnetItem();
           }
         }
         break;
