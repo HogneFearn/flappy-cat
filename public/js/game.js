@@ -334,6 +334,10 @@ function update() {
         }
         // Don't restart the game automatically when buttons are shown
         // Player must click the "Play Again" button instead
+      } else if (gamePaused) {
+        // Resume game and jump at the same time
+        gamePaused = false;
+        player.vy = jumpPower;
       } else if (!gameStarted) {
         gameStarted = true;
         player.vy = jumpPower;

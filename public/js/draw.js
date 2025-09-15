@@ -248,13 +248,13 @@ function draw() {
     ctx.font = "18px Arial";
     if (isMobile) {
       ctx.fillText(
-        "Tap the Resume button to continue",
+        "Tap to resume and jump",
         canvas.width / 2,
         canvas.height / 2 + 20
       );
     } else {
       ctx.fillText(
-        "Press P or click Resume to continue",
+        "Press SPACE to resume and jump",
         canvas.width / 2,
         canvas.height / 2 + 20
       );

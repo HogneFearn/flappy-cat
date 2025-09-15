@@ -114,12 +114,13 @@ canvas.addEventListener("touchstart", (e) => {
     return; // Important: prevent any other touch handling when leaderboard is open
   }
 
-  // Priority 2: Check for pause button click
+  // Priority 2: Check for pause button click (only when game is running and not paused)
   if (
     gameRunning &&
     gameStarted &&
     gameNameEntered &&
     !showAuthScreen &&
+    !gamePaused &&
     pauseButtonCoords.x &&
     canvasX >= pauseButtonCoords.x &&
     canvasX <= pauseButtonCoords.x + pauseButtonCoords.width &&
@@ -263,12 +264,13 @@ canvas.addEventListener("click", (e) => {
     return; // Important: prevent any other click handling when leaderboard is open
   }
 
-  // Priority 2: Check for pause button click
+  // Priority 2: Check for pause button click (only when game is running and not paused)
   if (
     gameRunning &&
     gameStarted &&
     gameNameEntered &&
     !showAuthScreen &&
+    !gamePaused &&
     pauseButtonCoords.x &&
     canvasX >= pauseButtonCoords.x &&
     canvasX <= pauseButtonCoords.x + pauseButtonCoords.width &&
@@ -345,6 +347,10 @@ function handleJump() {
     }
     // Don't restart the game automatically when buttons are shown
     // Player must click the "Play Again" button instead
+  } else if (gamePaused) {
+    // Resume game and jump at the same time
+    gamePaused = false;
+    player.vy = jumpPower;
   } else if (!gameStarted) {
     gameStarted = true;
     player.vy = jumpPower;
