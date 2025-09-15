@@ -88,6 +88,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
             buyGoldMagnetItem();
           }
+        } else if (item && shopCoord.itemId === "miniNuke") {
+          if (totalCoinsWallet >= item.price) {
+            buyMiniNukeItem();
+          }
         }
         break;
       }
@@ -128,6 +132,26 @@ canvas.addEventListener("touchstart", (e) => {
     canvasY <= pauseButtonCoords.y + pauseButtonCoords.height
   ) {
     togglePause();
+    return;
+  }
+
+  // Priority 2.5: Check for rocket button click (only when game is running, not paused, and has mini nukes)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasMiniNuke &&
+    miniNukeCount > 0 &&
+    !isRocketActive &&
+    rocketButtonCoords.x &&
+    canvasX >= rocketButtonCoords.x &&
+    canvasX <= rocketButtonCoords.x + rocketButtonCoords.width &&
+    canvasY >= rocketButtonCoords.y &&
+    canvasY <= rocketButtonCoords.y + rocketButtonCoords.height
+  ) {
+    launchRocket();
     return;
   }
 
@@ -238,6 +262,10 @@ canvas.addEventListener("click", (e) => {
           if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
             buyGoldMagnetItem();
           }
+        } else if (item && shopCoord.itemId === "miniNuke") {
+          if (totalCoinsWallet >= item.price) {
+            buyMiniNukeItem();
+          }
         }
         break;
       }
@@ -278,6 +306,26 @@ canvas.addEventListener("click", (e) => {
     canvasY <= pauseButtonCoords.y + pauseButtonCoords.height
   ) {
     togglePause();
+    return;
+  }
+
+  // Priority 2.5: Check for rocket button click (only when game is running, not paused, and has mini nukes)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasMiniNuke &&
+    miniNukeCount > 0 &&
+    !isRocketActive &&
+    rocketButtonCoords.x &&
+    canvasX >= rocketButtonCoords.x &&
+    canvasX <= rocketButtonCoords.x + rocketButtonCoords.width &&
+    canvasY >= rocketButtonCoords.y &&
+    canvasY <= rocketButtonCoords.y + rocketButtonCoords.height
+  ) {
+    launchRocket();
     return;
   }
 

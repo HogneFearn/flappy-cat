@@ -223,6 +223,21 @@ async function buyGoldMagnet(sessionToken, currentWallet) {
   return { success: false };
 }
 
+async function buyMiniNuke(sessionToken, currentWallet) {
+  const miniNukeCost = 500;
+  if (currentWallet >= miniNukeCost) {
+    const newWallet = currentWallet - miniNukeCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.miniNukeCount = (inventory.miniNukeCount || 0) + 1; // 1 use per purchase
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 // Player-specific high score functions
 async function loadPlayerHighScore(sessionToken) {
   if (!sessionToken) {
@@ -284,6 +299,9 @@ async function initializeGameData() {
 
     goldMagnetRoundsLeft = inventory.goldMagnetRoundsLeft || 0;
     hasGoldMagnet = goldMagnetRoundsLeft > 0; // Set hasGoldMagnet based on rounds left
+
+    miniNukeCount = inventory.miniNukeCount || 0;
+    hasMiniNuke = miniNukeCount > 0; // Set hasMiniNuke based on count
 
     // Load color preference
     selectedCatColor = await getPlayerColor(currentSession.sessionToken);

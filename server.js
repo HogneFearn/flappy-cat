@@ -5,7 +5,7 @@ const cors = require("cors");
 const crypto = require("crypto");
 
 const app = express();
-const PORT = process.env.PORT || 3007;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -78,8 +78,17 @@ function initDatabase() {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_name TEXT UNIQUE NOT NULL,
     magnet_rounds_left INTEGER DEFAULT 0,
+    mini_nuke_count INTEGER DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  // Add mini_nuke_count column to existing tables (migration)
+  db.run(
+    `ALTER TABLE player_inventory ADD COLUMN mini_nuke_count INTEGER DEFAULT 0`,
+    (err) => {
+      // Ignore error if column already exists
+    }
+  );
 
   // Player high scores table
   db.run(`CREATE TABLE IF NOT EXISTS player_high_scores (
@@ -286,7 +295,7 @@ app.post("/api/auth/signup", (req, res) => {
             username,
           ]);
           db.run(
-            "INSERT INTO player_inventory (player_name, magnet_rounds_left) VALUES (?, 0)",
+            "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count) VALUES (?, 0, 0)",
             [username]
           );
           db.run(
@@ -494,7 +503,7 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
   db.get(
-    "SELECT magnet_rounds_left FROM player_inventory WHERE player_name = ?",
+    "SELECT magnet_rounds_left, mini_nuke_count FROM player_inventory WHERE player_name = ?",
     [playerName],
     (err, row) => {
       if (err) {
@@ -503,18 +512,21 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
       }
 
       if (row) {
-        res.json({ magnetRoundsLeft: row.magnet_rounds_left });
+        res.json({
+          magnetRoundsLeft: row.magnet_rounds_left,
+          miniNukeCount: row.mini_nuke_count || 0,
+        });
       } else {
         // Create new inventory with default values
         db.run(
-          "INSERT INTO player_inventory (player_name, magnet_rounds_left) VALUES (?, 0)",
+          "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count) VALUES (?, 0, 0)",
           [playerName],
           function (err) {
             if (err) {
               res.status(500).json({ error: err.message });
               return;
             }
-            res.json({ magnetRoundsLeft: 0 });
+            res.json({ magnetRoundsLeft: 0, miniNukeCount: 0 });
           }
         );
       }
@@ -525,11 +537,11 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
 // Update player inventory
 app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
-  const { magnetRoundsLeft } = req.body;
+  const { magnetRoundsLeft, miniNukeCount } = req.body;
 
   db.run(
-    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
-    [playerName, magnetRoundsLeft],
+    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+    [playerName, magnetRoundsLeft || 0, miniNukeCount || 0],
     function (err) {
       if (err) {
         res.status(500).json({ error: err.message });

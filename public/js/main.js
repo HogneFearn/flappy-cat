@@ -318,6 +318,11 @@ function resetGameForNewPlayer() {
   playerHighScore = 0;
   hasMagnet = false;
   magnetRoundsLeft = 0;
+  hasMiniNuke = false;
+  miniNukeCount = 0;
+  isRocketActive = false;
+  rocket = null;
+  explosion = null;
   selectedCatColor = "gray"; // Reset to default color
 
   // Reset UI states

@@ -120,6 +120,81 @@ function draw() {
     ctx.shadowBlur = 0;
   }
 
+  // Draw rocket if active
+  if (isRocketActive && rocket) {
+    // Draw rocket trail
+    ctx.fillStyle = "rgba(255, 165, 0, 0.6)"; // Orange trail
+    ctx.fillRect(rocket.x - 20, rocket.y + 5, 20, 10);
+
+    // Draw rocket image if loaded, otherwise use rectangle
+    if (
+      miniNukeImage &&
+      miniNukeImage.complete &&
+      miniNukeImage.naturalWidth > 0
+    ) {
+      const rocketSize = 25;
+      ctx.drawImage(miniNukeImage, rocket.x, rocket.y, rocketSize, rocketSize);
+    } else {
+      // Fallback rocket
+      ctx.fillStyle = "#32CD32"; // Green color
+      ctx.fillRect(rocket.x, rocket.y, 25, 15);
+      // Add simple rocket tip
+      ctx.beginPath();
+      ctx.moveTo(rocket.x + 25, rocket.y + 7.5);
+      ctx.lineTo(rocket.x + 35, rocket.y + 7.5);
+      ctx.strokeStyle = "#228B22";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  }
+
+  // Draw explosion if active
+  if (explosion) {
+    const progress = explosion.timer / explosion.duration;
+    const maxRadius = explosion.maxRadius;
+    const currentRadius = maxRadius * progress;
+
+    // Draw multiple explosion rings
+    for (let i = 0; i < 3; i++) {
+      const ringProgress = Math.max(0, progress - i * 0.2);
+      const ringRadius = maxRadius * ringProgress;
+      const alpha = Math.max(0, 1 - ringProgress);
+
+      if (ringRadius > 0) {
+        // Outer explosion ring (orange/red)
+        ctx.beginPath();
+        ctx.arc(explosion.x, explosion.y, ringRadius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, ${100 - i * 30}, 0, ${alpha * 0.6})`;
+        ctx.fill();
+
+        // Inner explosion ring (yellow/white)
+        if (ringRadius > 10) {
+          ctx.beginPath();
+          ctx.arc(explosion.x, explosion.y, ringRadius * 0.6, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, ${100 + i * 50}, ${alpha * 0.8})`;
+          ctx.fill();
+        }
+      }
+    }
+
+    // Draw explosion particles
+    for (let particle of explosion.particles) {
+      const particleProgress = explosion.timer / explosion.duration;
+      const alpha = Math.max(0, 1 - particleProgress);
+
+      ctx.beginPath();
+      ctx.arc(
+        particle.x + particle.vx * particleProgress * 100,
+        particle.y + particle.vy * particleProgress * 100,
+        particle.size * (1 - particleProgress * 0.5),
+        0,
+        Math.PI * 2
+      );
+      ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha})`;
+      ctx.fill();
+    }
+  }
+
   // Draw UI
   ctx.fillStyle = "#fff";
   ctx.font = "16px Arial";
@@ -214,6 +289,26 @@ function draw() {
       buttonX + buttonSize / 2,
       buttonY + buttonSize / 2 + 8
     );
+
+    // Draw rocket button (only when player has mini nukes)
+    if (hasMiniNuke && miniNukeCount > 0 && !isRocketActive) {
+      const rocketButtonY = buttonY + buttonSize + 5; // 5px gap between buttons
+
+      // Store rocket button coordinates for click detection
+      rocketButtonCoords = {
+        x: buttonX,
+        y: rocketButtonY,
+        width: buttonSize,
+        height: buttonSize,
+      };
+
+      // Draw rocket emoji
+      ctx.fillText(
+        "🚀",
+        buttonX + buttonSize / 2,
+        rocketButtonY + buttonSize / 2 + 8
+      );
+    }
 
     // Reset text alignment and font size
     ctx.textAlign = "right";
