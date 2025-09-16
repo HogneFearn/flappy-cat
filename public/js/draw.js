@@ -302,12 +302,24 @@ function draw() {
         height: buttonSize,
       };
 
-      // Draw rocket emoji
-      ctx.fillText(
-        "🚀",
-        buttonX + buttonSize / 2,
-        rocketButtonY + buttonSize / 2 + 8
-      );
+      // Draw mini nuke image or fallback
+      if (
+        miniNukeImage &&
+        miniNukeImage.complete &&
+        miniNukeImage.naturalWidth > 0
+      ) {
+        const imageSize = buttonSize;
+        const imageX = buttonX + (buttonSize - imageSize) / 2;
+        const imageY = rocketButtonY + (buttonSize - imageSize) / 2;
+        ctx.drawImage(miniNukeImage, imageX, imageY, imageSize, imageSize);
+      } else {
+        // Fallback to emoji if image not loaded
+        ctx.fillText(
+          "🚀",
+          buttonX + buttonSize / 2,
+          rocketButtonY + buttonSize / 2 + 8
+        );
+      }
     }
 
     // Reset text alignment and font size
@@ -751,6 +763,7 @@ function draw() {
       // Store coordinates for click detection with larger touch area
       shopGridCoords.push({
         itemId: item.id,
+        itemName: item.name,
         x: x - touchPadding,
         y: y - touchPadding,
         width: itemSize + touchPadding * 2,
@@ -761,7 +774,8 @@ function draw() {
       const canAfford = totalCoinsWallet >= item.price;
       const isOwned =
         (item.id === "magnet" && magnetRoundsLeft > 0) ||
-        (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0);
+        (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0) ||
+        (item.id === "miniNuke" && miniNukeCount > 0);
 
       // Draw item box background with better colors
       if (isOwned) {
@@ -788,20 +802,22 @@ function draw() {
         ctx.strokeRect(x, y, itemSize, itemSize);
       }
 
-      // Draw item icon (image instead of emoji)
-      let magnetImage = null;
+      // Draw item icon (image instead of emoji when available)
+      let itemImage = null;
       if (item.id === "magnet") {
-        magnetImage = redMagnetImage;
+        itemImage = redMagnetImage;
       } else if (item.id === "goldMagnet") {
-        magnetImage = goldMagnetImage;
+        itemImage = goldMagnetImage;
+      } else if (item.id === "miniNuke") {
+        itemImage = miniNukeImage;
       }
 
-      if (magnetImage && magnetImage.complete && magnetImage.naturalWidth > 0) {
-        // Draw magnet image
-        const imageSize = isMobile ? 24 : 28; // Smaller than the full box
+      if (itemImage && itemImage.complete && itemImage.naturalWidth > 0) {
+        // Draw item image
+        const imageSize = isMobile ? 36 : 42; // Quite a bit bigger than before (was 24/28)
         const imageX = x + itemSize / 2 - imageSize / 2;
         const imageY = y + itemSize / 2 - imageSize / 2;
-        ctx.drawImage(magnetImage, imageX, imageY, imageSize, imageSize);
+        ctx.drawImage(itemImage, imageX, imageY, imageSize, imageSize);
       } else {
         // Fallback to emoji if image not loaded
         ctx.fillStyle = "#fff";
@@ -833,13 +849,15 @@ function draw() {
       if (isOwned) {
         ctx.fillStyle = "#4CAF50";
         ctx.font = isMobile ? "8px Arial" : "9px Arial";
-        const roundsLeft =
-          item.id === "magnet" ? magnetRoundsLeft : goldMagnetRoundsLeft;
-        ctx.fillText(
-          `✓ ${roundsLeft} left`,
-          x + itemSize / 2,
-          y + itemSize + 40
-        );
+        let statusText = "✓ Owned";
+        if (item.id === "magnet") {
+          statusText = `✓ ${magnetRoundsLeft} left`;
+        } else if (item.id === "goldMagnet") {
+          statusText = `✓ ${goldMagnetRoundsLeft} left`;
+        } else if (item.id === "miniNuke") {
+          statusText = `✓ ${miniNukeCount} left`;
+        }
+        ctx.fillText(statusText, x + itemSize / 2, y + itemSize + 40);
       } else if (!canAfford) {
         ctx.fillStyle = "#FF6B6B";
         ctx.font = isMobile ? "8px Arial" : "9px Arial";
