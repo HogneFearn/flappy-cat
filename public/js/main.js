@@ -320,6 +320,8 @@ function resetGameForNewPlayer() {
   magnetRoundsLeft = 0;
   hasMiniNuke = false;
   miniNukeCount = 0;
+  hasNuke = false;
+  nukeCount = 0;
   isRocketActive = false;
   rocket = null;
   explosion = null;

@@ -238,6 +238,21 @@ async function buyMiniNuke(sessionToken, currentWallet) {
   return { success: false };
 }
 
+async function buyNuke(sessionToken, currentWallet) {
+  const nukeCost = 800;
+  if (currentWallet >= nukeCost) {
+    const newWallet = currentWallet - nukeCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.nukeCount = (inventory.nukeCount || 0) + 1; // 1 use per purchase
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 // Player-specific high score functions
 async function loadPlayerHighScore(sessionToken) {
   if (!sessionToken) {
@@ -302,6 +317,9 @@ async function initializeGameData() {
 
     miniNukeCount = inventory.miniNukeCount || 0;
     hasMiniNuke = miniNukeCount > 0; // Set hasMiniNuke based on count
+
+    nukeCount = inventory.nukeCount || 0;
+    hasNuke = nukeCount > 0; // Set hasNuke based on count
 
     // Load color preference
     selectedCatColor = await getPlayerColor(currentSession.sessionToken);

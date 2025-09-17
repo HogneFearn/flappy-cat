@@ -322,6 +322,34 @@ function draw() {
       }
     }
 
+    // Draw nuke button (only when player has nukes)
+    if (hasNuke && nukeCount > 0 && !isRocketActive) {
+      const nukeButtonY = buttonY + buttonSize * 2 + 10; // Below mini nuke button with gap
+
+      // Store nuke button coordinates for click detection
+      nukeButtonCoords = {
+        x: buttonX,
+        y: nukeButtonY,
+        width: buttonSize,
+        height: buttonSize,
+      };
+
+      // Draw nuke image or fallback
+      if (nukeImage && nukeImage.complete && nukeImage.naturalWidth > 0) {
+        const imageSize = buttonSize;
+        const imageX = buttonX + (buttonSize - imageSize) / 2;
+        const imageY = nukeButtonY + (buttonSize - imageSize) / 2;
+        ctx.drawImage(nukeImage, imageX, imageY, imageSize, imageSize);
+      } else {
+        // Fallback to emoji if image not loaded
+        ctx.fillText(
+          "💥",
+          buttonX + buttonSize / 2,
+          nukeButtonY + buttonSize / 2 + 8
+        );
+      }
+    }
+
     // Reset text alignment and font size
     ctx.textAlign = "right";
     ctx.font = "16px Arial"; // Reset font size back to normal
@@ -775,7 +803,8 @@ function draw() {
       const isOwned =
         (item.id === "magnet" && magnetRoundsLeft > 0) ||
         (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0) ||
-        (item.id === "miniNuke" && miniNukeCount > 0);
+        (item.id === "miniNuke" && miniNukeCount > 0) ||
+        (item.id === "nuke" && nukeCount > 0);
 
       // Draw item box background with better colors
       if (isOwned) {
@@ -810,6 +839,8 @@ function draw() {
         itemImage = goldMagnetImage;
       } else if (item.id === "miniNuke") {
         itemImage = miniNukeImage;
+      } else if (item.id === "nuke") {
+        itemImage = nukeImage;
       }
 
       if (itemImage && itemImage.complete && itemImage.naturalWidth > 0) {
@@ -856,6 +887,8 @@ function draw() {
           statusText = `✓ ${goldMagnetRoundsLeft} left`;
         } else if (item.id === "miniNuke") {
           statusText = `✓ ${miniNukeCount} left`;
+        } else if (item.id === "nuke") {
+          statusText = `✓ ${nukeCount} left`;
         }
         ctx.fillText(statusText, x + itemSize / 2, y + itemSize + 40);
       } else if (!canAfford) {

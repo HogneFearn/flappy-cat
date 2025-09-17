@@ -50,9 +50,12 @@ let goldMagnetRadius = 280; // Greater radius than regular magnet
 let goldMagnetPullSpeed = 2; // Faster pull speed
 let hasMiniNuke = false;
 let miniNukeCount = 0;
+let hasNuke = false;
+let nukeCount = 0;
 let isRocketActive = false;
 let rocket = null; // Will store rocket position and animation data
 let rocketButtonCoords = {}; // Store rocket button coordinates for click detection
+let nukeButtonCoords = {}; // Store nuke button coordinates for click detection
 let explosion = null; // Will store explosion animation data
 let shopGridCoords = []; // Will store the exact coordinates of each shop item button
 
@@ -77,6 +80,13 @@ let availableShopItems = [
     name: "🚀 Mini Nuke",
     price: 500,
     description: "Clears 3 pipe sets (+15 points)",
+    duration: "1 use",
+  },
+  {
+    id: "nuke",
+    name: "💥 Nuke",
+    price: 800,
+    description: "Clears 10 pipe sets (+50 points)",
     duration: "1 use",
   },
 ];
@@ -139,6 +149,10 @@ goldMagnetImage.src = "gold-magnet.png";
 // Mini nuke image
 const miniNukeImage = new Image();
 miniNukeImage.src = "mini-nuke.png";
+
+// Nuke image
+const nukeImage = new Image();
+nukeImage.src = "nuke.png";
 
 // Mobile detection
 const isMobile =

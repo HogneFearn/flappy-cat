@@ -92,6 +92,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price) {
             buyMiniNukeItem();
           }
+        } else if (item && shopCoord.itemId === "nuke") {
+          if (totalCoinsWallet >= item.price) {
+            buyNukeItem();
+          }
         }
         break;
       }
@@ -152,6 +156,26 @@ canvas.addEventListener("touchstart", (e) => {
     canvasY <= rocketButtonCoords.y + rocketButtonCoords.height
   ) {
     launchRocket();
+    return;
+  }
+
+  // Priority 2b: Check for nuke button click during gameplay (touchstart for better responsiveness)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasNuke &&
+    nukeCount > 0 &&
+    !isRocketActive &&
+    nukeButtonCoords.x &&
+    canvasX >= nukeButtonCoords.x &&
+    canvasX <= nukeButtonCoords.x + nukeButtonCoords.width &&
+    canvasY >= nukeButtonCoords.y &&
+    canvasY <= nukeButtonCoords.y + nukeButtonCoords.height
+  ) {
+    launchNuke();
     return;
   }
 
@@ -266,6 +290,10 @@ canvas.addEventListener("click", (e) => {
           if (totalCoinsWallet >= item.price) {
             buyMiniNukeItem();
           }
+        } else if (item && shopCoord.itemId === "nuke") {
+          if (totalCoinsWallet >= item.price) {
+            buyNukeItem();
+          }
         }
         break;
       }
@@ -326,6 +354,26 @@ canvas.addEventListener("click", (e) => {
     canvasY <= rocketButtonCoords.y + rocketButtonCoords.height
   ) {
     launchRocket();
+    return;
+  }
+
+  // Priority 2.6: Check for nuke button click (only when game is running, not paused, and has nukes)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasNuke &&
+    nukeCount > 0 &&
+    !isRocketActive &&
+    nukeButtonCoords.x &&
+    canvasX >= nukeButtonCoords.x &&
+    canvasX <= nukeButtonCoords.x + nukeButtonCoords.width &&
+    canvasY >= nukeButtonCoords.y &&
+    canvasY <= nukeButtonCoords.y + nukeButtonCoords.height
+  ) {
+    launchNuke();
     return;
   }
 

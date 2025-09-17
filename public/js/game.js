@@ -189,6 +189,9 @@ async function handleGameOver() {
     // Always include mini nuke count (doesn't decrease on game over)
     inventory.miniNukeCount = miniNukeCount;
 
+    // Always include nuke count (doesn't decrease on game over)
+    inventory.nukeCount = nukeCount;
+
     // Save updated inventory
     await savePlayerInventory(currentSession.sessionToken, inventory);
   }
@@ -564,6 +567,15 @@ async function buyMiniNukeItem() {
   }
 }
 
+async function buyNukeItem() {
+  const result = await buyNuke(currentSession.sessionToken, totalCoinsWallet);
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    nukeCount = result.inventory.nukeCount;
+    hasNuke = nukeCount > 0;
+  }
+}
+
 // Color palette functions
 async function selectCatColor(colorName) {
   try {
@@ -593,6 +605,7 @@ function launchRocket() {
     x: player.x + player.w,
     y: player.y + player.h / 2 - 7.5, // Center vertically with player
     speed: 8, // Fast movement speed
+    type: "miniNuke", // Track rocket type
   };
 
   isRocketActive = true;
@@ -602,9 +615,36 @@ function launchRocket() {
   savePlayerInventory(currentSession.sessionToken, {
     magnetRoundsLeft: magnetRoundsLeft || 0,
     miniNukeCount: miniNukeCount,
+    nukeCount: nukeCount,
   });
 
-  console.log("Rocket launched! Mini nukes left:", miniNukeCount);
+  console.log("Mini nuke launched! Mini nukes left:", miniNukeCount);
+}
+
+function launchNuke() {
+  if (!hasNuke || nukeCount <= 0 || isRocketActive) {
+    return;
+  }
+
+  // Initialize nuke rocket at player position
+  rocket = {
+    x: player.x + player.w,
+    y: player.y + player.h / 2 - 7.5, // Center vertically with player
+    speed: 8, // Fast movement speed
+    type: "nuke", // Track rocket type
+  };
+
+  isRocketActive = true;
+  nukeCount--;
+
+  // Save updated inventory
+  savePlayerInventory(currentSession.sessionToken, {
+    magnetRoundsLeft: magnetRoundsLeft || 0,
+    miniNukeCount: miniNukeCount,
+    nukeCount: nukeCount,
+  });
+
+  console.log("Nuke launched! Nukes left:", nukeCount);
 }
 
 function updateRocket() {
@@ -624,16 +664,20 @@ function updateRocket() {
 }
 
 function createExplosion(x, y) {
+  const isNuke = rocket && rocket.type === "nuke";
+  const particleCount = isNuke ? 60 : 20; // 3x more particles for nuke
+  const maxVelocity = isNuke ? 6 : 2; // 3x faster velocity for nuke particles
+  const maxSize = isNuke ? 18 : 6; // 3x larger particles for nuke
   const particles = [];
 
   // Create explosion particles
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < particleCount; i++) {
     particles.push({
       x: x,
       y: y,
-      vx: (Math.random() - 0.5) * 2, // Random velocity in x direction
-      vy: (Math.random() - 0.5) * 2, // Random velocity in y direction
-      size: Math.random() * 6 + 2, // Random size between 2-8
+      vx: (Math.random() - 0.5) * maxVelocity, // Random velocity in x direction
+      vy: (Math.random() - 0.5) * maxVelocity, // Random velocity in y direction
+      size: Math.random() * maxSize + 2, // Random size
       color: {
         r: 255,
         g: Math.floor(Math.random() * 100 + 100), // Yellow to red
@@ -646,8 +690,8 @@ function createExplosion(x, y) {
     x: x,
     y: y,
     timer: 0,
-    duration: 500, // 500ms explosion duration
-    maxRadius: 80,
+    duration: isNuke ? 1000 : 500, // 2x longer duration for nuke
+    maxRadius: isNuke ? 240 : 80, // 3x larger radius for nuke
     particles: particles,
   };
 }
@@ -670,8 +714,11 @@ function explodeRocket() {
     return;
   }
 
-  // Remove up to 3 sets of pipes that are ahead of the player and award 15 points
-  const maxPipesToRemove = 3;
+  const isNuke = rocket && rocket.type === "nuke";
+  const maxPipesToRemove = isNuke ? 10 : 3; // Nuke clears 10 pipes, mini nuke clears 3
+  const pointsAwarded = isNuke ? 50 : 15; // Nuke awards 50 points, mini nuke awards 15
+  const delayTime = isNuke ? -8000 : -4000; // Nuke creates longer clear path
+
   const playerRightEdge = player.x + player.w;
 
   // Find and remove pipes that are ahead of the player (x position greater than player)
@@ -691,16 +738,15 @@ function explodeRocket() {
   const pipesRemovedCount = pipesToRemove.length;
 
   // Reset obstacle spawn timer to create a longer clear path
-  // This gives the player the benefit equivalent to clearing 3 pipe sets
-  obstacleSpawnTimer = -4000; // Delay next pipes by 4 seconds (2 extra pipe cycles)
+  obstacleSpawnTimer = delayTime;
 
-  // Award full 15 points regardless of how many pipes were actually removed
-  // This represents the strategic value of clearing the path ahead
-  const pointsAwarded = 15;
+  // Award points based on rocket type
   obstacleScore += pointsAwarded;
 
   console.log(
-    `Rocket exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, awarded ${pointsAwarded} points`
+    `${
+      isNuke ? "Nuke" : "Mini nuke"
+    } exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, awarded ${pointsAwarded} points`
   );
 
   // Reset rocket state
@@ -710,5 +756,8 @@ function explodeRocket() {
   // Update inventory state
   if (miniNukeCount <= 0) {
     hasMiniNuke = false;
+  }
+  if (nukeCount <= 0) {
+    hasNuke = false;
   }
 }
