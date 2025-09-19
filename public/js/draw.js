@@ -292,7 +292,7 @@ function draw() {
 
     // Draw rocket button (only when player has mini nukes)
     if (hasMiniNuke && miniNukeCount > 0 && !isRocketActive) {
-      const rocketButtonY = buttonY + buttonSize + 5; // 5px gap between buttons
+      const rocketButtonY = buttonY + buttonSize + 100; // 20px gap between buttons
 
       // Store rocket button coordinates for click detection
       rocketButtonCoords = {
@@ -320,11 +320,26 @@ function draw() {
           rocketButtonY + buttonSize / 2 + 8
         );
       }
+
+      // Draw mini nuke count with background for better visibility
+      const miniCountText = miniNukeCount + "x";
+      const miniCountX = buttonX - 25; // Position to the left of the button
+      const miniCountY = rocketButtonY + buttonSize / 2 + 4;
+
+      // Draw background rectangle for text
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(miniCountX - 3, miniCountY - 10, 18, 14);
+
+      // Draw text
+      ctx.fillStyle = "#FFD700"; // Gold color for better contrast
+      ctx.font = "12px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(miniCountText, miniCountX, miniCountY);
     }
 
     // Draw nuke button (only when player has nukes)
     if (hasNuke && nukeCount > 0 && !isRocketActive) {
-      const nukeButtonY = buttonY + buttonSize * 2 + 10; // Below mini nuke button with gap
+      const nukeButtonY = buttonY + buttonSize * 2 + 105; // Below mini nuke button with gap
 
       // Store nuke button coordinates for click detection
       nukeButtonCoords = {
@@ -348,6 +363,21 @@ function draw() {
           nukeButtonY + buttonSize / 2 + 8
         );
       }
+
+      // Draw nuke count with background for better visibility
+      const nukeCountText = nukeCount + "x";
+      const nukeCountX = buttonX - 25; // Position to the left of the button
+      const nukeCountY = nukeButtonY + buttonSize / 2 + 4;
+
+      // Draw background rectangle for text
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(nukeCountX - 3, nukeCountY - 10, 18, 14);
+
+      // Draw text
+      ctx.fillStyle = "#FFD700"; // Gold color for better contrast
+      ctx.font = "12px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(nukeCountText, nukeCountX, nukeCountY);
     }
 
     // Reset text alignment and font size
@@ -355,7 +385,9 @@ function draw() {
     ctx.font = "16px Arial"; // Reset font size back to normal
   }
 
+  // Reset text properties for score display
   ctx.textAlign = "left";
+  ctx.fillStyle = "#fff"; // Reset to white for score text
   ctx.fillText("Score: " + obstacleScore, 20, 25);
 
   // Add shadow to online count for better contrast
