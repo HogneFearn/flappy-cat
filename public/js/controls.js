@@ -3,6 +3,11 @@ let keys = {};
 document.addEventListener("keydown", (e) => {
   keys[e.code] = true;
 
+  // Initialize audio system on first user interaction
+  if (!audioInitialized) {
+    initializeAudio();
+  }
+
   // Skip input handling if authentication screen is showing
   if (showAuthScreen) {
     return;
@@ -16,6 +21,11 @@ let isJumpHeld = false;
 // Canvas touch handler for all game interactions
 canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
+
+  // Initialize audio system on first user interaction
+  if (!audioInitialized) {
+    initializeAudio();
+  }
 
   // Get accurate canvas coordinates
   const coords = getCanvasCoordinates(

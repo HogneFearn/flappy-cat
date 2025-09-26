@@ -1,3 +1,83 @@
+// Audio system for sound effects
+let miniNukeSound = null;
+let nukeSound = null;
+let coinSound = null;
+let audioInitialized = false;
+
+// Initialize audio with user interaction (required for mobile)
+function initializeAudio() {
+  if (!audioInitialized) {
+    try {
+      miniNukeSound = new Audio("sounds/boom.mp3");
+      miniNukeSound.preload = "auto";
+      miniNukeSound.volume = 0.7;
+
+      nukeSound = new Audio("sounds/big-boom.mp3");
+      nukeSound.preload = "auto";
+      nukeSound.volume = 0.7;
+
+      coinSound = new Audio("sounds/coin.mp3");
+      coinSound.preload = "auto";
+      coinSound.volume = 0.6; // Slightly quieter for coin pickup
+
+      audioInitialized = true;
+      console.log("Audio system initialized");
+    } catch (error) {
+      console.warn("Failed to initialize audio:", error);
+    }
+  }
+}
+
+// Play explosion sound with fallback for mobile devices
+function playExplosionSound(rocketType = "miniNuke") {
+  if (!audioInitialized) {
+    initializeAudio();
+  }
+
+  const soundToPlay = rocketType === "nuke" ? nukeSound : miniNukeSound;
+
+  if (soundToPlay) {
+    try {
+      // Clone the audio to allow multiple overlapping sounds
+      const soundClone = soundToPlay.cloneNode();
+      soundClone.volume = 0.7;
+      const playPromise = soundClone.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn(`Failed to play ${rocketType} explosion sound:`, error);
+        });
+      }
+    } catch (error) {
+      console.warn(`Error playing ${rocketType} explosion sound:`, error);
+    }
+  }
+}
+
+// Play coin pickup sound with fallback for mobile devices
+function playCoinSound() {
+  if (!audioInitialized) {
+    initializeAudio();
+  }
+
+  if (coinSound) {
+    try {
+      // Clone the audio to allow multiple overlapping sounds
+      const soundClone = coinSound.cloneNode();
+      soundClone.volume = 0.6;
+      const playPromise = soundClone.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn("Failed to play coin pickup sound:", error);
+        });
+      }
+    } catch (error) {
+      console.warn("Error playing coin pickup sound:", error);
+    }
+  }
+}
+
 function spawnCoin() {
   let x, y, radius;
   let attempts = 0;
@@ -482,6 +562,8 @@ function update() {
       // Collision detection
       if (distance < coin.r + player.w / 2) {
         coins.splice(i, 1);
+        // Play coin pickup sound
+        playCoinSound();
         // Add coin value directly to wallet
         totalCoinsWallet += coin.value;
         savePlayerWallet(currentSession.sessionToken, totalCoinsWallet);
@@ -715,6 +797,9 @@ function explodeRocket() {
   }
 
   const isNuke = rocket && rocket.type === "nuke";
+
+  // Play appropriate explosion sound based on rocket type
+  playExplosionSound(rocket.type);
   const maxPipesToRemove = isNuke ? 10 : 3; // Nuke clears 10 pipes, mini nuke clears 3
   const delayTime = isNuke ? -8000 : -4000; // Nuke creates longer clear path
 
