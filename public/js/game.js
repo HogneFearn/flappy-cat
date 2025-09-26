@@ -716,7 +716,6 @@ function explodeRocket() {
 
   const isNuke = rocket && rocket.type === "nuke";
   const maxPipesToRemove = isNuke ? 10 : 3; // Nuke clears 10 pipes, mini nuke clears 3
-  const pointsAwarded = isNuke ? 50 : 15; // Nuke awards 50 points, mini nuke awards 15
   const delayTime = isNuke ? -8000 : -4000; // Nuke creates longer clear path
 
   const playerRightEdge = player.x + player.w;
@@ -740,13 +739,26 @@ function explodeRocket() {
   // Reset obstacle spawn timer to create a longer clear path
   obstacleSpawnTimer = delayTime;
 
-  // Award points based on rocket type
-  obstacleScore += pointsAwarded;
+  // Create delayed point awards for the full potential points (regardless of pipes actually removed)
+  const pointDelay = Math.abs(delayTime) / maxPipesToRemove; // Divide delay evenly across max potential pipes
+
+  for (let i = 0; i < maxPipesToRemove; i++) {
+    setTimeout(() => {
+      obstacleScore += 5; // Award 5 points per pipe
+      console.log(
+        `Awarded 5 points from ${isNuke ? "nuke" : "mini nuke"} explosion (${
+          i + 1
+        }/${maxPipesToRemove})`
+      );
+    }, pointDelay * (i + 1));
+  }
 
   console.log(
     `${
       isNuke ? "Nuke" : "Mini nuke"
-    } exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, awarded ${pointsAwarded} points`
+    } exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, will award ${
+      pipesRemovedCount * 5
+    } points over time`
   );
 
   // Reset rocket state
