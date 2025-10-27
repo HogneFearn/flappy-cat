@@ -85,7 +85,7 @@ let availableShopItems = [
   {
     id: "nuke",
     name: "💥 Nuke",
-    price: 800,
+    price: 1000,
     description: "Clears 10 pipe sets (+50 points)",
     duration: "1 use",
   },

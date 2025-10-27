@@ -239,7 +239,7 @@ async function buyMiniNuke(sessionToken, currentWallet) {
 }
 
 async function buyNuke(sessionToken, currentWallet) {
-  const nukeCost = 800;
+  const nukeCost = 1000;
   if (currentWallet >= nukeCost) {
     const newWallet = currentWallet - nukeCost;
     const inventory = await loadPlayerInventory(sessionToken);
