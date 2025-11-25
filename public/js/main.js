@@ -322,6 +322,10 @@ function resetGameForNewPlayer() {
   miniNukeCount = 0;
   hasNuke = false;
   nukeCount = 0;
+  hasGhostShroom = false;
+  ghostShroomCount = 0;
+  isGhostActive = false;
+  ghostModeActivationTime = 0;
   isRocketActive = false;
   rocket = null;
   explosion = null;

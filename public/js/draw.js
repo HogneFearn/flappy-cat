@@ -57,7 +57,43 @@ function draw() {
   }
 
   // Draw player
-  if (
+  if (isGhostActive) {
+    // Check if we're in grace period
+    const timeSinceActivation = performance.now() - ghostModeActivationTime;
+    const inGracePeriod = timeSinceActivation <= ghostModeGracePeriod;
+
+    // Draw ghost cat when in ghost mode
+    if (
+      ghostCatImage &&
+      ghostCatImage.complete &&
+      ghostCatImage.naturalHeight !== 0
+    ) {
+      // Add pulsing transparency during grace period
+      if (inGracePeriod) {
+        const pulse = Math.sin(timeSinceActivation / 100) * 0.2 + 0.6; // Pulse between 0.4 and 0.8
+        ctx.globalAlpha = pulse;
+
+        // Add glow effect during grace period
+        ctx.shadowColor = "#88ff88";
+        ctx.shadowBlur = 15;
+      } else {
+        ctx.globalAlpha = 0.7;
+      }
+
+      ctx.drawImage(ghostCatImage, player.x, player.y, player.w, player.h);
+      ctx.globalAlpha = 1.0; // Reset alpha
+      ctx.shadowBlur = 0; // Reset shadow
+    } else {
+      // Fallback to semi-transparent rectangle
+      if (inGracePeriod) {
+        const pulse = Math.sin(timeSinceActivation / 100) * 0.2 + 0.5;
+        ctx.fillStyle = `rgba(200, 200, 255, ${pulse})`;
+      } else {
+        ctx.fillStyle = "rgba(200, 200, 255, 0.5)";
+      }
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+    }
+  } else if (
     catImages[selectedCatColor] &&
     catImages[selectedCatColor].complete &&
     catImages[selectedCatColor].naturalHeight !== 0
@@ -262,6 +298,51 @@ function draw() {
         canvas.width - 20,
         uiLineOffset
       );
+    }
+    uiLineOffset += 20;
+  }
+
+  // Show ghost shroom status if active or in ghost mode
+  if ((hasGhostShroom && ghostShroomCount > 0) || isGhostActive) {
+    // Draw ghost shroom image
+    if (
+      ghostShroomImage &&
+      ghostShroomImage.complete &&
+      ghostShroomImage.naturalWidth > 0
+    ) {
+      const imageSize = 16;
+      const text = isGhostActive ? "GHOST MODE!" : ghostShroomCount + " left";
+      const imageX =
+        canvas.width - 20 - ctx.measureText(" " + text).width - imageSize;
+      const imageY = uiLineOffset - 12; // Center vertically with text
+      ctx.drawImage(ghostShroomImage, imageX, imageY, imageSize, imageSize);
+
+      // Add glow effect when ghost mode is active
+      if (isGhostActive) {
+        ctx.shadowColor = "#88ff88";
+        ctx.shadowBlur = 10;
+      }
+
+      ctx.fillText(text, canvas.width - 20, uiLineOffset);
+
+      // Reset shadow
+      ctx.shadowBlur = 0;
+    } else {
+      // Fallback to emoji
+      const text = isGhostActive
+        ? "👻 GHOST MODE!"
+        : "👻 " + ghostShroomCount + " left";
+
+      // Add glow effect when ghost mode is active
+      if (isGhostActive) {
+        ctx.shadowColor = "#88ff88";
+        ctx.shadowBlur = 10;
+      }
+
+      ctx.fillText(text, canvas.width - 20, uiLineOffset);
+
+      // Reset shadow
+      ctx.shadowBlur = 0;
     }
     uiLineOffset += 20;
   }
@@ -835,6 +916,7 @@ function draw() {
       const isOwned =
         (item.id === "magnet" && magnetRoundsLeft > 0) ||
         (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0) ||
+        (item.id === "ghostShroom" && ghostShroomCount > 0) ||
         (item.id === "miniNuke" && miniNukeCount > 0) ||
         (item.id === "nuke" && nukeCount > 0);
 
@@ -869,6 +951,8 @@ function draw() {
         itemImage = redMagnetImage;
       } else if (item.id === "goldMagnet") {
         itemImage = goldMagnetImage;
+      } else if (item.id === "ghostShroom") {
+        itemImage = ghostShroomImage;
       } else if (item.id === "miniNuke") {
         itemImage = miniNukeImage;
       } else if (item.id === "nuke") {
@@ -917,6 +1001,8 @@ function draw() {
           statusText = `✓ ${magnetRoundsLeft} left`;
         } else if (item.id === "goldMagnet") {
           statusText = `✓ ${goldMagnetRoundsLeft} left`;
+        } else if (item.id === "ghostShroom") {
+          statusText = `✓ ${ghostShroomCount} left`;
         } else if (item.id === "miniNuke") {
           statusText = `✓ ${miniNukeCount} left`;
         } else if (item.id === "nuke") {

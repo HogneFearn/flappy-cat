@@ -372,6 +372,8 @@ function resetGame() {
   isRocketActive = false; // Reset rocket state
   rocket = null; // Clear rocket object
   explosion = null; // Clear explosion state
+  isGhostActive = false; // Reset ghost mode state
+  ghostModeActivationTime = 0; // Reset ghost mode timer
   for (let i = 0; i < 3; i++) spawnCoin();
 }
 
@@ -503,12 +505,84 @@ function update() {
 
   // Ground collision
   if (player.y + player.h > groundY) {
-    handleGameOver();
+    if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+      // Activate ghost mode on first hit
+      isGhostActive = true;
+      ghostModeActivationTime = performance.now(); // Record activation time
+      ghostShroomCount--;
+      if (ghostShroomCount <= 0) {
+        hasGhostShroom = false;
+      }
+      // Save updated inventory
+      savePlayerInventory(currentSession.sessionToken, {
+        magnetRoundsLeft: magnetRoundsLeft || 0,
+        miniNukeCount: miniNukeCount,
+        nukeCount: nukeCount,
+        ghostShroomCount: ghostShroomCount,
+      });
+      console.log(
+        "Ghost mode activated (ground hit)! Ghost shrooms left:",
+        ghostShroomCount
+      );
+      // Bounce back up slightly to prevent getting stuck
+      player.y = groundY - player.h;
+      player.vy = -2;
+    } else if (isGhostActive) {
+      // Check if grace period has expired
+      const timeSinceActivation = performance.now() - ghostModeActivationTime;
+      if (timeSinceActivation > ghostModeGracePeriod) {
+        // Grace period expired, trigger game over
+        handleGameOver();
+      } else {
+        // During grace period, bounce back
+        player.y = groundY - player.h;
+        player.vy = -2;
+      }
+    } else {
+      // No ghost shroom available
+      handleGameOver();
+    }
   }
 
   // Ceiling collision
   if (player.y < 0) {
-    handleGameOver();
+    if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+      // Activate ghost mode on first hit
+      isGhostActive = true;
+      ghostModeActivationTime = performance.now(); // Record activation time
+      ghostShroomCount--;
+      if (ghostShroomCount <= 0) {
+        hasGhostShroom = false;
+      }
+      // Save updated inventory
+      savePlayerInventory(currentSession.sessionToken, {
+        magnetRoundsLeft: magnetRoundsLeft || 0,
+        miniNukeCount: miniNukeCount,
+        nukeCount: nukeCount,
+        ghostShroomCount: ghostShroomCount,
+      });
+      console.log(
+        "Ghost mode activated (ceiling hit)! Ghost shrooms left:",
+        ghostShroomCount
+      );
+      // Bounce back down slightly to prevent getting stuck
+      player.y = 0;
+      player.vy = 2;
+    } else if (isGhostActive) {
+      // Check if grace period has expired
+      const timeSinceActivation = performance.now() - ghostModeActivationTime;
+      if (timeSinceActivation > ghostModeGracePeriod) {
+        // Grace period expired, trigger game over
+        handleGameOver();
+      } else {
+        // During grace period, bounce back
+        player.y = 0;
+        player.vy = 2;
+      }
+    } else {
+      // No ghost shroom available
+      handleGameOver();
+    }
   }
 
   // Only move world objects if game has started
@@ -600,7 +674,38 @@ function update() {
         player.x + player.w > obstacle.x &&
         player.y < obstacle.topHeight
       ) {
-        handleGameOver();
+        if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+          // Activate ghost mode on first hit
+          isGhostActive = true;
+          ghostModeActivationTime = performance.now(); // Record activation time
+          ghostShroomCount--;
+          if (ghostShroomCount <= 0) {
+            hasGhostShroom = false;
+          }
+          // Save updated inventory
+          savePlayerInventory(currentSession.sessionToken, {
+            magnetRoundsLeft: magnetRoundsLeft || 0,
+            miniNukeCount: miniNukeCount,
+            nukeCount: nukeCount,
+            ghostShroomCount: ghostShroomCount,
+          });
+          console.log(
+            "Ghost mode activated! Ghost shrooms left:",
+            ghostShroomCount
+          );
+        } else if (isGhostActive) {
+          // Check if grace period has expired
+          const timeSinceActivation =
+            performance.now() - ghostModeActivationTime;
+          if (timeSinceActivation > ghostModeGracePeriod) {
+            // Grace period expired, trigger game over
+            handleGameOver();
+          }
+          // Otherwise, ignore collision during grace period
+        } else {
+          // No ghost shroom available
+          handleGameOver();
+        }
       }
 
       // Bottom pipe collision
@@ -609,7 +714,38 @@ function update() {
         player.x + player.w > obstacle.x &&
         player.y + player.h > obstacle.bottomY
       ) {
-        handleGameOver();
+        if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+          // Activate ghost mode on first hit
+          isGhostActive = true;
+          ghostModeActivationTime = performance.now(); // Record activation time
+          ghostShroomCount--;
+          if (ghostShroomCount <= 0) {
+            hasGhostShroom = false;
+          }
+          // Save updated inventory
+          savePlayerInventory(currentSession.sessionToken, {
+            magnetRoundsLeft: magnetRoundsLeft || 0,
+            miniNukeCount: miniNukeCount,
+            nukeCount: nukeCount,
+            ghostShroomCount: ghostShroomCount,
+          });
+          console.log(
+            "Ghost mode activated! Ghost shrooms left:",
+            ghostShroomCount
+          );
+        } else if (isGhostActive) {
+          // Check if grace period has expired
+          const timeSinceActivation =
+            performance.now() - ghostModeActivationTime;
+          if (timeSinceActivation > ghostModeGracePeriod) {
+            // Grace period expired, trigger game over
+            handleGameOver();
+          }
+          // Otherwise, ignore collision during grace period
+        } else {
+          // No ghost shroom available
+          handleGameOver();
+        }
       }
 
       // Score when passing obstacle
@@ -676,6 +812,18 @@ async function buyNukeItem() {
     totalCoinsWallet = result.newWallet;
     nukeCount = result.inventory.nukeCount;
     hasNuke = nukeCount > 0;
+  }
+}
+
+async function buyGhostShroomItem() {
+  const result = await buyGhostShroom(
+    currentSession.sessionToken,
+    totalCoinsWallet
+  );
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    ghostShroomCount = result.inventory.ghostShroomCount;
+    hasGhostShroom = ghostShroomCount > 0;
   }
 }
 

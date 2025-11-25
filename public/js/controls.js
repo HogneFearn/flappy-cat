@@ -98,6 +98,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
             buyGoldMagnetItem();
           }
+        } else if (item && shopCoord.itemId === "ghostShroom") {
+          if (totalCoinsWallet >= item.price && ghostShroomCount === 0) {
+            buyGhostShroomItem();
+          }
         } else if (item && shopCoord.itemId === "miniNuke") {
           if (totalCoinsWallet >= item.price) {
             buyMiniNukeItem();
@@ -295,6 +299,10 @@ canvas.addEventListener("click", (e) => {
         } else if (item && shopCoord.itemId === "goldMagnet") {
           if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
             buyGoldMagnetItem();
+          }
+        } else if (item && shopCoord.itemId === "ghostShroom") {
+          if (totalCoinsWallet >= item.price && ghostShroomCount === 0) {
+            buyGhostShroomItem();
           }
         } else if (item && shopCoord.itemId === "miniNuke") {
           if (totalCoinsWallet >= item.price) {

@@ -253,6 +253,21 @@ async function buyNuke(sessionToken, currentWallet) {
   return { success: false };
 }
 
+async function buyGhostShroom(sessionToken, currentWallet) {
+  const ghostShroomCost = 300;
+  if (currentWallet >= ghostShroomCost) {
+    const newWallet = currentWallet - ghostShroomCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.ghostShroomCount = (inventory.ghostShroomCount || 0) + 1; // 1 use per purchase
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 // Player-specific high score functions
 async function loadPlayerHighScore(sessionToken) {
   if (!sessionToken) {
@@ -320,6 +335,9 @@ async function initializeGameData() {
 
     nukeCount = inventory.nukeCount || 0;
     hasNuke = nukeCount > 0; // Set hasNuke based on count
+
+    ghostShroomCount = inventory.ghostShroomCount || 0;
+    hasGhostShroom = ghostShroomCount > 0; // Set hasGhostShroom based on count
 
     // Load color preference
     selectedCatColor = await getPlayerColor(currentSession.sessionToken);

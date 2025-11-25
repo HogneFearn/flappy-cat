@@ -52,6 +52,11 @@ let hasMiniNuke = false;
 let miniNukeCount = 0;
 let hasNuke = false;
 let nukeCount = 0;
+let hasGhostShroom = false;
+let ghostShroomCount = 0;
+let isGhostActive = false;
+let ghostModeActivationTime = 0; // Track when ghost mode was activated
+let ghostModeGracePeriod = 2000; // 2 seconds of invincibility in milliseconds
 let isRocketActive = false;
 let rocket = null; // Will store rocket position and animation data
 let rocketButtonCoords = {}; // Store rocket button coordinates for click detection
@@ -74,6 +79,13 @@ let availableShopItems = [
     price: 700,
     description: "Stronger magnet with faster pull",
     duration: "1 round",
+  },
+  {
+    id: "ghostShroom",
+    name: "👻 Ghost Shroom",
+    price: 300,
+    description: "Survive one obstacle hit",
+    duration: "1 use",
   },
   {
     id: "miniNuke",
@@ -153,6 +165,14 @@ miniNukeImage.src = "mini-nuke.png";
 // Nuke image
 const nukeImage = new Image();
 nukeImage.src = "nuke.png";
+
+// Ghost shroom image
+const ghostShroomImage = new Image();
+ghostShroomImage.src = "ghost_shroom.png";
+
+// Ghost cat image
+const ghostCatImage = new Image();
+ghostCatImage.src = "ghost_cat.png";
 
 // Mobile detection
 const isMobile =
