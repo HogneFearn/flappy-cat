@@ -881,12 +881,13 @@ function draw() {
     // Use fixed canvas dimensions for calculation (mobile = 400px wide)
     const baseCanvasWidth = isMobile ? 400 : canvas.width;
     const itemSize = isMobile ? 65 : 60;
-    const spacing = isMobile ? 85 : 80;
+    const spacingX = isMobile ? 85 : 80;
+    const spacingY = isMobile ? 130 : 120; // Increased vertical spacing to prevent overlap
     const touchPadding = isMobile ? 15 : 5;
 
     // Calculate grid positioning based on logical canvas size
-    const totalGridWidth = itemsPerRow * spacing;
-    const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacing / 2;
+    const totalGridWidth = itemsPerRow * spacingX;
+    const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacingX / 2;
     const startY = 120;
 
     // Clear the shop grid coordinates array
@@ -898,8 +899,8 @@ function draw() {
       const col = i % itemsPerRow;
 
       // Calculate exact positions
-      const x = startX + col * spacing - itemSize / 2;
-      const y = startY + row * spacing - itemSize / 2;
+      const x = startX + col * spacingX - itemSize / 2;
+      const y = startY + row * spacingY - itemSize / 2;
 
       // Store coordinates for click detection with larger touch area
       shopGridCoords.push({
