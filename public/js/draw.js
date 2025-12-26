@@ -162,14 +162,18 @@ function draw() {
     ctx.fillStyle = "rgba(255, 165, 0, 0.6)"; // Orange trail
     ctx.fillRect(rocket.x - 20, rocket.y + 5, 20, 10);
 
+    // Determine which image to use based on rocket type
+    let rocketImage = miniNukeImage;
+    if (rocket.type === "nuke") {
+      rocketImage = nukeImage;
+    } else if (rocket.type === "goldNuke") {
+      rocketImage = goldNukeImage;
+    }
+
     // Draw rocket image if loaded, otherwise use rectangle
-    if (
-      miniNukeImage &&
-      miniNukeImage.complete &&
-      miniNukeImage.naturalWidth > 0
-    ) {
+    if (rocketImage && rocketImage.complete && rocketImage.naturalWidth > 0) {
       const rocketSize = 25;
-      ctx.drawImage(miniNukeImage, rocket.x, rocket.y, rocketSize, rocketSize);
+      ctx.drawImage(rocketImage, rocket.x, rocket.y, rocketSize, rocketSize);
     } else {
       // Fallback rocket
       ctx.fillStyle = "#32CD32"; // Green color
@@ -459,6 +463,55 @@ function draw() {
       ctx.font = "12px Arial";
       ctx.textAlign = "left";
       ctx.fillText(nukeCountText, nukeCountX, nukeCountY);
+    }
+
+    // Draw gold nuke button (only when player has gold nukes)
+    if (hasGoldNuke && goldNukeCount > 0 && !isRocketActive) {
+      const goldNukeButtonY = buttonY + buttonSize * 3 + 110; // Below nuke button with gap
+
+      // Store gold nuke button coordinates for click detection
+      goldNukeButtonCoords = {
+        x: buttonX,
+        y: goldNukeButtonY,
+        width: buttonSize,
+        height: buttonSize,
+      };
+
+      // Draw gold nuke image or fallback
+      if (
+        goldNukeImage &&
+        goldNukeImage.complete &&
+        goldNukeImage.naturalWidth > 0
+      ) {
+        const imageSize = buttonSize;
+        const imageX = buttonX + (buttonSize - imageSize) / 2;
+        const imageY = goldNukeButtonY + (buttonSize - imageSize) / 2;
+        ctx.drawImage(goldNukeImage, imageX, imageY, imageSize, imageSize);
+      } else {
+        // Draw gold nuke emoji
+        ctx.font = "24px Arial"; // Slightly smaller for emoji
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "☢️",
+          buttonX + buttonSize / 2,
+          goldNukeButtonY + buttonSize / 2 + 8
+        );
+      }
+
+      // Draw gold nuke count with background for better visibility
+      const goldNukeCountText = goldNukeCount + "x";
+      const goldNukeCountX = buttonX - 25; // Position to the left of the button
+      const goldNukeCountY = goldNukeButtonY + buttonSize / 2 + 4;
+
+      // Draw background rectangle for text
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(goldNukeCountX - 3, goldNukeCountY - 10, 18, 14);
+
+      // Draw text
+      ctx.fillStyle = "#FFD700"; // Gold color for better contrast
+      ctx.font = "12px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(goldNukeCountText, goldNukeCountX, goldNukeCountY);
     }
 
     // Reset text alignment and font size
@@ -919,7 +972,8 @@ function draw() {
         (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0) ||
         (item.id === "ghostShroom" && ghostShroomCount > 0) ||
         (item.id === "miniNuke" && miniNukeCount > 0) ||
-        (item.id === "nuke" && nukeCount > 0);
+        (item.id === "nuke" && nukeCount > 0) ||
+        (item.id === "goldNuke" && goldNukeCount > 0);
 
       // Draw item box background with better colors
       if (isOwned) {
@@ -958,6 +1012,8 @@ function draw() {
         itemImage = miniNukeImage;
       } else if (item.id === "nuke") {
         itemImage = nukeImage;
+      } else if (item.id === "goldNuke") {
+        itemImage = goldNukeImage;
       }
 
       if (itemImage && itemImage.complete && itemImage.naturalWidth > 0) {
@@ -1008,6 +1064,8 @@ function draw() {
           statusText = `✓ ${miniNukeCount} left`;
         } else if (item.id === "nuke") {
           statusText = `✓ ${nukeCount} left`;
+        } else if (item.id === "goldNuke") {
+          statusText = `✓ ${goldNukeCount} left`;
         }
         ctx.fillText(statusText, x + itemSize / 2, y + itemSize + 40);
       } else if (!canAfford) {

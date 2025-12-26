@@ -5,7 +5,7 @@ const cors = require("cors");
 const crypto = require("crypto");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3007;
 
 // Middleware
 app.use(cors());
@@ -85,6 +85,38 @@ function initDatabase() {
   // Add mini_nuke_count column to existing tables (migration)
   db.run(
     `ALTER TABLE player_inventory ADD COLUMN mini_nuke_count INTEGER DEFAULT 0`,
+    (err) => {
+      // Ignore error if column already exists
+    }
+  );
+
+  // Add nuke_count column to existing tables (migration)
+  db.run(
+    `ALTER TABLE player_inventory ADD COLUMN nuke_count INTEGER DEFAULT 0`,
+    (err) => {
+      // Ignore error if column already exists
+    }
+  );
+
+  // Add gold_nuke_count column to existing tables (migration)
+  db.run(
+    `ALTER TABLE player_inventory ADD COLUMN gold_nuke_count INTEGER DEFAULT 0`,
+    (err) => {
+      // Ignore error if column already exists
+    }
+  );
+
+  // Add gold_magnet_rounds_left column to existing tables (migration)
+  db.run(
+    `ALTER TABLE player_inventory ADD COLUMN gold_magnet_rounds_left INTEGER DEFAULT 0`,
+    (err) => {
+      // Ignore error if column already exists
+    }
+  );
+
+  // Add ghost_shroom_count column to existing tables (migration)
+  db.run(
+    `ALTER TABLE player_inventory ADD COLUMN ghost_shroom_count INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
     }
@@ -295,7 +327,7 @@ app.post("/api/auth/signup", (req, res) => {
             username,
           ]);
           db.run(
-            "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count) VALUES (?, 0, 0)",
+            "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, nuke_count, gold_magnet_rounds_left) VALUES (?, 0, 0, 0, 0)",
             [username]
           );
           db.run(
@@ -503,7 +535,7 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
   db.get(
-    "SELECT magnet_rounds_left, mini_nuke_count FROM player_inventory WHERE player_name = ?",
+    "SELECT magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count FROM player_inventory WHERE player_name = ?",
     [playerName],
     (err, row) => {
       if (err) {
@@ -515,18 +547,29 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
         res.json({
           magnetRoundsLeft: row.magnet_rounds_left,
           miniNukeCount: row.mini_nuke_count || 0,
+          nukeCount: row.nuke_count || 0,
+          goldNukeCount: row.gold_nuke_count || 0,
+          goldMagnetRoundsLeft: row.gold_magnet_rounds_left || 0,
+          ghostShroomCount: row.ghost_shroom_count || 0,
         });
       } else {
         // Create new inventory with default values
         db.run(
-          "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count) VALUES (?, 0, 0)",
+          "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count) VALUES (?, 0, 0, 0, 0, 0, 0)",
           [playerName],
           function (err) {
             if (err) {
               res.status(500).json({ error: err.message });
               return;
             }
-            res.json({ magnetRoundsLeft: 0, miniNukeCount: 0 });
+            res.json({
+              magnetRoundsLeft: 0,
+              miniNukeCount: 0,
+              nukeCount: 0,
+              goldNukeCount: 0,
+              goldMagnetRoundsLeft: 0,
+              ghostShroomCount: 0,
+            });
           }
         );
       }
@@ -537,11 +580,26 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
 // Update player inventory
 app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
-  const { magnetRoundsLeft, miniNukeCount } = req.body;
+  const {
+    magnetRoundsLeft,
+    miniNukeCount,
+    nukeCount,
+    goldNukeCount,
+    goldMagnetRoundsLeft,
+    ghostShroomCount,
+  } = req.body;
 
   db.run(
-    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
-    [playerName, magnetRoundsLeft || 0, miniNukeCount || 0],
+    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+    [
+      playerName,
+      magnetRoundsLeft || 0,
+      miniNukeCount || 0,
+      nukeCount || 0,
+      goldNukeCount || 0,
+      goldMagnetRoundsLeft || 0,
+      ghostShroomCount || 0,
+    ],
     function (err) {
       if (err) {
         res.status(500).json({ error: err.message });

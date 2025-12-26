@@ -253,6 +253,21 @@ async function buyNuke(sessionToken, currentWallet) {
   return { success: false };
 }
 
+async function buyGoldNuke(sessionToken, currentWallet) {
+  const goldNukeCost = 2000;
+  if (currentWallet >= goldNukeCost) {
+    const newWallet = currentWallet - goldNukeCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.goldNukeCount = (inventory.goldNukeCount || 0) + 1; // 1 use per purchase
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 async function buyGhostShroom(sessionToken, currentWallet) {
   const ghostShroomCost = 300;
   if (currentWallet >= ghostShroomCost) {
@@ -335,6 +350,9 @@ async function initializeGameData() {
 
     nukeCount = inventory.nukeCount || 0;
     hasNuke = nukeCount > 0; // Set hasNuke based on count
+
+    goldNukeCount = inventory.goldNukeCount || 0;
+    hasGoldNuke = goldNukeCount > 0; // Set hasGoldNuke based on count
 
     ghostShroomCount = inventory.ghostShroomCount || 0;
     hasGhostShroom = ghostShroomCount > 0; // Set hasGhostShroom based on count

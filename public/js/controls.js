@@ -110,6 +110,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price) {
             buyNukeItem();
           }
+        } else if (item && shopCoord.itemId === "goldNuke") {
+          if (totalCoinsWallet >= item.price) {
+            buyGoldNukeItem();
+          }
         }
         break;
       }
@@ -190,6 +194,26 @@ canvas.addEventListener("touchstart", (e) => {
     canvasY <= nukeButtonCoords.y + nukeButtonCoords.height
   ) {
     launchNuke();
+    return;
+  }
+
+  // Priority 2c: Check for gold nuke button click during gameplay (touchstart for better responsiveness)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasGoldNuke &&
+    goldNukeCount > 0 &&
+    !isRocketActive &&
+    goldNukeButtonCoords.x &&
+    canvasX >= goldNukeButtonCoords.x &&
+    canvasX <= goldNukeButtonCoords.x + goldNukeButtonCoords.width &&
+    canvasY >= goldNukeButtonCoords.y &&
+    canvasY <= goldNukeButtonCoords.y + goldNukeButtonCoords.height
+  ) {
+    launchGoldNuke();
     return;
   }
 
@@ -312,6 +336,10 @@ canvas.addEventListener("click", (e) => {
           if (totalCoinsWallet >= item.price) {
             buyNukeItem();
           }
+        } else if (item && shopCoord.itemId === "goldNuke") {
+          if (totalCoinsWallet >= item.price) {
+            buyGoldNukeItem();
+          }
         }
         break;
       }
@@ -392,6 +420,26 @@ canvas.addEventListener("click", (e) => {
     canvasY <= nukeButtonCoords.y + nukeButtonCoords.height
   ) {
     launchNuke();
+    return;
+  }
+
+  // Priority 2.7: Check for gold nuke button click (only when game is running, not paused, and has gold nukes)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasGoldNuke &&
+    goldNukeCount > 0 &&
+    !isRocketActive &&
+    goldNukeButtonCoords.x &&
+    canvasX >= goldNukeButtonCoords.x &&
+    canvasX <= goldNukeButtonCoords.x + goldNukeButtonCoords.width &&
+    canvasY >= goldNukeButtonCoords.y &&
+    canvasY <= goldNukeButtonCoords.y + goldNukeButtonCoords.height
+  ) {
+    launchGoldNuke();
     return;
   }
 

@@ -52,6 +52,8 @@ let hasMiniNuke = false;
 let miniNukeCount = 0;
 let hasNuke = false;
 let nukeCount = 0;
+let hasGoldNuke = false;
+let goldNukeCount = 0;
 let hasGhostShroom = false;
 let ghostShroomCount = 0;
 let isGhostActive = false;
@@ -61,37 +63,18 @@ let isRocketActive = false;
 let rocket = null; // Will store rocket position and animation data
 let rocketButtonCoords = {}; // Store rocket button coordinates for click detection
 let nukeButtonCoords = {}; // Store nuke button coordinates for click detection
+let goldNukeButtonCoords = {}; // Store gold nuke button coordinates for click detection
 let explosion = null; // Will store explosion animation data
+let lastExplosionType = null; // Track the type of the last explosion
 let shopGridCoords = []; // Will store the exact coordinates of each shop item button
 
 // Shop items configuration
 let availableShopItems = [
   {
-    id: "magnet",
-    name: "🧲 Coin Magnet",
-    price: 200,
-    description: "Attracts coins from 7x distance",
-    duration: "3 rounds",
-  },
-  {
-    id: "goldMagnet",
-    name: "🟡 Gold Magnet",
-    price: 700,
-    description: "Stronger magnet with faster pull",
-    duration: "1 round",
-  },
-  {
-    id: "ghostShroom",
-    name: "👻 Ghost Shroom",
-    price: 300,
-    description: "Survive one obstacle hit",
-    duration: "1 use",
-  },
-  {
-    id: "miniNuke",
-    name: "🚀 Mini Nuke",
-    price: 500,
-    description: "Clears 3 pipe sets (+15 points)",
+    id: "goldNuke",
+    name: "☢️ Gold Nuke",
+    price: 2450,
+    description: "Clears 20 pipes + 2x coins",
     duration: "1 use",
   },
   {
@@ -100,6 +83,34 @@ let availableShopItems = [
     price: 1000,
     description: "Clears 10 pipe sets (+50 points)",
     duration: "1 use",
+  },
+  {
+    id: "goldMagnet",
+    name: "🟡 Gold Magnet",
+    price: 750,
+    description: "Stronger magnet with faster pull",
+    duration: "1 round",
+  },
+  {
+    id: "ghostShroom",
+    name: "👻 Ghost Shroom",
+    price: 650,
+    description: "Survive one obstacle hit",
+    duration: "1 use",
+  },
+  {
+    id: "miniNuke",
+    name: "🚀 Mini Nuke",
+    price: 350,
+    description: "Clears 3 pipe sets (+15 points)",
+    duration: "1 use",
+  },
+  {
+    id: "magnet",
+    name: "🧲 Coin Magnet",
+    price: 200,
+    description: "Attracts coins from 7x distance",
+    duration: "3 rounds",
   },
 ];
 
@@ -165,6 +176,10 @@ miniNukeImage.src = "mini-nuke.png";
 // Nuke image
 const nukeImage = new Image();
 nukeImage.src = "nuke.png";
+
+// Gold Nuke image
+const goldNukeImage = new Image();
+goldNukeImage.src = "gold_nuke.png";
 
 // Ghost shroom image
 const ghostShroomImage = new Image();

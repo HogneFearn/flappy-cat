@@ -3,6 +3,7 @@ let audioContext = null;
 let soundBuffers = {
   miniNuke: null,
   nuke: null,
+  goldNuke: null,
   coin: null,
 };
 let audioInitialized = false;
@@ -24,6 +25,7 @@ async function initializeAudio() {
       await Promise.all([
         loadAudioBuffer("sounds/boom.mp3", "miniNuke"),
         loadAudioBuffer("sounds/big-boom.mp3", "nuke"),
+        loadAudioBuffer("sounds/big-boom.mp3", "goldNuke"), // Use same sound for gold nuke
         loadAudioBuffer("sounds/coin.mp3", "coin"),
       ]);
 
@@ -86,7 +88,12 @@ function playExplosionSound(rocketType = "miniNuke") {
     initializeAudio();
   }
 
-  const soundKey = rocketType === "nuke" ? "nuke" : "miniNuke";
+  let soundKey = "miniNuke";
+  if (rocketType === "nuke") {
+    soundKey = "nuke";
+  } else if (rocketType === "goldNuke") {
+    soundKey = "goldNuke";
+  }
   playSound(soundKey, 1.0);
 }
 
@@ -293,6 +300,9 @@ async function handleGameOver() {
     // Always include nuke count (doesn't decrease on game over)
     inventory.nukeCount = nukeCount;
 
+    // Always include gold nuke count (doesn't decrease on game over)
+    inventory.goldNukeCount = goldNukeCount;
+
     // Save updated inventory
     await savePlayerInventory(currentSession.sessionToken, inventory);
   }
@@ -372,6 +382,7 @@ function resetGame() {
   isRocketActive = false; // Reset rocket state
   rocket = null; // Clear rocket object
   explosion = null; // Clear explosion state
+  lastExplosionType = null; // Reset last explosion type
   isGhostActive = false; // Reset ghost mode state
   ghostModeActivationTime = 0; // Reset ghost mode timer
   for (let i = 0; i < 3; i++) spawnCoin();
@@ -766,7 +777,9 @@ function update() {
     }
 
     // Ensure there are always coins on screen
-    if (coins.length < 3) {
+    const coinLimit =
+      obstacleSpawnTimer < 0 && lastExplosionType === "goldNuke" ? 6 : 3;
+    if (coins.length < coinLimit) {
       spawnCoin();
     }
   } // End of gameStarted condition
@@ -812,6 +825,18 @@ async function buyNukeItem() {
     totalCoinsWallet = result.newWallet;
     nukeCount = result.inventory.nukeCount;
     hasNuke = nukeCount > 0;
+  }
+}
+
+async function buyGoldNukeItem() {
+  const result = await buyGoldNuke(
+    currentSession.sessionToken,
+    totalCoinsWallet
+  );
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    goldNukeCount = result.inventory.goldNukeCount;
+    hasGoldNuke = goldNukeCount > 0;
   }
 }
 
@@ -867,6 +892,8 @@ function launchRocket() {
     magnetRoundsLeft: magnetRoundsLeft || 0,
     miniNukeCount: miniNukeCount,
     nukeCount: nukeCount,
+    goldNukeCount: goldNukeCount,
+    ghostShroomCount: ghostShroomCount,
   });
 
   console.log("Mini nuke launched! Mini nukes left:", miniNukeCount);
@@ -893,9 +920,39 @@ function launchNuke() {
     magnetRoundsLeft: magnetRoundsLeft || 0,
     miniNukeCount: miniNukeCount,
     nukeCount: nukeCount,
+    goldNukeCount: goldNukeCount,
+    ghostShroomCount: ghostShroomCount,
   });
 
   console.log("Nuke launched! Nukes left:", nukeCount);
+}
+
+function launchGoldNuke() {
+  if (!hasGoldNuke || goldNukeCount <= 0 || isRocketActive) {
+    return;
+  }
+
+  // Initialize gold nuke rocket at player position
+  rocket = {
+    x: player.x + player.w,
+    y: player.y + player.h / 2 - 7.5, // Center vertically with player
+    speed: 8, // Fast movement speed
+    type: "goldNuke", // Track rocket type
+  };
+
+  isRocketActive = true;
+  goldNukeCount--;
+
+  // Save updated inventory
+  savePlayerInventory(currentSession.sessionToken, {
+    magnetRoundsLeft: magnetRoundsLeft || 0,
+    miniNukeCount: miniNukeCount,
+    nukeCount: nukeCount,
+    goldNukeCount: goldNukeCount,
+    ghostShroomCount: ghostShroomCount,
+  });
+
+  console.log("Gold Nuke launched! Gold Nukes left:", goldNukeCount);
 }
 
 function updateRocket() {
@@ -916,9 +973,28 @@ function updateRocket() {
 
 function createExplosion(x, y) {
   const isNuke = rocket && rocket.type === "nuke";
-  const particleCount = isNuke ? 60 : 20; // 3x more particles for nuke
-  const maxVelocity = isNuke ? 6 : 2; // 3x faster velocity for nuke particles
-  const maxSize = isNuke ? 18 : 6; // 3x larger particles for nuke
+  const isGoldNuke = rocket && rocket.type === "goldNuke";
+
+  let particleCount = 20;
+  let maxVelocity = 2;
+  let maxSize = 6;
+  let duration = 500;
+  let maxRadius = 80;
+
+  if (isNuke) {
+    particleCount = 60;
+    maxVelocity = 6;
+    maxSize = 18;
+    duration = 1000;
+    maxRadius = 240;
+  } else if (isGoldNuke) {
+    particleCount = 100; // Even more particles
+    maxVelocity = 8;
+    maxSize = 22;
+    duration = 1500;
+    maxRadius = 320;
+  }
+
   const particles = [];
 
   // Create explosion particles
@@ -941,8 +1017,8 @@ function createExplosion(x, y) {
     x: x,
     y: y,
     timer: 0,
-    duration: isNuke ? 1000 : 500, // 2x longer duration for nuke
-    maxRadius: isNuke ? 240 : 80, // 3x larger radius for nuke
+    duration: duration,
+    maxRadius: maxRadius,
     particles: particles,
   };
 }
@@ -966,11 +1042,24 @@ function explodeRocket() {
   }
 
   const isNuke = rocket && rocket.type === "nuke";
+  const isGoldNuke = rocket && rocket.type === "goldNuke";
+
+  // Store explosion type for coin spawning logic
+  lastExplosionType = rocket.type;
 
   // Play appropriate explosion sound based on rocket type
   playExplosionSound(rocket.type);
-  const maxPipesToRemove = isNuke ? 10 : 3; // Nuke clears 10 pipes, mini nuke clears 3
-  const delayTime = isNuke ? -8000 : -4000; // Nuke creates longer clear path
+
+  let maxPipesToRemove = 3;
+  let delayTime = -4000;
+
+  if (isNuke) {
+    maxPipesToRemove = 10;
+    delayTime = -8000;
+  } else if (isGoldNuke) {
+    maxPipesToRemove = 20;
+    delayTime = -16000; // Even longer clear path
+  }
 
   const playerRightEdge = player.x + player.w;
 
@@ -999,18 +1088,24 @@ function explodeRocket() {
   for (let i = 0; i < maxPipesToRemove; i++) {
     setTimeout(() => {
       obstacleScore += 5; // Award 5 points per pipe
+      let explosionName = "mini nuke";
+      if (isNuke) explosionName = "nuke";
+      if (isGoldNuke) explosionName = "gold nuke";
+
       console.log(
-        `Awarded 5 points from ${isNuke ? "nuke" : "mini nuke"} explosion (${
+        `Awarded 5 points from ${explosionName} explosion (${
           i + 1
         }/${maxPipesToRemove})`
       );
     }, pointDelay * (i + 1));
   }
 
+  let explosionName = "Mini nuke";
+  if (isNuke) explosionName = "Nuke";
+  if (isGoldNuke) explosionName = "Gold nuke";
+
   console.log(
-    `${
-      isNuke ? "Nuke" : "Mini nuke"
-    } exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, will award ${
+    `${explosionName} exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, will award ${
       pipesRemovedCount * 5
     } points over time`
   );
@@ -1025,5 +1120,8 @@ function explodeRocket() {
   }
   if (nukeCount <= 0) {
     hasNuke = false;
+  }
+  if (goldNukeCount <= 0) {
+    hasGoldNuke = false;
   }
 }
