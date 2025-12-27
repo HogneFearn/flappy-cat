@@ -71,17 +71,24 @@ let shopGridCoords = []; // Will store the exact coordinates of each shop item b
 // Shop items configuration
 let availableShopItems = [
   {
-    id: "goldNuke",
-    name: "☢️ Gold Nuke",
-    price: 2450,
-    description: "Clears 20 pipes + 2x coins",
+    id: "magnet",
+    name: "🧲 Coin Magnet",
+    price: 200,
+    description: "Attracts coins from 7x distance",
+    duration: "3 rounds",
+  },
+  {
+    id: "miniNuke",
+    name: "🚀 Mini Nuke",
+    price: 350,
+    description: "Clears 3 pipe sets (+15 points)",
     duration: "1 use",
   },
   {
-    id: "nuke",
-    name: "💥 Nuke",
-    price: 1000,
-    description: "Clears 10 pipe sets (+50 points)",
+    id: "ghostShroom",
+    name: "👻 Ghost Shroom",
+    price: 650,
+    description: "Survive one obstacle hit",
     duration: "1 use",
   },
   {
@@ -92,25 +99,18 @@ let availableShopItems = [
     duration: "1 round",
   },
   {
-    id: "ghostShroom",
-    name: "👻 Ghost Shroom",
-    price: 650,
-    description: "Survive one obstacle hit",
+    id: "nuke",
+    name: "💥 Nuke",
+    price: 1000,
+    description: "Clears 10 pipe sets (+50 points)",
     duration: "1 use",
   },
   {
-    id: "miniNuke",
-    name: "🚀 Mini Nuke",
-    price: 350,
-    description: "Clears 3 pipe sets (+15 points)",
+    id: "goldNuke",
+    name: "☢️ Gold Nuke",
+    price: 2450,
+    description: "Clears 20 pipes + 2x coins",
     duration: "1 use",
-  },
-  {
-    id: "magnet",
-    name: "🧲 Coin Magnet",
-    price: 200,
-    description: "Attracts coins from 7x distance",
-    duration: "3 rounds",
   },
 ];
 

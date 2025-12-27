@@ -1088,6 +1088,18 @@ function explodeRocket() {
   for (let i = 0; i < maxPipesToRemove; i++) {
     setTimeout(() => {
       obstacleScore += 5; // Award 5 points per pipe
+
+      // Update game speed based on new score with safeguards
+      const newSpeed = calculateGameSpeed();
+      // Only update if the new speed is reasonable (prevent sudden spikes)
+      if (newSpeed <= gameSpeed + 0.5) {
+        gameSpeed = newSpeed;
+      } else {
+        console.warn(
+          `Prevented speed spike: ${gameSpeed} → ${newSpeed}, keeping current speed`
+        );
+      }
+
       let explosionName = "mini nuke";
       if (isNuke) explosionName = "nuke";
       if (isGoldNuke) explosionName = "gold nuke";
