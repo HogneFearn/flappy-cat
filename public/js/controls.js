@@ -102,6 +102,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price && ghostShroomCount === 0) {
             buyGhostShroomItem();
           }
+        } else if (item && shopCoord.itemId === "springBoots") {
+          if (totalCoinsWallet >= item.price && springBootsCount === 0) {
+            buySpringBootsItem();
+          }
         } else if (item && shopCoord.itemId === "miniNuke") {
           if (totalCoinsWallet >= item.price) {
             buyMiniNukeItem();
@@ -327,6 +331,10 @@ canvas.addEventListener("click", (e) => {
         } else if (item && shopCoord.itemId === "ghostShroom") {
           if (totalCoinsWallet >= item.price && ghostShroomCount === 0) {
             buyGhostShroomItem();
+          }
+        } else if (item && shopCoord.itemId === "springBoots") {
+          if (totalCoinsWallet >= item.price && springBootsCount === 0) {
+            buySpringBootsItem();
           }
         } else if (item && shopCoord.itemId === "miniNuke") {
           if (totalCoinsWallet >= item.price) {

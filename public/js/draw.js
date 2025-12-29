@@ -351,6 +351,34 @@ function draw() {
     uiLineOffset += 20;
   }
 
+  // Show spring boots status if active
+  if (hasSpringBoots && springBootsCount > 0) {
+    // Draw spring boots image
+    if (
+      springBootsImage &&
+      springBootsImage.complete &&
+      springBootsImage.naturalWidth > 0
+    ) {
+      const imageSize = 16;
+      const imageX =
+        canvas.width -
+        20 -
+        ctx.measureText(" " + springBootsCount + " left").width -
+        imageSize;
+      const imageY = uiLineOffset - 12; // Center vertically with text
+      ctx.drawImage(springBootsImage, imageX, imageY, imageSize, imageSize);
+      ctx.fillText(springBootsCount + " left", canvas.width - 20, uiLineOffset);
+    } else {
+      // Fallback to emoji
+      ctx.fillText(
+        "👢 " + springBootsCount + " left",
+        canvas.width - 20,
+        uiLineOffset
+      );
+    }
+    uiLineOffset += 20;
+  }
+
   // Draw pause button (only when game is running and started)
   if (gameRunning && gameStarted && gameNameEntered && !showAuthScreen) {
     const buttonSize = 30; // Size for the emoji area
@@ -971,6 +999,7 @@ function draw() {
         (item.id === "magnet" && magnetRoundsLeft > 0) ||
         (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0) ||
         (item.id === "ghostShroom" && ghostShroomCount > 0) ||
+        (item.id === "springBoots" && springBootsCount > 0) ||
         (item.id === "miniNuke" && miniNukeCount > 0) ||
         (item.id === "nuke" && nukeCount > 0) ||
         (item.id === "goldNuke" && goldNukeCount > 0);
@@ -1008,6 +1037,8 @@ function draw() {
         itemImage = goldMagnetImage;
       } else if (item.id === "ghostShroom") {
         itemImage = ghostShroomImage;
+      } else if (item.id === "springBoots") {
+        itemImage = springBootsImage;
       } else if (item.id === "miniNuke") {
         itemImage = miniNukeImage;
       } else if (item.id === "nuke") {
@@ -1060,6 +1091,8 @@ function draw() {
           statusText = `✓ ${goldMagnetRoundsLeft} left`;
         } else if (item.id === "ghostShroom") {
           statusText = `✓ ${ghostShroomCount} left`;
+        } else if (item.id === "springBoots") {
+          statusText = `✓ ${springBootsCount} left`;
         } else if (item.id === "miniNuke") {
           statusText = `✓ ${miniNukeCount} left`;
         } else if (item.id === "nuke") {

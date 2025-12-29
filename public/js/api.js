@@ -269,11 +269,26 @@ async function buyGoldNuke(sessionToken, currentWallet) {
 }
 
 async function buyGhostShroom(sessionToken, currentWallet) {
-  const ghostShroomCost = 300;
+  const ghostShroomCost = 650;
   if (currentWallet >= ghostShroomCost) {
     const newWallet = currentWallet - ghostShroomCost;
     const inventory = await loadPlayerInventory(sessionToken);
     inventory.ghostShroomCount = (inventory.ghostShroomCount || 0) + 1; // 1 use per purchase
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
+async function buySpringBoots(sessionToken, currentWallet) {
+  const springBootsCost = 550;
+  if (currentWallet >= springBootsCost) {
+    const newWallet = currentWallet - springBootsCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.springBootsCount = (inventory.springBootsCount || 0) + 1; // 1 use per purchase
 
     await savePlayerWallet(sessionToken, newWallet);
     await savePlayerInventory(sessionToken, inventory);

@@ -56,6 +56,8 @@ let hasGoldNuke = false;
 let goldNukeCount = 0;
 let hasGhostShroom = false;
 let ghostShroomCount = 0;
+let hasSpringBoots = false;
+let springBootsCount = 0;
 let isGhostActive = false;
 let ghostModeActivationTime = 0; // Track when ghost mode was activated
 let ghostModeGracePeriod = 2000; // 2 seconds of invincibility in milliseconds
@@ -64,6 +66,7 @@ let rocket = null; // Will store rocket position and animation data
 let rocketButtonCoords = {}; // Store rocket button coordinates for click detection
 let nukeButtonCoords = {}; // Store nuke button coordinates for click detection
 let goldNukeButtonCoords = {}; // Store gold nuke button coordinates for click detection
+let springBootsButtonCoords = {}; // Store spring boots button coordinates for click detection
 let explosion = null; // Will store explosion animation data
 let lastExplosionType = null; // Track the type of the last explosion
 let shopGridCoords = []; // Will store the exact coordinates of each shop item button
@@ -83,6 +86,13 @@ let availableShopItems = [
     price: 350,
     description: "Clears 3 pipe sets (+15 points)",
     duration: "1 use",
+  },
+  {
+    id: "springBoots",
+    name: "👢 Spring Boots",
+    price: 550,
+    description: "Super jump on ground hit",
+    duration: "1 round",
   },
   {
     id: "ghostShroom",
@@ -184,6 +194,10 @@ goldNukeImage.src = "gold_nuke.png";
 // Ghost shroom image
 const ghostShroomImage = new Image();
 ghostShroomImage.src = "ghost_shroom.png";
+
+// Spring boots image
+const springBootsImage = new Image();
+springBootsImage.src = "spring_boots.png";
 
 // Ghost cat image
 const ghostCatImage = new Image();

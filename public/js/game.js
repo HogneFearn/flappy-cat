@@ -5,6 +5,7 @@ let soundBuffers = {
   nuke: null,
   goldNuke: null,
   coin: null,
+  boing: null,
 };
 let audioInitialized = false;
 let masterGain = null;
@@ -27,6 +28,7 @@ async function initializeAudio() {
         loadAudioBuffer("sounds/big-boom.mp3", "nuke"),
         loadAudioBuffer("sounds/big-boom.mp3", "goldNuke"), // Use same sound for gold nuke
         loadAudioBuffer("sounds/coin.mp3", "coin"),
+        loadAudioBuffer("sounds/boing.mp3", "boing"),
       ]);
 
       audioInitialized = true;
@@ -104,6 +106,15 @@ function playCoinSound() {
   }
 
   playSound("coin", 0.8); // Slightly quieter for coin pickup
+}
+
+// Play boing sound with Web Audio API
+function playBoingSound() {
+  if (!audioInitialized) {
+    initializeAudio();
+  }
+
+  playSound("boing", 1.0);
 }
 
 function spawnCoin() {
@@ -273,7 +284,7 @@ async function handleGameOver() {
   showGameOverButtons = false; // Start with just the game over message
 
   // Decrease magnet rounds if player has magnets
-  if (hasMagnet || hasGoldMagnet || hasMiniNuke) {
+  if (hasMagnet || hasGoldMagnet || hasMiniNuke || hasSpringBoots) {
     const inventory = {};
 
     if (hasMagnet) {
@@ -292,6 +303,12 @@ async function handleGameOver() {
         goldMagnetRoundsLeft = 0;
       }
       inventory.goldMagnetRoundsLeft = goldMagnetRoundsLeft;
+    }
+
+    if (hasSpringBoots) {
+      springBootsCount = 0;
+      hasSpringBoots = false;
+      inventory.springBootsCount = 0;
     }
 
     // Always include mini nuke count (doesn't decrease on game over)
@@ -516,7 +533,12 @@ function update() {
 
   // Ground collision
   if (player.y + player.h > groundY) {
-    if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+    if (hasSpringBoots && springBootsCount > 0) {
+      playBoingSound();
+      player.vy = -16.3; // High vertical jump but safe from ceiling
+      player.y = groundY - player.h - 10; // Immediate height boost
+      console.log("Spring boots bounce!");
+    } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
       // Activate ghost mode on first hit
       isGhostActive = true;
       ghostModeActivationTime = performance.now(); // Record activation time
@@ -849,6 +871,18 @@ async function buyGhostShroomItem() {
     totalCoinsWallet = result.newWallet;
     ghostShroomCount = result.inventory.ghostShroomCount;
     hasGhostShroom = ghostShroomCount > 0;
+  }
+}
+
+async function buySpringBootsItem() {
+  const result = await buySpringBoots(
+    currentSession.sessionToken,
+    totalCoinsWallet
+  );
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    springBootsCount = result.inventory.springBootsCount;
+    hasSpringBoots = springBootsCount > 0;
   }
 }
 
