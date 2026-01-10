@@ -416,214 +416,166 @@ function draw() {
       buttonY + buttonSize / 2 + 8
     );
 
-    // Draw rocket button (only when player has mini nukes)
-    if (hasMiniNuke && miniNukeCount > 0 && !isRocketActive) {
-      const rocketButtonY = buttonY + buttonSize + 100; // 20px gap between buttons
+    // Reset action button coordinates
+    rocketButtonCoords = {};
+    nukeButtonCoords = {};
+    goldNukeButtonCoords = {};
+    energyCapeButtonCoords = {};
 
-      // Store rocket button coordinates for click detection
-      rocketButtonCoords = {
-        x: buttonX,
-        y: rocketButtonY,
-        width: buttonSize,
-        height: buttonSize,
-      };
+    // Draw action buttons (bottom bar)
+    // Ground area starts at groundY and goes to canvas.height (~80px height)
+    const actionBtnSize = 50;
+    const actionBtnGap = 15;
+    const actionBtnY = groundY + (canvas.height - groundY - actionBtnSize) / 2;
 
-      // Draw mini nuke image or fallback
-      if (
-        miniNukeImage &&
-        miniNukeImage.complete &&
-        miniNukeImage.naturalWidth > 0
-      ) {
-        const imageSize = buttonSize;
-        const imageX = buttonX + (buttonSize - imageSize) / 2;
-        const imageY = rocketButtonY + (buttonSize - imageSize) / 2;
-        ctx.drawImage(miniNukeImage, imageX, imageY, imageSize, imageSize);
-      } else {
-        // Fallback to emoji if image not loaded
-        ctx.fillText(
-          "🚀",
-          buttonX + buttonSize / 2,
-          rocketButtonY + buttonSize / 2 + 8
+    // We will lay them out from Right to Left, starting near the right edge
+    let currentActionX = canvas.width - 20 - actionBtnSize;
+
+    // Helper function to draw an action button slot
+    const drawActionSlot = (
+      image,
+      fallbackEmoji,
+      count,
+      isActive,
+      isCooldown,
+      cooldownProgress
+    ) => {
+      // Draw background box
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent dark background
+      ctx.fillRect(currentActionX, actionBtnY, actionBtnSize, actionBtnSize);
+
+      // Draw border
+      ctx.strokeStyle = isActive ? "#FFFF00" : "#FFFFFF"; // Yellow if active, White otherwise
+      ctx.lineWidth = 2;
+      ctx.strokeRect(currentActionX, actionBtnY, actionBtnSize, actionBtnSize);
+
+      // Draw image or emoji
+      if (image && image.complete && image.naturalWidth > 0) {
+        const imgSize = actionBtnSize - 10;
+        ctx.drawImage(
+          image,
+          currentActionX + 5,
+          actionBtnY + 5,
+          imgSize,
+          imgSize
         );
-      }
-
-      // Draw mini nuke count with background for better visibility
-      const miniCountText = miniNukeCount + "x";
-      const miniCountX = buttonX - 25; // Position to the left of the button
-      const miniCountY = rocketButtonY + buttonSize / 2 + 4;
-
-      // Draw background rectangle for text
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(miniCountX - 3, miniCountY - 10, 18, 14);
-
-      // Draw text
-      ctx.fillStyle = "#FFD700"; // Gold color for better contrast
-      ctx.font = "12px Arial";
-      ctx.textAlign = "left";
-      ctx.fillText(miniCountText, miniCountX, miniCountY);
-    }
-
-    // Draw nuke button (only when player has nukes)
-    if (hasNuke && nukeCount > 0 && !isRocketActive) {
-      const nukeButtonY = buttonY + buttonSize * 2 + 105; // Below mini nuke button with gap
-
-      // Store nuke button coordinates for click detection
-      nukeButtonCoords = {
-        x: buttonX,
-        y: nukeButtonY,
-        width: buttonSize,
-        height: buttonSize,
-      };
-
-      // Draw nuke image or fallback
-      if (nukeImage && nukeImage.complete && nukeImage.naturalWidth > 0) {
-        const imageSize = buttonSize;
-        const imageX = buttonX + (buttonSize - imageSize) / 2;
-        const imageY = nukeButtonY + (buttonSize - imageSize) / 2;
-        ctx.drawImage(nukeImage, imageX, imageY, imageSize, imageSize);
       } else {
-        // Fallback to emoji if image not loaded
-        ctx.fillText(
-          "💥",
-          buttonX + buttonSize / 2,
-          nukeButtonY + buttonSize / 2 + 8
-        );
-      }
-
-      // Draw nuke count with background for better visibility
-      const nukeCountText = nukeCount + "x";
-      const nukeCountX = buttonX - 25; // Position to the left of the button
-      const nukeCountY = nukeButtonY + buttonSize / 2 + 4;
-
-      // Draw background rectangle for text
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(nukeCountX - 3, nukeCountY - 10, 18, 14);
-
-      // Draw text
-      ctx.fillStyle = "#FFD700"; // Gold color for better contrast
-      ctx.font = "12px Arial";
-      ctx.textAlign = "left";
-      ctx.fillText(nukeCountText, nukeCountX, nukeCountY);
-    }
-
-    // Draw gold nuke button (only when player has gold nukes)
-    if (hasGoldNuke && goldNukeCount > 0 && !isRocketActive) {
-      const goldNukeButtonY = buttonY + buttonSize * 3 + 110; // Below nuke button with gap
-
-      // Store gold nuke button coordinates for click detection
-      goldNukeButtonCoords = {
-        x: buttonX,
-        y: goldNukeButtonY,
-        width: buttonSize,
-        height: buttonSize,
-      };
-
-      // Draw gold nuke image or fallback
-      if (
-        goldNukeImage &&
-        goldNukeImage.complete &&
-        goldNukeImage.naturalWidth > 0
-      ) {
-        const imageSize = buttonSize;
-        const imageX = buttonX + (buttonSize - imageSize) / 2;
-        const imageY = goldNukeButtonY + (buttonSize - imageSize) / 2;
-        ctx.drawImage(goldNukeImage, imageX, imageY, imageSize, imageSize);
-      } else {
-        // Draw gold nuke emoji
-        ctx.font = "24px Arial"; // Slightly smaller for emoji
-        ctx.textAlign = "center";
-        ctx.fillText(
-          "☢️",
-          buttonX + buttonSize / 2,
-          goldNukeButtonY + buttonSize / 2 + 8
-        );
-      }
-
-      // Draw gold nuke count with background for better visibility
-      const goldNukeCountText = goldNukeCount + "x";
-      const goldNukeCountX = buttonX - 25; // Position to the left of the button
-      const goldNukeCountY = goldNukeButtonY + buttonSize / 2 + 4;
-
-      // Draw background rectangle for text
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(goldNukeCountX - 3, goldNukeCountY - 10, 18, 14);
-
-      // Draw text
-      ctx.fillStyle = "#FFD700"; // Gold color for better contrast
-      ctx.font = "12px Arial";
-      ctx.textAlign = "left";
-      ctx.fillText(goldNukeCountText, goldNukeCountX, goldNukeCountY);
-    }
-
-    // Draw energy cape dash button (only when player has energy cape)
-    if (hasEnergyCape && energyCapeRoundsLeft > 0 && !isRocketActive) {
-      const energyCapeButtonY = buttonY + buttonSize * 4 + 115; // Below gold nuke button with gap
-
-      // Store energy cape button coordinates for click detection
-      energyCapeButtonCoords = {
-        x: buttonX,
-        y: energyCapeButtonY,
-        width: buttonSize,
-        height: buttonSize,
-      };
-
-      // Draw energy cape image or fallback
-      if (
-        energyCapeImage &&
-        energyCapeImage.complete &&
-        energyCapeImage.naturalWidth > 0
-      ) {
-        const imageSize = buttonSize;
-        const imageX = buttonX + (buttonSize - imageSize) / 2;
-        const imageY = energyCapeButtonY + (buttonSize - imageSize) / 2;
-        ctx.drawImage(energyCapeImage, imageX, imageY, imageSize, imageSize);
-      } else {
-        // Draw emoji
+        ctx.fillStyle = "#FFFFFF";
         ctx.font = "24px Arial";
         ctx.textAlign = "center";
         ctx.fillText(
-          "⚡",
-          buttonX + buttonSize / 2,
-          energyCapeButtonY + buttonSize / 2 + 8
+          fallbackEmoji,
+          currentActionX + actionBtnSize / 2,
+          actionBtnY + actionBtnSize / 2 + 8
         );
       }
 
-      // Draw cooldown overlay if active
-      if (energyCapeReloadTimer > 0) {
-        const progress = energyCapeReloadTimer / energyCapeCooldown;
-        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      // Draw count badge
+      if (count !== undefined && count !== null) {
+        const countText = count + "x";
+        ctx.fillStyle = "#FFD700";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "right";
+        // Shadow for better visibility
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 2;
+        ctx.fillText(
+          countText,
+          currentActionX + actionBtnSize - 5,
+          actionBtnY + actionBtnSize - 5
+        );
+        ctx.shadowBlur = 0; // Reset shadow
+        ctx.textAlign = "left"; // Reset defaults
+      }
 
-        // Draw pie chart or filling rect
+      // Draw cooldown overlay
+      if (isCooldown && cooldownProgress > 0) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
         ctx.beginPath();
         ctx.moveTo(
-          buttonX + buttonSize / 2,
-          energyCapeButtonY + buttonSize / 2
+          currentActionX + actionBtnSize / 2,
+          actionBtnY + actionBtnSize / 2
         );
         ctx.arc(
-          buttonX + buttonSize / 2,
-          energyCapeButtonY + buttonSize / 2,
-          buttonSize / 2 + 2,
+          currentActionX + actionBtnSize / 2,
+          actionBtnY + actionBtnSize / 2,
+          actionBtnSize / 2,
           -Math.PI / 2,
-          -Math.PI / 2 + Math.PI * 2 * progress
+          -Math.PI / 2 + Math.PI * 2 * cooldownProgress
         );
         ctx.lineTo(
-          buttonX + buttonSize / 2,
-          energyCapeButtonY + buttonSize / 2
+          currentActionX + actionBtnSize / 2,
+          actionBtnY + actionBtnSize / 2
         );
         ctx.fill();
       }
 
-      // Draw active indicator if dashing
-      if (energyCapeActive) {
-        ctx.strokeStyle = "#FFFF00"; // Yellow glow
-        ctx.lineWidth = 2;
-        ctx.strokeRect(
-          buttonX - 2,
-          energyCapeButtonY - 2,
-          buttonSize + 4,
-          buttonSize + 4
-        );
-      }
+      // Return coordinates for click detection
+      const coords = {
+        x: currentActionX,
+        y: actionBtnY,
+        width: actionBtnSize,
+        height: actionBtnSize,
+      };
+
+      // Move X to the left for the next button
+      currentActionX -= actionBtnSize + actionBtnGap;
+
+      return coords;
+    };
+
+    // Draw buttons from Right to Left
+
+    // 1. Energy Cape (Rightmost)
+    if (hasEnergyCape && energyCapeRoundsLeft > 0) {
+      energyCapeButtonCoords = drawActionSlot(
+        energyCapeImage,
+        "⚡",
+        energyCapeRoundsLeft,
+        energyCapeActive,
+        energyCapeReloadTimer > 0 || isRocketActive,
+        energyCapeReloadTimer > 0
+          ? energyCapeReloadTimer / energyCapeCooldown
+          : isRocketActive
+          ? 1
+          : 0
+      );
+    }
+
+    // 2. Gold Nuke
+    if (hasGoldNuke && goldNukeCount > 0) {
+      goldNukeButtonCoords = drawActionSlot(
+        goldNukeImage,
+        "☢️",
+        goldNukeCount,
+        false,
+        isRocketActive,
+        isRocketActive ? 1 : 0
+      );
+    }
+
+    // 3. Nuke
+    if (hasNuke && nukeCount > 0) {
+      nukeButtonCoords = drawActionSlot(
+        nukeImage,
+        "💥",
+        nukeCount,
+        false,
+        isRocketActive,
+        isRocketActive ? 1 : 0
+      );
+    }
+
+    // 4. Mini Nuke (Leftmost)
+    if (hasMiniNuke && miniNukeCount > 0) {
+      rocketButtonCoords = drawActionSlot(
+        miniNukeImage,
+        "🚀",
+        miniNukeCount,
+        false,
+        isRocketActive,
+        isRocketActive ? 1 : 0
+      );
     }
 
     // Reset text alignment and font size
