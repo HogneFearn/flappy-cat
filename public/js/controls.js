@@ -118,6 +118,10 @@ canvas.addEventListener("touchstart", (e) => {
           if (totalCoinsWallet >= item.price) {
             buyGoldNukeItem();
           }
+        } else if (item && shopCoord.itemId === "energyCape") {
+          if (totalCoinsWallet >= item.price && energyCapeRoundsLeft === 0) {
+            buyEnergyCapeItem();
+          }
         }
         break;
       }
@@ -218,6 +222,28 @@ canvas.addEventListener("touchstart", (e) => {
     canvasY <= goldNukeButtonCoords.y + goldNukeButtonCoords.height
   ) {
     launchGoldNuke();
+    return;
+  }
+
+  // Priority 2d: Check for energy cape dash button click during gameplay
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasEnergyCape &&
+    energyCapeRoundsLeft > 0 &&
+    !energyCapeActive &&
+    energyCapeReloadTimer <= 0 &&
+    !isRocketActive &&
+    energyCapeButtonCoords.x &&
+    canvasX >= energyCapeButtonCoords.x &&
+    canvasX <= energyCapeButtonCoords.x + energyCapeButtonCoords.width &&
+    canvasY >= energyCapeButtonCoords.y &&
+    canvasY <= energyCapeButtonCoords.y + energyCapeButtonCoords.height
+  ) {
+    activateDash();
     return;
   }
 
@@ -348,6 +374,10 @@ canvas.addEventListener("click", (e) => {
           if (totalCoinsWallet >= item.price) {
             buyGoldNukeItem();
           }
+        } else if (item && shopCoord.itemId === "energyCape") {
+          if (totalCoinsWallet >= item.price && energyCapeRoundsLeft === 0) {
+            buyEnergyCapeItem();
+          }
         }
         break;
       }
@@ -448,6 +478,28 @@ canvas.addEventListener("click", (e) => {
     canvasY <= goldNukeButtonCoords.y + goldNukeButtonCoords.height
   ) {
     launchGoldNuke();
+    return;
+  }
+
+  // Priority 2.8: Check for energy cape dash button click (only when game is running, not paused, and has energy cape)
+  if (
+    gameRunning &&
+    gameStarted &&
+    gameNameEntered &&
+    !showAuthScreen &&
+    !gamePaused &&
+    hasEnergyCape &&
+    energyCapeRoundsLeft > 0 &&
+    !energyCapeActive &&
+    energyCapeReloadTimer <= 0 &&
+    !isRocketActive &&
+    energyCapeButtonCoords.x &&
+    canvasX >= energyCapeButtonCoords.x &&
+    canvasX <= energyCapeButtonCoords.x + energyCapeButtonCoords.width &&
+    canvasY >= energyCapeButtonCoords.y &&
+    canvasY <= energyCapeButtonCoords.y + energyCapeButtonCoords.height
+  ) {
+    activateDash();
     return;
   }
 

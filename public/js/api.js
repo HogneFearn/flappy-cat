@@ -298,6 +298,21 @@ async function buySpringBoots(sessionToken, currentWallet) {
   return { success: false };
 }
 
+async function buyEnergyCape(sessionToken, currentWallet) {
+  const energyCapeCost = 1750;
+  if (currentWallet >= energyCapeCost) {
+    const newWallet = currentWallet - energyCapeCost;
+    const inventory = await loadPlayerInventory(sessionToken);
+    inventory.energyCapeRoundsLeft = (inventory.energyCapeRoundsLeft || 0) + 1; // 1 round per purchase
+
+    await savePlayerWallet(sessionToken, newWallet);
+    await savePlayerInventory(sessionToken, inventory);
+
+    return { success: true, newWallet, inventory };
+  }
+  return { success: false };
+}
+
 // Player-specific high score functions
 async function loadPlayerHighScore(sessionToken) {
   if (!sessionToken) {
@@ -371,6 +386,9 @@ async function initializeGameData() {
 
     ghostShroomCount = inventory.ghostShroomCount || 0;
     hasGhostShroom = ghostShroomCount > 0; // Set hasGhostShroom based on count
+
+    energyCapeRoundsLeft = inventory.energyCapeRoundsLeft || 0;
+    hasEnergyCape = energyCapeRoundsLeft > 0; // Set hasEnergyCape based on rounds left
 
     // Load color preference
     selectedCatColor = await getPlayerColor(currentSession.sessionToken);

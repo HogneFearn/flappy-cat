@@ -284,7 +284,13 @@ async function handleGameOver() {
   showGameOverButtons = false; // Start with just the game over message
 
   // Decrease magnet rounds if player has magnets
-  if (hasMagnet || hasGoldMagnet || hasMiniNuke || hasSpringBoots) {
+  if (
+    hasMagnet ||
+    hasGoldMagnet ||
+    hasMiniNuke ||
+    hasSpringBoots ||
+    hasEnergyCape
+  ) {
     const inventory = {};
 
     if (hasMagnet) {
@@ -309,6 +315,12 @@ async function handleGameOver() {
       springBootsCount = 0;
       hasSpringBoots = false;
       inventory.springBootsCount = 0;
+    }
+
+    if (hasEnergyCape) {
+      energyCapeRoundsLeft = 0;
+      hasEnergyCape = false;
+      inventory.energyCapeRoundsLeft = 0;
     }
 
     // Always include mini nuke count (doesn't decrease on game over)
@@ -518,6 +530,11 @@ function update() {
   // Update rocket if active
   updateRocket();
 
+  // Update energy cape cooldown
+  if (energyCapeReloadTimer > 0) {
+    energyCapeReloadTimer -= deltaTime;
+  }
+
   // Update explosion if active
   updateExplosion();
 
@@ -526,9 +543,27 @@ function update() {
 
   // Only apply gravity and movement if game has started
   if (gameStarted) {
-    // Gravity (frame-rate independent)
-    player.vy += gravity * deltaMultiplier;
-    player.y += player.vy * deltaMultiplier;
+    if (energyCapeActive) {
+      // Dash physics: fly forward/right, ignore gravity
+      player.x += player.vx * deltaMultiplier;
+      player.y += player.vy * deltaMultiplier; // Should be 0 usually
+
+      // Cap x position to avoid going too far
+      if (player.x > canvas.width * 0.7) {
+        player.x = canvas.width * 0.7;
+      }
+    } else {
+      // Normal physics
+      // If player is ahead of normal position (after dash), drift back
+      if (player.x > 70) {
+        player.x -= 3 * deltaMultiplier; // Drift back speed
+        if (player.x < 70) player.x = 70;
+      }
+
+      // Gravity (frame-rate independent)
+      player.vy += gravity * deltaMultiplier;
+      player.y += player.vy * deltaMultiplier;
+    }
   }
 
   // Ground collision
@@ -712,7 +747,20 @@ function update() {
         player.x + player.w > obstacle.x &&
         player.y < obstacle.topHeight
       ) {
-        if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+        if (energyCapeActive) {
+          // Dash destroys the pipe!
+          createExplosion(obstacle.x + obstacle.width / 2, obstacle.topHeight);
+          playExplosionSound("miniNuke");
+
+          // Move obstacle off-screen to be removed
+          obstacle.x = -1000;
+
+          // DO NOT consume touch immediately to allow passing through
+          // energyCapeActive = false;
+
+          console.log("Dash destroyed top pipe!");
+          continue;
+        } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
           // Activate ghost mode on first hit
           isGhostActive = true;
           ghostModeActivationTime = performance.now(); // Record activation time
@@ -752,7 +800,20 @@ function update() {
         player.x + player.w > obstacle.x &&
         player.y + player.h > obstacle.bottomY
       ) {
-        if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+        if (energyCapeActive) {
+          // Dash destroys the pipe!
+          createExplosion(obstacle.x + obstacle.width / 2, obstacle.bottomY);
+          playExplosionSound("miniNuke");
+
+          // Move obstacle off-screen to be removed
+          obstacle.x = -1000;
+
+          // DO NOT consume dash immediately to allow passing through
+          // energyCapeActive = false;
+
+          console.log("Dash destroyed bottom pipe!");
+          continue;
+        } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
           // Activate ghost mode on first hit
           isGhostActive = true;
           ghostModeActivationTime = performance.now(); // Record activation time
@@ -891,6 +952,30 @@ async function buySpringBootsItem() {
   }
 }
 
+async function buyEnergyCapeItem() {
+  const result = await buyEnergyCape(
+    currentSession.sessionToken,
+    totalCoinsWallet
+  );
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    energyCapeRoundsLeft = result.inventory.energyCapeRoundsLeft;
+    hasEnergyCape = energyCapeRoundsLeft > 0;
+  }
+}
+
+async function buyEnergyCapeItem() {
+  const result = await buyEnergyCape(
+    currentSession.sessionToken,
+    totalCoinsWallet
+  );
+  if (result.success) {
+    totalCoinsWallet = result.newWallet;
+    energyCapeRoundsLeft = result.inventory.energyCapeRoundsLeft;
+    hasEnergyCape = energyCapeRoundsLeft > 0;
+  }
+}
+
 // Color palette functions
 async function selectCatColor(colorName) {
   try {
@@ -992,6 +1077,37 @@ function launchGoldNuke() {
   });
 
   console.log("Gold Nuke launched! Gold Nukes left:", goldNukeCount);
+}
+
+function activateDash() {
+  if (
+    !hasEnergyCape ||
+    energyCapeRoundsLeft <= 0 ||
+    energyCapeReloadTimer > 0 ||
+    isRocketActive ||
+    energyCapeActive ||
+    !gameStarted ||
+    gamePaused
+  ) {
+    return;
+  }
+
+  energyCapeActive = true;
+  energyCapeReloadTimer = energyCapeCooldown;
+
+  // Apply initial boost
+  player.vx = 15; // Fast forward speed
+  player.vy = 0; // Float
+
+  // Dash lasts for 500ms
+  setTimeout(() => {
+    energyCapeActive = false;
+    // Note: We'll rely on update loop to handle deceleration/return
+  }, 500);
+
+  // Play a sound? Maybe the small explosion sound?
+  playExplosionSound("miniNuke");
+  console.log("Energy Cape Dash activated!");
 }
 
 function updateRocket() {

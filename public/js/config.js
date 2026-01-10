@@ -58,6 +58,12 @@ let hasGhostShroom = false;
 let ghostShroomCount = 0;
 let hasSpringBoots = false;
 let springBootsCount = 0;
+let hasEnergyCape = false;
+let energyCapeRoundsLeft = 0;
+let energyCapeActive = false; // Is player currently dashing?
+let energyCapeReloadTimer = 0; // Cooldown timer (0 to 4000ms)
+let energyCapeCooldown = 4000; // 4 seconds cooldown
+let energyCapeButtonCoords = {}; // Store energy cape button coordinates for click detection
 let isGhostActive = false;
 let ghostModeActivationTime = 0; // Track when ghost mode was activated
 let ghostModeGracePeriod = 2000; // 2 seconds of invincibility in milliseconds
@@ -121,6 +127,13 @@ let availableShopItems = [
     price: 2450,
     description: "Clears 20 pipes + 2x coins",
     duration: "1 use",
+  },
+  {
+    id: "energyCape",
+    name: "⚡ Energy Cape",
+    price: 1750,
+    description: "Dash through pipes! 4s cooldown",
+    duration: "1 round",
   },
 ];
 
@@ -202,6 +215,10 @@ springBootsImage.src = "spring_boots.png";
 // Ghost cat image
 const ghostCatImage = new Image();
 ghostCatImage.src = "ghost_cat.png";
+
+// Energy Cape image
+const energyCapeImage = new Image();
+energyCapeImage.src = "energy_cape.png";
 
 // Mobile detection
 const isMobile =

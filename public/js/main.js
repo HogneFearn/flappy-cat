@@ -324,6 +324,10 @@ function resetGameForNewPlayer() {
   nukeCount = 0;
   hasGhostShroom = false;
   ghostShroomCount = 0;
+  hasEnergyCape = false;
+  energyCapeRoundsLeft = 0;
+  energyCapeActive = false;
+  energyCapeReloadTimer = 0;
   isGhostActive = false;
   ghostModeActivationTime = 0;
   isRocketActive = false;

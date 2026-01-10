@@ -112,6 +112,19 @@ function draw() {
     ctx.fillRect(player.x, player.y, player.w, player.h);
   }
 
+  // Draw energy cape if equipped (on top of player)
+  if (hasEnergyCape && energyCapeRoundsLeft > 0 && !isGhostActive) {
+    if (
+      energyCapeImage &&
+      energyCapeImage.complete &&
+      energyCapeImage.naturalWidth > 0
+    ) {
+      // Draw cape on top of player
+      // Adjust position to align with cat's back
+      ctx.drawImage(energyCapeImage, player.x - 18, player.y - 5, 45, 45);
+    }
+  }
+
   // Draw coins
   for (let coin of coins) {
     // Add glow effect for rare coins
@@ -540,6 +553,77 @@ function draw() {
       ctx.font = "12px Arial";
       ctx.textAlign = "left";
       ctx.fillText(goldNukeCountText, goldNukeCountX, goldNukeCountY);
+    }
+
+    // Draw energy cape dash button (only when player has energy cape)
+    if (hasEnergyCape && energyCapeRoundsLeft > 0 && !isRocketActive) {
+      const energyCapeButtonY = buttonY + buttonSize * 4 + 115; // Below gold nuke button with gap
+
+      // Store energy cape button coordinates for click detection
+      energyCapeButtonCoords = {
+        x: buttonX,
+        y: energyCapeButtonY,
+        width: buttonSize,
+        height: buttonSize,
+      };
+
+      // Draw energy cape image or fallback
+      if (
+        energyCapeImage &&
+        energyCapeImage.complete &&
+        energyCapeImage.naturalWidth > 0
+      ) {
+        const imageSize = buttonSize;
+        const imageX = buttonX + (buttonSize - imageSize) / 2;
+        const imageY = energyCapeButtonY + (buttonSize - imageSize) / 2;
+        ctx.drawImage(energyCapeImage, imageX, imageY, imageSize, imageSize);
+      } else {
+        // Draw emoji
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(
+          "⚡",
+          buttonX + buttonSize / 2,
+          energyCapeButtonY + buttonSize / 2 + 8
+        );
+      }
+
+      // Draw cooldown overlay if active
+      if (energyCapeReloadTimer > 0) {
+        const progress = energyCapeReloadTimer / energyCapeCooldown;
+        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+
+        // Draw pie chart or filling rect
+        ctx.beginPath();
+        ctx.moveTo(
+          buttonX + buttonSize / 2,
+          energyCapeButtonY + buttonSize / 2
+        );
+        ctx.arc(
+          buttonX + buttonSize / 2,
+          energyCapeButtonY + buttonSize / 2,
+          buttonSize / 2 + 2,
+          -Math.PI / 2,
+          -Math.PI / 2 + Math.PI * 2 * progress
+        );
+        ctx.lineTo(
+          buttonX + buttonSize / 2,
+          energyCapeButtonY + buttonSize / 2
+        );
+        ctx.fill();
+      }
+
+      // Draw active indicator if dashing
+      if (energyCapeActive) {
+        ctx.strokeStyle = "#FFFF00"; // Yellow glow
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          buttonX - 2,
+          energyCapeButtonY - 2,
+          buttonSize + 4,
+          buttonSize + 4
+        );
+      }
     }
 
     // Reset text alignment and font size
@@ -1002,7 +1086,8 @@ function draw() {
         (item.id === "springBoots" && springBootsCount > 0) ||
         (item.id === "miniNuke" && miniNukeCount > 0) ||
         (item.id === "nuke" && nukeCount > 0) ||
-        (item.id === "goldNuke" && goldNukeCount > 0);
+        (item.id === "goldNuke" && goldNukeCount > 0) ||
+        (item.id === "energyCape" && energyCapeRoundsLeft > 0);
 
       // Draw item box background with better colors
       if (isOwned) {
@@ -1045,6 +1130,8 @@ function draw() {
         itemImage = nukeImage;
       } else if (item.id === "goldNuke") {
         itemImage = goldNukeImage;
+      } else if (item.id === "energyCape") {
+        itemImage = energyCapeImage;
       }
 
       if (itemImage && itemImage.complete && itemImage.naturalWidth > 0) {
@@ -1097,6 +1184,8 @@ function draw() {
           statusText = `✓ ${miniNukeCount} left`;
         } else if (item.id === "nuke") {
           statusText = `✓ ${nukeCount} left`;
+        } else if (item.id === "energyCape") {
+          statusText = `✓ ${energyCapeRoundsLeft} left`;
         } else if (item.id === "goldNuke") {
           statusText = `✓ ${goldNukeCount} left`;
         }

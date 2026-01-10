@@ -122,6 +122,14 @@ function initDatabase() {
     }
   );
 
+  // Add energy_cape_rounds_left column to existing tables (migration)
+  db.run(
+    `ALTER TABLE player_inventory ADD COLUMN energy_cape_rounds_left INTEGER DEFAULT 0`,
+    (err) => {
+      // Ignore error if column already exists
+    }
+  );
+
   // Player high scores table
   db.run(`CREATE TABLE IF NOT EXISTS player_high_scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -535,7 +543,7 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
   db.get(
-    "SELECT magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count FROM player_inventory WHERE player_name = ?",
+    "SELECT magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count, energy_cape_rounds_left FROM player_inventory WHERE player_name = ?",
     [playerName],
     (err, row) => {
       if (err) {
@@ -587,10 +595,11 @@ app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
     goldNukeCount,
     goldMagnetRoundsLeft,
     ghostShroomCount,
+    energyCapeRoundsLeft,
   } = req.body;
 
   db.run(
-    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
+    "INSERT OR REPLACE INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, nuke_count, gold_nuke_count, gold_magnet_rounds_left, ghost_shroom_count, energy_cape_rounds_left, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
     [
       playerName,
       magnetRoundsLeft || 0,
@@ -599,6 +608,7 @@ app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
       goldNukeCount || 0,
       goldMagnetRoundsLeft || 0,
       ghostShroomCount || 0,
+      energyCapeRoundsLeft || 0,
     ],
     function (err) {
       if (err) {
