@@ -579,7 +579,12 @@ function update() {
 
   // Ceiling collision
   if (player.y < 0) {
-    if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+    if (hasSpringBoots && springBootsCount > 0) {
+      playBoingSound();
+      player.vy = 16.3; // Bounce down
+      player.y = 10; // Push away from ceiling
+      console.log("Spring boots ceiling bounce!");
+    } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
       // Activate ghost mode on first hit
       isGhostActive = true;
       ghostModeActivationTime = performance.now(); // Record activation time
