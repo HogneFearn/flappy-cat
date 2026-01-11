@@ -209,7 +209,7 @@ async function buyMagnet(sessionToken, currentWallet) {
 }
 
 async function buyGoldMagnet(sessionToken, currentWallet) {
-  const goldMagnetCost = 700;
+  const goldMagnetCost = 750;
   if (currentWallet >= goldMagnetCost) {
     const newWallet = currentWallet - goldMagnetCost;
     const inventory = await loadPlayerInventory(sessionToken);
@@ -224,7 +224,7 @@ async function buyGoldMagnet(sessionToken, currentWallet) {
 }
 
 async function buyMiniNuke(sessionToken, currentWallet) {
-  const miniNukeCost = 500;
+  const miniNukeCost = 350;
   if (currentWallet >= miniNukeCost) {
     const newWallet = currentWallet - miniNukeCost;
     const inventory = await loadPlayerInventory(sessionToken);
@@ -254,7 +254,7 @@ async function buyNuke(sessionToken, currentWallet) {
 }
 
 async function buyGoldNuke(sessionToken, currentWallet) {
-  const goldNukeCost = 2000;
+  const goldNukeCost = 2450;
   if (currentWallet >= goldNukeCost) {
     const newWallet = currentWallet - goldNukeCost;
     const inventory = await loadPlayerInventory(sessionToken);
