@@ -5,7 +5,8 @@ const cors = require("cors");
 const crypto = require("crypto");
 
 const app = express();
-const PORT = process.env.PORT || 3007;
+const PORT = process.env.PORT || 3001;
+const TEST_ADMIN_USER = "test_admin";
 
 // Middleware
 app.use(cors());
@@ -491,6 +492,23 @@ app.post("/api/auth/logout-beacon", (req, res) => {
 app.get("/api/player/wallet", validateSessionAndTrackOnline, (req, res) => {
   const playerName = req.user.username;
 
+  // Special handling for test admin: Always reset wallet to 1,000,000
+  if (playerName === TEST_ADMIN_USER) {
+    const testWalletAmount = 1000000;
+    db.run(
+      "INSERT OR REPLACE INTO players (name, wallet) VALUES (?, ?)",
+      [playerName, testWalletAmount],
+      function (err) {
+        if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+        }
+        res.json({ wallet: testWalletAmount });
+      }
+    );
+    return;
+  }
+
   db.get(
     "SELECT wallet FROM players WHERE name = ?",
     [playerName],
@@ -779,6 +797,12 @@ app.post(
   (req, res) => {
     const playerName = req.user.username;
     const { score } = req.body;
+
+    // Special handling for test admin: Do not save score to leaderboard
+    if (playerName === TEST_ADMIN_USER) {
+      console.log("Test admin score ignored for leaderboard");
+      return res.json({ success: true });
+    }
 
     console.log("Leaderboard POST request:", {
       playerName,
