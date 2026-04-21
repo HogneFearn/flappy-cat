@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Flappy Cat - Mobile Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <input type="text" id="nameInput" placeholder="Enter your name" maxlength="15" style="display: none;">
+        <div id="mobileControls">
+            <div id="menuButtons">
+                <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
+                <button id="switchPlayerBtn" class="menu-btn">Switch Player</button>
+                <button id="restartBtn" class="menu-btn">Restart</button>
+            </div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+
+</html>
