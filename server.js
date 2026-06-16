@@ -1,6 +1,7 @@
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const fs = require("fs");
 const cors = require("cors");
 const crypto = require("crypto");
 
@@ -8,10 +9,15 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const TEST_ADMIN_USER = process.env.TEST_ADMIN_USER || "";
 
+// Serve the Vite production build from `dist/` when it exists, otherwise fall
+// back to `public/` (e.g. before the first `npm run build`).
+const DIST_DIR = path.join(__dirname, "dist");
+const STATIC_DIR = fs.existsSync(DIST_DIR) ? DIST_DIR : path.join(__dirname, "public");
+
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(STATIC_DIR));
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
@@ -868,7 +874,7 @@ app.post("/api/highscore/:type", (req, res) => {
 
 // Serve the game on root route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(STATIC_DIR, "index.html"));
 });
 
 // Handle graceful shutdown
