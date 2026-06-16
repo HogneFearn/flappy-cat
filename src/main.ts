@@ -88,22 +88,7 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("keyup", (e) => (state.keys[e.code] = false));
 
 // Canvas touch handler for all game interactions
-canvas.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-
-  // Initialize audio system on first user interaction
-  if (!audioInitialized) {
-    initializeAudio();
-  }
-
-  // Get accurate canvas coordinates
-  const coords = getCanvasCoordinates(
-    e.touches[0].clientX,
-    e.touches[0].clientY
-  );
-  const canvasX = coords.x;
-  const canvasY = coords.y;
-
+function handleCanvasPointer(canvasX, canvasY, isTouch) {
   // Priority 1: Handle overlay screens (these should block all other interactions)
   if (state.showColorPalette) {
     // Check if touch is on close button using stored coordinates
@@ -342,10 +327,27 @@ canvas.addEventListener("touchstart", (e) => {
 
   // Priority 3: Normal game interactions (only when no overlays are open)
   if (!state.showAuthScreen && state.gameNameEntered) {
-    state.isJumpHeld = true;
-    state.jumpHoldTimer = 0;
+    if (isTouch) {
+      state.isJumpHeld = true;
+      state.jumpHoldTimer = 0;
+    }
     handleJump();
   }
+}
+
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+
+  // Initialize audio system on first user interaction
+  if (!audioInitialized) {
+    initializeAudio();
+  }
+
+  const coords = getCanvasCoordinates(
+    e.touches[0].clientX,
+    e.touches[0].clientY
+  );
+  handleCanvasPointer(coords.x, coords.y, true);
 });
 
 canvas.addEventListener("touchend", (e) => {
@@ -355,248 +357,8 @@ canvas.addEventListener("touchend", (e) => {
 
 // Canvas click handler for desktop
 canvas.addEventListener("click", (e) => {
-  // Get accurate canvas coordinates
   const coords = getCanvasCoordinates(e.clientX, e.clientY);
-  const canvasX = coords.x;
-  const canvasY = coords.y;
-
-  // Priority 1: Handle overlay screens (these should block all other interactions)
-  if (state.showColorPalette) {
-    // Check if click is on close button using stored coordinates
-    if (
-      canvasX >= state.closeButtonCoords.x &&
-      canvasX <= state.closeButtonCoords.x + state.closeButtonCoords.size &&
-      canvasY >= state.closeButtonCoords.y &&
-      canvasY <= state.closeButtonCoords.y + state.closeButtonCoords.size
-    ) {
-      state.showColorPalette = false;
-      return;
-    }
-
-    // Handle color selection clicks using stored coordinates
-    for (let i = 0; i < state.colorGridCoords.length; i++) {
-      const colorCoord = state.colorGridCoords[i];
-
-      if (
-        canvasX >= colorCoord.x &&
-        canvasX <= colorCoord.x + colorCoord.width &&
-        canvasY >= colorCoord.y &&
-        canvasY <= colorCoord.y + colorCoord.height
-      ) {
-        selectCatColor(colorCoord.color);
-        break;
-      }
-    }
-
-    return; // Important: prevent any other click handling when color palette is open
-  } else if (state.showShop) {
-    // Check if click is on close button
-    if (
-      canvasX >= state.closeButtonCoords.x &&
-      canvasX <= state.closeButtonCoords.x + state.closeButtonCoords.size &&
-      canvasY >= state.closeButtonCoords.y &&
-      canvasY <= state.closeButtonCoords.y + state.closeButtonCoords.size
-    ) {
-      state.showShop = false;
-      return;
-    }
-
-    // Handle shop item selection clicks using stored coordinates
-    for (let i = 0; i < state.shopGridCoords.length; i++) {
-      const shopCoord = state.shopGridCoords[i];
-
-      if (
-        canvasX >= shopCoord.x &&
-        canvasX <= shopCoord.x + shopCoord.width &&
-        canvasY >= shopCoord.y &&
-        canvasY <= shopCoord.y + shopCoord.height
-      ) {
-        // Find the item and check if it can be purchased
-        const item = availableShopItems.find(
-          (item) => item.id === shopCoord.itemId
-        );
-        if (item && shopCoord.itemId === "magnet") {
-          if (state.totalCoinsWallet >= item.price && state.magnetRoundsLeft === 0) {
-            buyMagnetItem();
-          }
-        } else if (item && shopCoord.itemId === "goldMagnet") {
-          if (state.totalCoinsWallet >= item.price && state.goldMagnetRoundsLeft === 0) {
-            buyGoldMagnetItem();
-          }
-        } else if (item && shopCoord.itemId === "ghostShroom") {
-          if (state.totalCoinsWallet >= item.price && state.ghostShroomCount === 0) {
-            buyGhostShroomItem();
-          }
-        } else if (item && shopCoord.itemId === "springBoots") {
-          if (state.totalCoinsWallet >= item.price && state.springBootsCount === 0) {
-            buySpringBootsItem();
-          }
-        } else if (item && shopCoord.itemId === "miniNuke") {
-          if (state.totalCoinsWallet >= item.price) {
-            buyMiniNukeItem();
-          }
-        } else if (item && shopCoord.itemId === "nuke") {
-          if (state.totalCoinsWallet >= item.price) {
-            buyNukeItem();
-          }
-        } else if (item && shopCoord.itemId === "goldNuke") {
-          if (state.totalCoinsWallet >= item.price) {
-            buyGoldNukeItem();
-          }
-        } else if (item && shopCoord.itemId === "energyCape") {
-          if (state.totalCoinsWallet >= item.price && state.energyCapeRoundsLeft === 0) {
-            buyEnergyCapeItem();
-          }
-        }
-        break;
-      }
-    }
-
-    // If clicking outside the shop content area, close the shop
-    const shopContentTop = 30;
-    const shopContentBottom = 380; // Adjusted for new centered layout
-    const shopContentLeft = canvas.width / 4;
-    const shopContentRight = (3 * canvas.width) / 4;
-
-    if (
-      canvasY < shopContentTop ||
-      canvasY > shopContentBottom ||
-      canvasX < shopContentLeft ||
-      canvasX > shopContentRight
-    ) {
-      state.showShop = false;
-    }
-    return; // Important: prevent any other click handling when shop is open
-  } else if (state.showLeaderboard) {
-    // Close leaderboard when clicking on canvas
-    state.showLeaderboard = false;
-    return; // Important: prevent any other click handling when leaderboard is open
-  }
-
-  // Priority 2: Check for pause button click (only when game is running and not paused)
-  if (
-    state.gameRunning &&
-    state.gameStarted &&
-    state.gameNameEntered &&
-    !state.showAuthScreen &&
-    !state.gamePaused &&
-    state.pauseButtonCoords.x &&
-    canvasX >= state.pauseButtonCoords.x &&
-    canvasX <= state.pauseButtonCoords.x + state.pauseButtonCoords.width &&
-    canvasY >= state.pauseButtonCoords.y &&
-    canvasY <= state.pauseButtonCoords.y + state.pauseButtonCoords.height
-  ) {
-    togglePause();
-    return;
-  }
-
-  // Priority 2.5: Check for rocket button click (only when game is running, not paused, and has mini nukes)
-  if (
-    state.gameRunning &&
-    state.gameStarted &&
-    state.gameNameEntered &&
-    !state.showAuthScreen &&
-    !state.gamePaused &&
-    state.hasMiniNuke &&
-    state.miniNukeCount > 0 &&
-    !state.isRocketActive &&
-    state.rocketButtonCoords.x &&
-    canvasX >= state.rocketButtonCoords.x &&
-    canvasX <= state.rocketButtonCoords.x + state.rocketButtonCoords.width &&
-    canvasY >= state.rocketButtonCoords.y &&
-    canvasY <= state.rocketButtonCoords.y + state.rocketButtonCoords.height
-  ) {
-    launchRocket();
-    return;
-  }
-
-  // Priority 2.6: Check for nuke button click (only when game is running, not paused, and has nukes)
-  if (
-    state.gameRunning &&
-    state.gameStarted &&
-    state.gameNameEntered &&
-    !state.showAuthScreen &&
-    !state.gamePaused &&
-    state.hasNuke &&
-    state.nukeCount > 0 &&
-    !state.isRocketActive &&
-    state.nukeButtonCoords.x &&
-    canvasX >= state.nukeButtonCoords.x &&
-    canvasX <= state.nukeButtonCoords.x + state.nukeButtonCoords.width &&
-    canvasY >= state.nukeButtonCoords.y &&
-    canvasY <= state.nukeButtonCoords.y + state.nukeButtonCoords.height
-  ) {
-    launchNuke();
-    return;
-  }
-
-  // Priority 2.7: Check for gold nuke button click (only when game is running, not paused, and has gold nukes)
-  if (
-    state.gameRunning &&
-    state.gameStarted &&
-    state.gameNameEntered &&
-    !state.showAuthScreen &&
-    !state.gamePaused &&
-    state.hasGoldNuke &&
-    state.goldNukeCount > 0 &&
-    !state.isRocketActive &&
-    state.goldNukeButtonCoords.x &&
-    canvasX >= state.goldNukeButtonCoords.x &&
-    canvasX <= state.goldNukeButtonCoords.x + state.goldNukeButtonCoords.width &&
-    canvasY >= state.goldNukeButtonCoords.y &&
-    canvasY <= state.goldNukeButtonCoords.y + state.goldNukeButtonCoords.height
-  ) {
-    launchGoldNuke();
-    return;
-  }
-
-  // Priority 2.8: Check for energy cape dash button click (only when game is running, not paused, and has energy cape)
-  if (
-    state.gameRunning &&
-    state.gameStarted &&
-    state.gameNameEntered &&
-    !state.showAuthScreen &&
-    !state.gamePaused &&
-    state.hasEnergyCape &&
-    state.energyCapeRoundsLeft > 0 &&
-    !state.energyCapeActive &&
-    state.energyCapeReloadTimer <= 0 &&
-    !state.isRocketActive &&
-    state.energyCapeButtonCoords.x &&
-    canvasX >= state.energyCapeButtonCoords.x &&
-    canvasX <= state.energyCapeButtonCoords.x + state.energyCapeButtonCoords.width &&
-    canvasY >= state.energyCapeButtonCoords.y &&
-    canvasY <= state.energyCapeButtonCoords.y + state.energyCapeButtonCoords.height
-  ) {
-    activateDash();
-    return;
-  }
-
-  // Priority 3: Check for in-canvas button clicks when game is over
-  if (!state.gameRunning && state.showGameOverButtons && state.gameOverButtons.length > 0) {
-    for (const button of state.gameOverButtons) {
-      if (
-        canvasX >= button.x &&
-        canvasX <= button.x + button.width &&
-        canvasY >= button.y &&
-        canvasY <= button.y + button.height
-      ) {
-        handleGameOverButtonClick(button.action);
-        return;
-      }
-    }
-  }
-
-  // If game is over but buttons aren't shown yet, show them on click
-  if (!state.gameRunning && !state.showGameOverButtons) {
-    state.showGameOverButtons = true;
-    return;
-  }
-
-  // Priority 3: Normal game interactions (only when no overlays are open)
-  if (!state.showAuthScreen && state.gameNameEntered) {
-    handleJump();
-  }
+  handleCanvasPointer(coords.x, coords.y, false);
 });
 
 // Handle in-canvas button clicks
