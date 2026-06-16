@@ -14,13 +14,26 @@ A Flappy Bird-style game I vibe coded together with my young nephew. Features a 
 
 ```bash
 npm install
-npm start
 ```
 
-Then visit `http://localhost:3001`
+**Production-style run** (Express serves the built frontend):
+
+```bash
+npm run build   # bundles the TypeScript frontend into dist/
+npm start       # serves API + dist/ on http://localhost:3001
+```
+
+**Dev with hot reload** (two terminals):
+
+```bash
+npm run dev:server   # API on http://localhost:3001
+npm run dev:web      # Vite dev server on http://localhost:5173 (proxies /api)
+```
+
+Type-check without emitting: `npm run typecheck`.
 
 ## Tech Stack
 
 - Node.js + Express
 - SQLite (via `sqlite3`)
-- Vanilla JS frontend
+- TypeScript frontend (ES modules) bundled with Vite

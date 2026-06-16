@@ -7,12 +7,10 @@ import {
   playBoingSound,
 } from "./audio";
 import {
-  targetFPS,
   targetFrameTime,
   availableShopItems,
   availableColors,
   catImages,
-  catImage,
   backgroundImage,
   yellowCoinImage,
   redCoinImage,
@@ -29,25 +27,19 @@ import {
   isMobile,
 } from "./assets";
 import { state } from "./state";
-import { canvas, ctx, resizeCanvas, getCanvasCoordinates } from "./dom";
+import { canvas, ctx, getCanvasCoordinates } from "./dom";
 
 // ===================== canvas.js =====================
 
 import {
-  apiRequest,
   signupPlayer,
   loginPlayer,
   validateSession,
   saveSession,
   loadSession,
   clearSession,
-  loadPlayerWallet,
   savePlayerWallet,
-  loadLeaderboard,
   addToLeaderboard,
-  loadHighScore,
-  saveHighScore,
-  loadPlayerInventory,
   savePlayerInventory,
   buyMagnet,
   buyGoldMagnet,
@@ -57,16 +49,11 @@ import {
   buyGhostShroom,
   buySpringBoots,
   buyEnergyCape,
-  loadPlayerHighScore,
   savePlayerHighScore,
-  getPlayerHighScore,
-  checkPlayerHasMagnet,
   initializeGameData,
   startHeartbeat,
-  stopHeartbeat,
   getOnlineCount,
   logout,
-  getPlayerColor,
   savePlayerColor,
 } from "./api";
 

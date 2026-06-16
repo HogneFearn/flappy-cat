@@ -1,5 +1,5 @@
 // Frame timing constants
-export const targetFPS = 60;
+const targetFPS = 60;
 export const targetFrameTime = 1000 / targetFPS; // 16.67ms for 60fps
 
 // Shop items configuration
@@ -90,7 +90,7 @@ availableColors.forEach((color) => {
 });
 
 // For backward compatibility
-export const catImage = catImages.gray;
+const catImage = catImages.gray;
 
 // Background image
 export const backgroundImage = new Image();

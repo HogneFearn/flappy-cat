@@ -1,7 +1,7 @@
 import { state } from "./state";
 
 // API helper functions
-export async function apiRequest(url: string, options: RequestInit = {}) {
+async function apiRequest(url: string, options: RequestInit = {}) {
   try {
     // Log the request details
     if (options.method === "POST") {
@@ -82,7 +82,7 @@ export function clearSession() {
 }
 
 // Player wallet functions (now using API instead of localStorage)
-export async function loadPlayerWallet(sessionToken) {
+async function loadPlayerWallet(sessionToken) {
   if (!sessionToken) {
     console.error("No session token provided for loadPlayerWallet");
     return 0;
@@ -113,7 +113,7 @@ export async function savePlayerWallet(sessionToken, coins) {
 }
 
 // Leaderboard functions (now using API instead of localStorage)
-export async function loadLeaderboard() {
+async function loadLeaderboard() {
   const result = await apiRequest("/api/leaderboard");
   return result || [];
 }
@@ -152,12 +152,12 @@ export async function addToLeaderboard(sessionToken, score) {
 }
 
 // High score functions (now using API instead of localStorage)
-export async function loadHighScore() {
+async function loadHighScore() {
   const result = await apiRequest("/api/highscore/obstacle");
   return result ? result.score : 0;
 }
 
-export async function saveHighScore(score) {
+async function saveHighScore(score) {
   await apiRequest("/api/highscore/obstacle", {
     method: "POST",
     body: JSON.stringify({ score }),
@@ -165,7 +165,7 @@ export async function saveHighScore(score) {
 }
 
 // Shop/inventory functions
-export async function loadPlayerInventory(sessionToken) {
+async function loadPlayerInventory(sessionToken) {
   if (!sessionToken) {
     console.error("No session token provided for loadPlayerInventory");
     return { magnetRoundsLeft: 0 };
@@ -316,7 +316,7 @@ export async function buyEnergyCape(sessionToken, currentWallet) {
 }
 
 // Player-specific high score functions
-export async function loadPlayerHighScore(sessionToken) {
+async function loadPlayerHighScore(sessionToken) {
   if (!sessionToken) {
     console.error("No session token provided for loadPlayerHighScore");
     return 0;
@@ -347,12 +347,12 @@ export async function savePlayerHighScore(sessionToken, score) {
 }
 
 // Helper function for getting player high score
-export async function getPlayerHighScore(sessionToken) {
+async function getPlayerHighScore(sessionToken) {
   return await loadPlayerHighScore(sessionToken);
 }
 
 // Helper function for checking if player has magnet
-export async function checkPlayerHasMagnet(sessionToken) {
+async function checkPlayerHasMagnet(sessionToken) {
   const inventory = await loadPlayerInventory(sessionToken);
   return inventory && inventory.hasMagnet;
 }
@@ -463,7 +463,7 @@ export async function startHeartbeat(sessionToken) {
   }, 2 * 60 * 1000); // 2 minutes
 }
 
-export function stopHeartbeat() {
+function stopHeartbeat() {
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
     heartbeatInterval = null;
@@ -491,7 +491,7 @@ export async function logout(sessionToken) {
 }
 
 // Color preference functions
-export async function getPlayerColor(sessionToken) {
+async function getPlayerColor(sessionToken) {
   const result = await apiRequest("/api/player/color", {
     headers: {
       Authorization: `Bearer ${sessionToken}`,

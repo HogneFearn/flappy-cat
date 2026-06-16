@@ -21,7 +21,7 @@ import {
 } from "./assets";
 
 // Function to draw a button
-export function drawButton(text, x, y, width, height, color) {
+function drawButton(text, x, y, width, height, color) {
   // Button background
   ctx.fillStyle = color;
   ctx.fillRect(x, y, width, height);
@@ -540,7 +540,7 @@ export function draw() {
 }
 
 // Mario-style pipe drawing function
-export function drawMarioPipe(x, y, width, height, isTop) {
+function drawMarioPipe(x, y, width, height, isTop) {
   const rimHeight = 20;
   const pipeBodyHeight = isTop ? height - rimHeight : height - rimHeight;
   const pipeBodyY = isTop ? y : y + rimHeight;
@@ -601,7 +601,7 @@ export function drawMarioPipe(x, y, width, height, isTop) {
 }
 
 // Helper function to get hex color for fallback rectangles
-export function getColorHex(colorName) {
+function getColorHex(colorName) {
   const colorMap = {
     gray: "#808080",
     blue: "#0066FF",
