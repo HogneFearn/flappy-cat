@@ -35,4 +35,4 @@ deployment-package/
 # ignore deployment package and database
 deployment-package
 game.db
-cloudpanel-pw.rtf
+cloudpanel-pw.rtffallow-report.json
