@@ -1150,335 +1150,16 @@ function update() {
   const deltaMultiplier = state.deltaTime / targetFrameTime;
 
   // Only apply gravity and movement if game has started
-  if (state.gameStarted) {
-    if (state.energyCapeActive) {
-      // Dash physics: fly forward/right, ignore gravity
-      state.player.x += state.player.vx * deltaMultiplier;
-      state.player.y += state.player.vy * deltaMultiplier; // Should be 0 usually
-
-      // Cap x position to avoid going too far
-      if (state.player.x > canvas.width * 0.7) {
-        state.player.x = canvas.width * 0.7;
-      }
-    } else {
-      // Normal physics
-      // If player is ahead of normal position (after dash), drift back
-      if (state.player.x > 70) {
-        state.player.x -= 3 * deltaMultiplier; // Drift back speed
-        if (state.player.x < 70) state.player.x = 70;
-      }
-
-      // Gravity (frame-rate independent)
-      state.player.vy += state.gravity * deltaMultiplier;
-      state.player.y += state.player.vy * deltaMultiplier;
-    }
-  }
+  applyPlayerPhysics(deltaMultiplier);
 
   // Ground collision
-  if (state.player.y + state.player.h > state.groundY) {
-    if (state.hasSpringBoots && state.springBootsCount > 0) {
-      playBoingSound();
-      state.player.vy = -16.3; // High vertical jump but safe from ceiling
-      state.player.y = state.groundY - state.player.h - 10; // Immediate height boost
-      console.log("Spring boots bounce!");
-    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
-      // Activate ghost mode on first hit
-      state.isGhostActive = true;
-      state.ghostModeActivationTime = performance.now(); // Record activation time
-      state.ghostShroomCount--;
-      if (state.ghostShroomCount <= 0) {
-        state.hasGhostShroom = false;
-      }
-      // Save updated inventory
-      savePlayerInventory(state.currentSession.sessionToken, {
-        magnetRoundsLeft: state.magnetRoundsLeft || 0,
-        miniNukeCount: state.miniNukeCount,
-        nukeCount: state.nukeCount,
-        ghostShroomCount: state.ghostShroomCount,
-      });
-      console.log(
-        "Ghost mode activated (ground hit)! Ghost shrooms left:",
-        state.ghostShroomCount
-      );
-      // Bounce back up slightly to prevent getting stuck
-      state.player.y = state.groundY - state.player.h;
-      state.player.vy = -2;
-    } else if (state.isGhostActive) {
-      // Check if grace period has expired
-      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
-      if (timeSinceActivation > state.ghostModeGracePeriod) {
-        // Grace period expired, trigger game over
-        handleGameOver();
-      } else {
-        // During grace period, bounce back
-        state.player.y = state.groundY - state.player.h;
-        state.player.vy = -2;
-      }
-    } else {
-      // No ghost shroom available
-      handleGameOver();
-    }
-  }
+  handleGroundCollision();
 
   // Ceiling collision
-  if (state.player.y < 0) {
-    if (state.hasSpringBoots && state.springBootsCount > 0) {
-      playBoingSound();
-      state.player.vy = 16.3; // Bounce down
-      state.player.y = 10; // Push away from ceiling
-      console.log("Spring boots ceiling bounce!");
-    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
-      // Activate ghost mode on first hit
-      state.isGhostActive = true;
-      state.ghostModeActivationTime = performance.now(); // Record activation time
-      state.ghostShroomCount--;
-      if (state.ghostShroomCount <= 0) {
-        state.hasGhostShroom = false;
-      }
-      // Save updated inventory
-      savePlayerInventory(state.currentSession.sessionToken, {
-        magnetRoundsLeft: state.magnetRoundsLeft || 0,
-        miniNukeCount: state.miniNukeCount,
-        nukeCount: state.nukeCount,
-        ghostShroomCount: state.ghostShroomCount,
-      });
-      console.log(
-        "Ghost mode activated (ceiling hit)! Ghost shrooms left:",
-        state.ghostShroomCount
-      );
-      // Bounce back down slightly to prevent getting stuck
-      state.player.y = 0;
-      state.player.vy = 2;
-    } else if (state.isGhostActive) {
-      // Check if grace period has expired
-      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
-      if (timeSinceActivation > state.ghostModeGracePeriod) {
-        // Grace period expired, trigger game over
-        handleGameOver();
-      } else {
-        // During grace period, bounce back
-        state.player.y = 0;
-        state.player.vy = 2;
-      }
-    } else {
-      // No ghost shroom available
-      handleGameOver();
-    }
-  }
+  handleCeilingCollision();
 
   // Only move world objects if game has started
-  if (state.gameStarted) {
-    // Move obstacles (frame-rate independent)
-    for (let obstacle of state.obstacles) {
-      obstacle.x -= state.gameSpeed * deltaMultiplier;
-    }
-
-    // Move coins (frame-rate independent)
-    for (let coin of state.coins) {
-      coin.x -= state.gameSpeed * deltaMultiplier;
-    }
-
-    // Remove off-screen obstacles
-    state.obstacles = state.obstacles.filter((obstacle) => obstacle.x > -obstacle.width);
-
-    // Remove off-screen coins
-    state.coins = state.coins.filter((coin) => coin.x > -coin.r);
-
-    // Validate coin positions occasionally (every 1 second in real time)
-    state.validationTimer += state.deltaTime;
-    if (state.validationTimer > 1000) {
-      // 1000ms = 1 second
-      validateCoinPositions();
-      state.validationTimer = 0;
-    }
-
-    // Spawn obstacles (every 2 seconds in real time)
-    state.obstacleSpawnTimer += state.deltaTime;
-    if (state.obstacleSpawnTimer > 2000) {
-      // 2000ms = 2 seconds
-      spawnObstacle();
-      state.obstacleSpawnTimer = 0;
-    }
-
-    // Check coin collision
-    for (let i = state.coins.length - 1; i >= 0; i--) {
-      let coin = state.coins[i];
-      let dx = state.player.x + state.player.w / 2 - coin.x;
-      let dy = state.player.y + state.player.h / 2 - coin.y;
-      let distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Magnet attraction (frame-rate independent)
-      // Check for regular magnet first
-      if (
-        state.hasMagnet &&
-        state.magnetRoundsLeft > 0 &&
-        distance < state.magnetRadius &&
-        distance > coin.r + state.player.w / 2
-      ) {
-        // Pull coin towards player with regular magnet
-        const pullStrength = 0.7;
-        const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
-        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
-      }
-      // Check for gold magnet (stronger and wider range)
-      else if (
-        state.hasGoldMagnet &&
-        state.goldMagnetRoundsLeft > 0 &&
-        distance < state.goldMagnetRadius &&
-        distance > coin.r + state.player.w / 2
-      ) {
-        // Pull coin towards player with gold magnet (stronger pull)
-        const pullStrength = 1.4; // Double the strength of regular magnet
-        const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
-        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
-      }
-
-      // Collision detection
-      if (distance < coin.r + state.player.w / 2) {
-        state.coins.splice(i, 1);
-        // Play coin pickup sound
-        playCoinSound();
-        // Add coin value directly to wallet
-        state.totalCoinsWallet += coin.value;
-        savePlayerWallet(state.currentSession.sessionToken, state.totalCoinsWallet);
-        spawnCoin();
-      }
-    }
-
-    // Check obstacle collision
-    for (let obstacle of state.obstacles) {
-      // Top pipe collision
-      if (
-        state.player.x < obstacle.x + obstacle.width &&
-        state.player.x + state.player.w > obstacle.x &&
-        state.player.y < obstacle.topHeight
-      ) {
-        if (state.energyCapeActive) {
-          // Dash destroys the pipe!
-          createExplosion(obstacle.x + obstacle.width / 2, obstacle.topHeight);
-          playExplosionSound("miniNuke");
-
-          // Move obstacle off-screen to be removed
-          obstacle.x = -1000;
-
-          // DO NOT consume touch immediately to allow passing through
-          // energyCapeActive = false;
-
-          console.log("Dash destroyed top pipe!");
-          continue;
-        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
-          // Activate ghost mode on first hit
-          state.isGhostActive = true;
-          state.ghostModeActivationTime = performance.now(); // Record activation time
-          state.ghostShroomCount--;
-          if (state.ghostShroomCount <= 0) {
-            state.hasGhostShroom = false;
-          }
-          // Save updated inventory
-          savePlayerInventory(state.currentSession.sessionToken, {
-            magnetRoundsLeft: state.magnetRoundsLeft || 0,
-            miniNukeCount: state.miniNukeCount,
-            nukeCount: state.nukeCount,
-            ghostShroomCount: state.ghostShroomCount,
-          });
-          console.log(
-            "Ghost mode activated! Ghost shrooms left:",
-            state.ghostShroomCount
-          );
-        } else if (state.isGhostActive) {
-          // Check if grace period has expired
-          const timeSinceActivation =
-            performance.now() - state.ghostModeActivationTime;
-          if (timeSinceActivation > state.ghostModeGracePeriod) {
-            // Grace period expired, trigger game over
-            handleGameOver();
-          }
-          // Otherwise, ignore collision during grace period
-        } else {
-          // No ghost shroom available
-          handleGameOver();
-        }
-      }
-
-      // Bottom pipe collision
-      if (
-        state.player.x < obstacle.x + obstacle.width &&
-        state.player.x + state.player.w > obstacle.x &&
-        state.player.y + state.player.h > obstacle.bottomY
-      ) {
-        if (state.energyCapeActive) {
-          // Dash destroys the pipe!
-          createExplosion(obstacle.x + obstacle.width / 2, obstacle.bottomY);
-          playExplosionSound("miniNuke");
-
-          // Move obstacle off-screen to be removed
-          obstacle.x = -1000;
-
-          // DO NOT consume dash immediately to allow passing through
-          // energyCapeActive = false;
-
-          console.log("Dash destroyed bottom pipe!");
-          continue;
-        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
-          // Activate ghost mode on first hit
-          state.isGhostActive = true;
-          state.ghostModeActivationTime = performance.now(); // Record activation time
-          state.ghostShroomCount--;
-          if (state.ghostShroomCount <= 0) {
-            state.hasGhostShroom = false;
-          }
-          // Save updated inventory
-          savePlayerInventory(state.currentSession.sessionToken, {
-            magnetRoundsLeft: state.magnetRoundsLeft || 0,
-            miniNukeCount: state.miniNukeCount,
-            nukeCount: state.nukeCount,
-            ghostShroomCount: state.ghostShroomCount,
-          });
-          console.log(
-            "Ghost mode activated! Ghost shrooms left:",
-            state.ghostShroomCount
-          );
-        } else if (state.isGhostActive) {
-          // Check if grace period has expired
-          const timeSinceActivation =
-            performance.now() - state.ghostModeActivationTime;
-          if (timeSinceActivation > state.ghostModeGracePeriod) {
-            // Grace period expired, trigger game over
-            handleGameOver();
-          }
-          // Otherwise, ignore collision during grace period
-        } else {
-          // No ghost shroom available
-          handleGameOver();
-        }
-      }
-
-      // Score when passing obstacle
-      if (!obstacle.passed && state.player.x > obstacle.x + obstacle.width) {
-        obstacle.passed = true;
-        state.obstacleScore += 5;
-        // Update game speed based on new score with safeguards
-        const newSpeed = calculateGameSpeed();
-        // Only update if the new speed is reasonable (prevent sudden spikes)
-        if (newSpeed <= state.gameSpeed + 0.5) {
-          state.gameSpeed = newSpeed;
-        } else {
-          console.warn(
-            `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`
-          );
-        }
-      }
-    }
-
-    // Ensure there are always coins on screen
-    const coinLimit =
-      state.obstacleSpawnTimer < 0 && state.lastExplosionType === "goldNuke" ? 6 : 3;
-    if (state.coins.length < coinLimit) {
-      spawnCoin();
-    }
-  } // End of gameStarted condition
+  updateWorld(deltaMultiplier); // End of gameStarted condition
 }
 
 // Shop functions
@@ -2239,3 +1920,337 @@ function resetGameForNewPlayer() {
   state.leaderboard = [];
 }
 
+function applyPlayerPhysics(deltaMultiplier) {
+  if (state.gameStarted) {
+    if (state.energyCapeActive) {
+      // Dash physics: fly forward/right, ignore gravity
+      state.player.x += state.player.vx * deltaMultiplier;
+      state.player.y += state.player.vy * deltaMultiplier; // Should be 0 usually
+
+      // Cap x position to avoid going too far
+      if (state.player.x > canvas.width * 0.7) {
+        state.player.x = canvas.width * 0.7;
+      }
+    } else {
+      // Normal physics
+      // If player is ahead of normal position (after dash), drift back
+      if (state.player.x > 70) {
+        state.player.x -= 3 * deltaMultiplier; // Drift back speed
+        if (state.player.x < 70) state.player.x = 70;
+      }
+
+      // Gravity (frame-rate independent)
+      state.player.vy += state.gravity * deltaMultiplier;
+      state.player.y += state.player.vy * deltaMultiplier;
+    }
+  }
+}
+
+function handleGroundCollision() {
+  if (state.player.y + state.player.h > state.groundY) {
+    if (state.hasSpringBoots && state.springBootsCount > 0) {
+      playBoingSound();
+      state.player.vy = -16.3; // High vertical jump but safe from ceiling
+      state.player.y = state.groundY - state.player.h - 10; // Immediate height boost
+      console.log("Spring boots bounce!");
+    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+      // Activate ghost mode on first hit
+      state.isGhostActive = true;
+      state.ghostModeActivationTime = performance.now(); // Record activation time
+      state.ghostShroomCount--;
+      if (state.ghostShroomCount <= 0) {
+        state.hasGhostShroom = false;
+      }
+      // Save updated inventory
+      savePlayerInventory(state.currentSession.sessionToken, {
+        magnetRoundsLeft: state.magnetRoundsLeft || 0,
+        miniNukeCount: state.miniNukeCount,
+        nukeCount: state.nukeCount,
+        ghostShroomCount: state.ghostShroomCount,
+      });
+      console.log(
+        "Ghost mode activated (ground hit)! Ghost shrooms left:",
+        state.ghostShroomCount
+      );
+      // Bounce back up slightly to prevent getting stuck
+      state.player.y = state.groundY - state.player.h;
+      state.player.vy = -2;
+    } else if (state.isGhostActive) {
+      // Check if grace period has expired
+      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+      if (timeSinceActivation > state.ghostModeGracePeriod) {
+        // Grace period expired, trigger game over
+        handleGameOver();
+      } else {
+        // During grace period, bounce back
+        state.player.y = state.groundY - state.player.h;
+        state.player.vy = -2;
+      }
+    } else {
+      // No ghost shroom available
+      handleGameOver();
+    }
+  }
+}
+
+function handleCeilingCollision() {
+  if (state.player.y < 0) {
+    if (state.hasSpringBoots && state.springBootsCount > 0) {
+      playBoingSound();
+      state.player.vy = 16.3; // Bounce down
+      state.player.y = 10; // Push away from ceiling
+      console.log("Spring boots ceiling bounce!");
+    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+      // Activate ghost mode on first hit
+      state.isGhostActive = true;
+      state.ghostModeActivationTime = performance.now(); // Record activation time
+      state.ghostShroomCount--;
+      if (state.ghostShroomCount <= 0) {
+        state.hasGhostShroom = false;
+      }
+      // Save updated inventory
+      savePlayerInventory(state.currentSession.sessionToken, {
+        magnetRoundsLeft: state.magnetRoundsLeft || 0,
+        miniNukeCount: state.miniNukeCount,
+        nukeCount: state.nukeCount,
+        ghostShroomCount: state.ghostShroomCount,
+      });
+      console.log(
+        "Ghost mode activated (ceiling hit)! Ghost shrooms left:",
+        state.ghostShroomCount
+      );
+      // Bounce back down slightly to prevent getting stuck
+      state.player.y = 0;
+      state.player.vy = 2;
+    } else if (state.isGhostActive) {
+      // Check if grace period has expired
+      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+      if (timeSinceActivation > state.ghostModeGracePeriod) {
+        // Grace period expired, trigger game over
+        handleGameOver();
+      } else {
+        // During grace period, bounce back
+        state.player.y = 0;
+        state.player.vy = 2;
+      }
+    } else {
+      // No ghost shroom available
+      handleGameOver();
+    }
+  }
+}
+
+function updateWorld(deltaMultiplier) {
+  if (state.gameStarted) {
+    // Move obstacles (frame-rate independent)
+    for (let obstacle of state.obstacles) {
+      obstacle.x -= state.gameSpeed * deltaMultiplier;
+    }
+
+    // Move coins (frame-rate independent)
+    for (let coin of state.coins) {
+      coin.x -= state.gameSpeed * deltaMultiplier;
+    }
+
+    // Remove off-screen obstacles
+    state.obstacles = state.obstacles.filter((obstacle) => obstacle.x > -obstacle.width);
+
+    // Remove off-screen coins
+    state.coins = state.coins.filter((coin) => coin.x > -coin.r);
+
+    // Validate coin positions occasionally (every 1 second in real time)
+    state.validationTimer += state.deltaTime;
+    if (state.validationTimer > 1000) {
+      // 1000ms = 1 second
+      validateCoinPositions();
+      state.validationTimer = 0;
+    }
+
+    // Spawn obstacles (every 2 seconds in real time)
+    state.obstacleSpawnTimer += state.deltaTime;
+    if (state.obstacleSpawnTimer > 2000) {
+      // 2000ms = 2 seconds
+      spawnObstacle();
+      state.obstacleSpawnTimer = 0;
+    }
+
+    // Check coin collision
+    for (let i = state.coins.length - 1; i >= 0; i--) {
+      let coin = state.coins[i];
+      let dx = state.player.x + state.player.w / 2 - coin.x;
+      let dy = state.player.y + state.player.h / 2 - coin.y;
+      let distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Magnet attraction (frame-rate independent)
+      // Check for regular magnet first
+      if (
+        state.hasMagnet &&
+        state.magnetRoundsLeft > 0 &&
+        distance < state.magnetRadius &&
+        distance > coin.r + state.player.w / 2
+      ) {
+        // Pull coin towards player with regular magnet
+        const pullStrength = 0.7;
+        const angle = Math.atan2(dy, dx);
+        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+      }
+      // Check for gold magnet (stronger and wider range)
+      else if (
+        state.hasGoldMagnet &&
+        state.goldMagnetRoundsLeft > 0 &&
+        distance < state.goldMagnetRadius &&
+        distance > coin.r + state.player.w / 2
+      ) {
+        // Pull coin towards player with gold magnet (stronger pull)
+        const pullStrength = 1.4; // Double the strength of regular magnet
+        const angle = Math.atan2(dy, dx);
+        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+      }
+
+      // Collision detection
+      if (distance < coin.r + state.player.w / 2) {
+        state.coins.splice(i, 1);
+        // Play coin pickup sound
+        playCoinSound();
+        // Add coin value directly to wallet
+        state.totalCoinsWallet += coin.value;
+        savePlayerWallet(state.currentSession.sessionToken, state.totalCoinsWallet);
+        spawnCoin();
+      }
+    }
+
+    // Check obstacle collision
+    for (let obstacle of state.obstacles) {
+      // Top pipe collision
+      if (
+        state.player.x < obstacle.x + obstacle.width &&
+        state.player.x + state.player.w > obstacle.x &&
+        state.player.y < obstacle.topHeight
+      ) {
+        if (state.energyCapeActive) {
+          // Dash destroys the pipe!
+          createExplosion(obstacle.x + obstacle.width / 2, obstacle.topHeight);
+          playExplosionSound("miniNuke");
+
+          // Move obstacle off-screen to be removed
+          obstacle.x = -1000;
+
+          // DO NOT consume touch immediately to allow passing through
+          // energyCapeActive = false;
+
+          console.log("Dash destroyed top pipe!");
+          continue;
+        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+          // Activate ghost mode on first hit
+          state.isGhostActive = true;
+          state.ghostModeActivationTime = performance.now(); // Record activation time
+          state.ghostShroomCount--;
+          if (state.ghostShroomCount <= 0) {
+            state.hasGhostShroom = false;
+          }
+          // Save updated inventory
+          savePlayerInventory(state.currentSession.sessionToken, {
+            magnetRoundsLeft: state.magnetRoundsLeft || 0,
+            miniNukeCount: state.miniNukeCount,
+            nukeCount: state.nukeCount,
+            ghostShroomCount: state.ghostShroomCount,
+          });
+          console.log(
+            "Ghost mode activated! Ghost shrooms left:",
+            state.ghostShroomCount
+          );
+        } else if (state.isGhostActive) {
+          // Check if grace period has expired
+          const timeSinceActivation =
+            performance.now() - state.ghostModeActivationTime;
+          if (timeSinceActivation > state.ghostModeGracePeriod) {
+            // Grace period expired, trigger game over
+            handleGameOver();
+          }
+          // Otherwise, ignore collision during grace period
+        } else {
+          // No ghost shroom available
+          handleGameOver();
+        }
+      }
+
+      // Bottom pipe collision
+      if (
+        state.player.x < obstacle.x + obstacle.width &&
+        state.player.x + state.player.w > obstacle.x &&
+        state.player.y + state.player.h > obstacle.bottomY
+      ) {
+        if (state.energyCapeActive) {
+          // Dash destroys the pipe!
+          createExplosion(obstacle.x + obstacle.width / 2, obstacle.bottomY);
+          playExplosionSound("miniNuke");
+
+          // Move obstacle off-screen to be removed
+          obstacle.x = -1000;
+
+          // DO NOT consume dash immediately to allow passing through
+          // energyCapeActive = false;
+
+          console.log("Dash destroyed bottom pipe!");
+          continue;
+        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+          // Activate ghost mode on first hit
+          state.isGhostActive = true;
+          state.ghostModeActivationTime = performance.now(); // Record activation time
+          state.ghostShroomCount--;
+          if (state.ghostShroomCount <= 0) {
+            state.hasGhostShroom = false;
+          }
+          // Save updated inventory
+          savePlayerInventory(state.currentSession.sessionToken, {
+            magnetRoundsLeft: state.magnetRoundsLeft || 0,
+            miniNukeCount: state.miniNukeCount,
+            nukeCount: state.nukeCount,
+            ghostShroomCount: state.ghostShroomCount,
+          });
+          console.log(
+            "Ghost mode activated! Ghost shrooms left:",
+            state.ghostShroomCount
+          );
+        } else if (state.isGhostActive) {
+          // Check if grace period has expired
+          const timeSinceActivation =
+            performance.now() - state.ghostModeActivationTime;
+          if (timeSinceActivation > state.ghostModeGracePeriod) {
+            // Grace period expired, trigger game over
+            handleGameOver();
+          }
+          // Otherwise, ignore collision during grace period
+        } else {
+          // No ghost shroom available
+          handleGameOver();
+        }
+      }
+
+      // Score when passing obstacle
+      if (!obstacle.passed && state.player.x > obstacle.x + obstacle.width) {
+        obstacle.passed = true;
+        state.obstacleScore += 5;
+        // Update game speed based on new score with safeguards
+        const newSpeed = calculateGameSpeed();
+        // Only update if the new speed is reasonable (prevent sudden spikes)
+        if (newSpeed <= state.gameSpeed + 0.5) {
+          state.gameSpeed = newSpeed;
+        } else {
+          console.warn(
+            `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`
+          );
+        }
+      }
+    }
+
+    // Ensure there are always coins on screen
+    const coinLimit =
+      state.obstacleSpawnTimer < 0 && state.lastExplosionType === "goldNuke" ? 6 : 3;
+    if (state.coins.length < coinLimit) {
+      spawnCoin();
+    }
+  }
+}
