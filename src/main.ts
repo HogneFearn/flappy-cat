@@ -28,99 +28,11 @@ import {
   energyCapeImage,
   isMobile,
 } from "./assets";
-
-// Game variables
-let player = { x: 70, y: 300, w: 35, h: 35, vx: 0, vy: 0, onGround: false };
-let gravity = 0.2;
-let jumpPower = -3.5;
-let gameSpeed = 2.5;
-let baseGameSpeed = 2.5; // Store the original game speed
-
-// Delta time variables for consistent frame rate
-let lastTime = 0;
-let deltaTime = 0;
-let coins = [];
-let obstacles = [];
-let obstacleScore = 0;
-let totalCoinsWallet = 0; // Will be loaded when player name is set
-let onlineCount = 0; // Online users count
-let playerHighScore = 0; // Will be loaded from API for current player
-let gameRunning = true;
-let gameStarted = false;
-let gameNameEntered = false;
-let nameInputActive = false;
-let obstacleSpawnTimer = 0; // Now in milliseconds
-let validationTimer = 0; // Now in milliseconds
-let jumpHoldTimer = 0; // Now in milliseconds
-let playerName = "";
-let inputName = "";
-let inputPassword = "";
-let showLeaderboard = false;
-let switchingPlayer = false;
-let leaderboard = []; // Will be loaded from API instead of localStorage
-let showGameOverButtons = false; // Controls whether to show buttons after game over screen
-let gamePaused = false; // Controls whether the game is paused
-let pauseButtonCoords = {}; // Store pause button coordinates for click detection
-
-// Authentication variables
-let authMode = "login"; // "login", "signup", or "authenticated"
-let showAuthScreen = true;
-let authError = "";
-let currentSession = null;
-
-// Shop variables
-let showShop = false;
-let hasMagnet = false;
-let magnetRoundsLeft = 0;
-let magnetRadius = 250;
-let hasGoldMagnet = false;
-let goldMagnetRoundsLeft = 0;
-let goldMagnetRadius = 280; // Greater radius than regular magnet
-let goldMagnetPullSpeed = 2; // Faster pull speed
-let hasMiniNuke = false;
-let miniNukeCount = 0;
-let hasNuke = false;
-let nukeCount = 0;
-let hasGoldNuke = false;
-let goldNukeCount = 0;
-let hasGhostShroom = false;
-let ghostShroomCount = 0;
-let hasSpringBoots = false;
-let springBootsCount = 0;
-let hasEnergyCape = false;
-let energyCapeRoundsLeft = 0;
-let energyCapeActive = false; // Is player currently dashing?
-let energyCapeReloadTimer = 0; // Cooldown timer (0 to 4000ms)
-let energyCapeCooldown = 4000; // 4 seconds cooldown
-let energyCapeButtonCoords = {}; // Store energy cape button coordinates for click detection
-let isGhostActive = false;
-let ghostModeActivationTime = 0; // Track when ghost mode was activated
-let ghostModeGracePeriod = 2000; // 2 seconds of invincibility in milliseconds
-let isRocketActive = false;
-let rocket = null; // Will store rocket position and animation data
-let rocketButtonCoords = {}; // Store rocket button coordinates for click detection
-let nukeButtonCoords = {}; // Store nuke button coordinates for click detection
-let goldNukeButtonCoords = {}; // Store gold nuke button coordinates for click detection
-let springBootsButtonCoords = {}; // Store spring boots button coordinates for click detection
-let explosion = null; // Will store explosion animation data
-let lastExplosionType = null; // Track the type of the last explosion
-let shopGridCoords = []; // Will store the exact coordinates of each shop item button
-
-// Color palette variables
-let showColorPalette = false;
-let selectedCatColor = "gray"; // Default color
-let colorGridCoords = []; // Will store the exact coordinates of each color button
-let closeButtonCoords = { x: 0, y: 0, size: 0 }; // Will store close button coordinates
-
-// In-canvas button system for game over screen
-let gameOverButtons = [];
+import { state } from "./state";
 
 // ===================== canvas.js =====================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
-// Declare groundY before resizeCanvas function
-let groundY = 520; // Default value, will be updated by resizeCanvas
 
 // Responsive canvas sizing
 function resizeCanvas() {
@@ -162,7 +74,7 @@ function resizeCanvas() {
   }
 
   // Update ground position based on canvas height (not CSS height)
-  groundY = canvas.height - 80;
+  state.groundY = canvas.height - 80;
 }
 
 // Initialize canvas size
@@ -335,7 +247,7 @@ async function addToLeaderboard(sessionToken, score) {
     });
 
     // Reload leaderboard after adding score
-    leaderboard = await loadLeaderboard();
+    state.leaderboard = await loadLeaderboard();
   } catch (error) {
     console.error("Failed to add score to leaderboard:", error);
   }
@@ -549,47 +461,47 @@ async function checkPlayerHasMagnet(sessionToken) {
 
 // Initialize game data from API
 async function initializeGameData() {
-  if (!currentSession || !currentSession.sessionToken) {
+  if (!state.currentSession || !state.currentSession.sessionToken) {
     console.error("No valid session for initializing game data");
     return;
   }
 
   try {
     // Load player data using session token
-    totalCoinsWallet = await loadPlayerWallet(currentSession.sessionToken);
-    playerHighScore = await getPlayerHighScore(currentSession.sessionToken);
+    state.totalCoinsWallet = await loadPlayerWallet(state.currentSession.sessionToken);
+    state.playerHighScore = await getPlayerHighScore(state.currentSession.sessionToken);
 
     // Load inventory to get magnet rounds
-    const inventory = await loadPlayerInventory(currentSession.sessionToken);
-    magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
-    hasMagnet = magnetRoundsLeft > 0; // Set hasMagnet based on rounds left
+    const inventory = await loadPlayerInventory(state.currentSession.sessionToken);
+    state.magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
+    state.hasMagnet = state.magnetRoundsLeft > 0; // Set hasMagnet based on rounds left
 
-    goldMagnetRoundsLeft = inventory.goldMagnetRoundsLeft || 0;
-    hasGoldMagnet = goldMagnetRoundsLeft > 0; // Set hasGoldMagnet based on rounds left
+    state.goldMagnetRoundsLeft = inventory.goldMagnetRoundsLeft || 0;
+    state.hasGoldMagnet = state.goldMagnetRoundsLeft > 0; // Set hasGoldMagnet based on rounds left
 
-    miniNukeCount = inventory.miniNukeCount || 0;
-    hasMiniNuke = miniNukeCount > 0; // Set hasMiniNuke based on count
+    state.miniNukeCount = inventory.miniNukeCount || 0;
+    state.hasMiniNuke = state.miniNukeCount > 0; // Set hasMiniNuke based on count
 
-    nukeCount = inventory.nukeCount || 0;
-    hasNuke = nukeCount > 0; // Set hasNuke based on count
+    state.nukeCount = inventory.nukeCount || 0;
+    state.hasNuke = state.nukeCount > 0; // Set hasNuke based on count
 
-    goldNukeCount = inventory.goldNukeCount || 0;
-    hasGoldNuke = goldNukeCount > 0; // Set hasGoldNuke based on count
+    state.goldNukeCount = inventory.goldNukeCount || 0;
+    state.hasGoldNuke = state.goldNukeCount > 0; // Set hasGoldNuke based on count
 
-    ghostShroomCount = inventory.ghostShroomCount || 0;
-    hasGhostShroom = ghostShroomCount > 0; // Set hasGhostShroom based on count
+    state.ghostShroomCount = inventory.ghostShroomCount || 0;
+    state.hasGhostShroom = state.ghostShroomCount > 0; // Set hasGhostShroom based on count
 
-    energyCapeRoundsLeft = inventory.energyCapeRoundsLeft || 0;
-    hasEnergyCape = energyCapeRoundsLeft > 0; // Set hasEnergyCape based on rounds left
+    state.energyCapeRoundsLeft = inventory.energyCapeRoundsLeft || 0;
+    state.hasEnergyCape = state.energyCapeRoundsLeft > 0; // Set hasEnergyCape based on rounds left
 
     // Load color preference
-    selectedCatColor = await getPlayerColor(currentSession.sessionToken);
+    state.selectedCatColor = await getPlayerColor(state.currentSession.sessionToken);
 
     // Load leaderboard
-    leaderboard = await loadLeaderboard();
+    state.leaderboard = await loadLeaderboard();
 
     // Mark game as ready
-    gameNameEntered = true;
+    state.gameNameEntered = true;
 
     console.log("Game data initialized successfully");
   } catch (error) {
@@ -621,12 +533,12 @@ async function startHeartbeat(sessionToken) {
     if (result.onlineCount !== undefined) {
       console.log(
         "Updating onlineCount from",
-        onlineCount,
+        state.onlineCount,
         "to",
         result.onlineCount
       );
-      onlineCount = result.onlineCount;
-      console.log("onlineCount is now:", onlineCount);
+      state.onlineCount = result.onlineCount;
+      console.log("onlineCount is now:", state.onlineCount);
     }
   } catch (error) {
     console.error("Initial heartbeat failed:", error);
@@ -645,7 +557,7 @@ async function startHeartbeat(sessionToken) {
       console.log("Periodic heartbeat successful:", result);
       // Update online count from heartbeat response
       if (result.onlineCount !== undefined) {
-        onlineCount = result.onlineCount;
+        state.onlineCount = result.onlineCount;
       }
     } catch (error) {
       console.error("Heartbeat failed:", error);
@@ -702,9 +614,8 @@ async function savePlayerColor(sessionToken, selectedColor) {
 
 // ===================== controls.js =====================
 // Controls
-let keys = {};
 document.addEventListener("keydown", (e) => {
-  keys[e.code] = true;
+  state.keys[e.code] = true;
 
   // Initialize audio system on first user interaction
   if (!audioInitialized) {
@@ -712,14 +623,11 @@ document.addEventListener("keydown", (e) => {
   }
 
   // Skip input handling if authentication screen is showing
-  if (showAuthScreen) {
+  if (state.showAuthScreen) {
     return;
   }
 });
-document.addEventListener("keyup", (e) => (keys[e.code] = false));
-
-// Hold-to-jump functionality
-let isJumpHeld = false;
+document.addEventListener("keyup", (e) => (state.keys[e.code] = false));
 
 // Canvas touch handler for all game interactions
 canvas.addEventListener("touchstart", (e) => {
@@ -739,21 +647,21 @@ canvas.addEventListener("touchstart", (e) => {
   const canvasY = coords.y;
 
   // Priority 1: Handle overlay screens (these should block all other interactions)
-  if (showColorPalette) {
+  if (state.showColorPalette) {
     // Check if touch is on close button using stored coordinates
     if (
-      canvasX >= closeButtonCoords.x &&
-      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
-      canvasY >= closeButtonCoords.y &&
-      canvasY <= closeButtonCoords.y + closeButtonCoords.size
+      canvasX >= state.closeButtonCoords.x &&
+      canvasX <= state.closeButtonCoords.x + state.closeButtonCoords.size &&
+      canvasY >= state.closeButtonCoords.y &&
+      canvasY <= state.closeButtonCoords.y + state.closeButtonCoords.size
     ) {
-      showColorPalette = false;
+      state.showColorPalette = false;
       return;
     }
 
     // Handle color selection touches using stored coordinates
-    for (let i = 0; i < colorGridCoords.length; i++) {
-      const colorCoord = colorGridCoords[i];
+    for (let i = 0; i < state.colorGridCoords.length; i++) {
+      const colorCoord = state.colorGridCoords[i];
 
       if (
         canvasX >= colorCoord.x &&
@@ -767,21 +675,21 @@ canvas.addEventListener("touchstart", (e) => {
     }
 
     return; // Important: prevent any other touch handling when color palette is open
-  } else if (showShop) {
+  } else if (state.showShop) {
     // Check if touch is on close button
     if (
-      canvasX >= closeButtonCoords.x &&
-      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
-      canvasY >= closeButtonCoords.y &&
-      canvasY <= closeButtonCoords.y + closeButtonCoords.size
+      canvasX >= state.closeButtonCoords.x &&
+      canvasX <= state.closeButtonCoords.x + state.closeButtonCoords.size &&
+      canvasY >= state.closeButtonCoords.y &&
+      canvasY <= state.closeButtonCoords.y + state.closeButtonCoords.size
     ) {
-      showShop = false;
+      state.showShop = false;
       return;
     }
 
     // Handle shop item selection touches using stored coordinates
-    for (let i = 0; i < shopGridCoords.length; i++) {
-      const shopCoord = shopGridCoords[i];
+    for (let i = 0; i < state.shopGridCoords.length; i++) {
+      const shopCoord = state.shopGridCoords[i];
 
       if (
         canvasX >= shopCoord.x &&
@@ -794,35 +702,35 @@ canvas.addEventListener("touchstart", (e) => {
           (item) => item.id === shopCoord.itemId
         );
         if (item && shopCoord.itemId === "magnet") {
-          if (totalCoinsWallet >= item.price && magnetRoundsLeft === 0) {
+          if (state.totalCoinsWallet >= item.price && state.magnetRoundsLeft === 0) {
             buyMagnetItem();
           }
         } else if (item && shopCoord.itemId === "goldMagnet") {
-          if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
+          if (state.totalCoinsWallet >= item.price && state.goldMagnetRoundsLeft === 0) {
             buyGoldMagnetItem();
           }
         } else if (item && shopCoord.itemId === "ghostShroom") {
-          if (totalCoinsWallet >= item.price && ghostShroomCount === 0) {
+          if (state.totalCoinsWallet >= item.price && state.ghostShroomCount === 0) {
             buyGhostShroomItem();
           }
         } else if (item && shopCoord.itemId === "springBoots") {
-          if (totalCoinsWallet >= item.price && springBootsCount === 0) {
+          if (state.totalCoinsWallet >= item.price && state.springBootsCount === 0) {
             buySpringBootsItem();
           }
         } else if (item && shopCoord.itemId === "miniNuke") {
-          if (totalCoinsWallet >= item.price) {
+          if (state.totalCoinsWallet >= item.price) {
             buyMiniNukeItem();
           }
         } else if (item && shopCoord.itemId === "nuke") {
-          if (totalCoinsWallet >= item.price) {
+          if (state.totalCoinsWallet >= item.price) {
             buyNukeItem();
           }
         } else if (item && shopCoord.itemId === "goldNuke") {
-          if (totalCoinsWallet >= item.price) {
+          if (state.totalCoinsWallet >= item.price) {
             buyGoldNukeItem();
           }
         } else if (item && shopCoord.itemId === "energyCape") {
-          if (totalCoinsWallet >= item.price && energyCapeRoundsLeft === 0) {
+          if (state.totalCoinsWallet >= item.price && state.energyCapeRoundsLeft === 0) {
             buyEnergyCapeItem();
           }
         }
@@ -842,27 +750,27 @@ canvas.addEventListener("touchstart", (e) => {
       canvasX < shopContentLeft ||
       canvasX > shopContentRight
     ) {
-      showShop = false;
+      state.showShop = false;
     }
     return; // Important: prevent any other touch handling when shop is open
-  } else if (showLeaderboard) {
+  } else if (state.showLeaderboard) {
     // Close leaderboard when tapping on canvas
-    showLeaderboard = false;
+    state.showLeaderboard = false;
     return; // Important: prevent any other touch handling when leaderboard is open
   }
 
   // Priority 2: Check for pause button click (only when game is running and not paused)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    pauseButtonCoords.x &&
-    canvasX >= pauseButtonCoords.x &&
-    canvasX <= pauseButtonCoords.x + pauseButtonCoords.width &&
-    canvasY >= pauseButtonCoords.y &&
-    canvasY <= pauseButtonCoords.y + pauseButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.pauseButtonCoords.x &&
+    canvasX >= state.pauseButtonCoords.x &&
+    canvasX <= state.pauseButtonCoords.x + state.pauseButtonCoords.width &&
+    canvasY >= state.pauseButtonCoords.y &&
+    canvasY <= state.pauseButtonCoords.y + state.pauseButtonCoords.height
   ) {
     togglePause();
     return;
@@ -870,19 +778,19 @@ canvas.addEventListener("touchstart", (e) => {
 
   // Priority 2.5: Check for rocket button click (only when game is running, not paused, and has mini nukes)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasMiniNuke &&
-    miniNukeCount > 0 &&
-    !isRocketActive &&
-    rocketButtonCoords.x &&
-    canvasX >= rocketButtonCoords.x &&
-    canvasX <= rocketButtonCoords.x + rocketButtonCoords.width &&
-    canvasY >= rocketButtonCoords.y &&
-    canvasY <= rocketButtonCoords.y + rocketButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasMiniNuke &&
+    state.miniNukeCount > 0 &&
+    !state.isRocketActive &&
+    state.rocketButtonCoords.x &&
+    canvasX >= state.rocketButtonCoords.x &&
+    canvasX <= state.rocketButtonCoords.x + state.rocketButtonCoords.width &&
+    canvasY >= state.rocketButtonCoords.y &&
+    canvasY <= state.rocketButtonCoords.y + state.rocketButtonCoords.height
   ) {
     launchRocket();
     return;
@@ -890,19 +798,19 @@ canvas.addEventListener("touchstart", (e) => {
 
   // Priority 2b: Check for nuke button click during gameplay (touchstart for better responsiveness)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasNuke &&
-    nukeCount > 0 &&
-    !isRocketActive &&
-    nukeButtonCoords.x &&
-    canvasX >= nukeButtonCoords.x &&
-    canvasX <= nukeButtonCoords.x + nukeButtonCoords.width &&
-    canvasY >= nukeButtonCoords.y &&
-    canvasY <= nukeButtonCoords.y + nukeButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasNuke &&
+    state.nukeCount > 0 &&
+    !state.isRocketActive &&
+    state.nukeButtonCoords.x &&
+    canvasX >= state.nukeButtonCoords.x &&
+    canvasX <= state.nukeButtonCoords.x + state.nukeButtonCoords.width &&
+    canvasY >= state.nukeButtonCoords.y &&
+    canvasY <= state.nukeButtonCoords.y + state.nukeButtonCoords.height
   ) {
     launchNuke();
     return;
@@ -910,19 +818,19 @@ canvas.addEventListener("touchstart", (e) => {
 
   // Priority 2c: Check for gold nuke button click during gameplay (touchstart for better responsiveness)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasGoldNuke &&
-    goldNukeCount > 0 &&
-    !isRocketActive &&
-    goldNukeButtonCoords.x &&
-    canvasX >= goldNukeButtonCoords.x &&
-    canvasX <= goldNukeButtonCoords.x + goldNukeButtonCoords.width &&
-    canvasY >= goldNukeButtonCoords.y &&
-    canvasY <= goldNukeButtonCoords.y + goldNukeButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasGoldNuke &&
+    state.goldNukeCount > 0 &&
+    !state.isRocketActive &&
+    state.goldNukeButtonCoords.x &&
+    canvasX >= state.goldNukeButtonCoords.x &&
+    canvasX <= state.goldNukeButtonCoords.x + state.goldNukeButtonCoords.width &&
+    canvasY >= state.goldNukeButtonCoords.y &&
+    canvasY <= state.goldNukeButtonCoords.y + state.goldNukeButtonCoords.height
   ) {
     launchGoldNuke();
     return;
@@ -930,32 +838,32 @@ canvas.addEventListener("touchstart", (e) => {
 
   // Priority 2d: Check for energy cape dash button click during gameplay
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasEnergyCape &&
-    energyCapeRoundsLeft > 0 &&
-    !energyCapeActive &&
-    energyCapeReloadTimer <= 0 &&
-    !isRocketActive &&
-    energyCapeButtonCoords.x &&
-    canvasX >= energyCapeButtonCoords.x &&
-    canvasX <= energyCapeButtonCoords.x + energyCapeButtonCoords.width &&
-    canvasY >= energyCapeButtonCoords.y &&
-    canvasY <= energyCapeButtonCoords.y + energyCapeButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasEnergyCape &&
+    state.energyCapeRoundsLeft > 0 &&
+    !state.energyCapeActive &&
+    state.energyCapeReloadTimer <= 0 &&
+    !state.isRocketActive &&
+    state.energyCapeButtonCoords.x &&
+    canvasX >= state.energyCapeButtonCoords.x &&
+    canvasX <= state.energyCapeButtonCoords.x + state.energyCapeButtonCoords.width &&
+    canvasY >= state.energyCapeButtonCoords.y &&
+    canvasY <= state.energyCapeButtonCoords.y + state.energyCapeButtonCoords.height
   ) {
     activateDash();
     return;
   }
 
   // Priority 3: Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
-  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
+  if (!state.gameRunning && state.showGameOverButtons && state.gameOverButtons.length > 0) {
     // Find the clicked button by checking from bottom to top (reverse order)
     // to handle any potential overlaps
-    for (let i = gameOverButtons.length - 1; i >= 0; i--) {
-      const button = gameOverButtons[i];
+    for (let i = state.gameOverButtons.length - 1; i >= 0; i--) {
+      const button = state.gameOverButtons[i];
       if (
         canvasX >= button.x &&
         canvasX <= button.x + button.width &&
@@ -969,22 +877,22 @@ canvas.addEventListener("touchstart", (e) => {
   }
 
   // If game is over but buttons aren't shown yet, show them on tap
-  if (!gameRunning && !showGameOverButtons) {
-    showGameOverButtons = true;
+  if (!state.gameRunning && !state.showGameOverButtons) {
+    state.showGameOverButtons = true;
     return;
   }
 
   // Priority 3: Normal game interactions (only when no overlays are open)
-  if (!showAuthScreen && gameNameEntered) {
-    isJumpHeld = true;
-    jumpHoldTimer = 0;
+  if (!state.showAuthScreen && state.gameNameEntered) {
+    state.isJumpHeld = true;
+    state.jumpHoldTimer = 0;
     handleJump();
   }
 });
 
 canvas.addEventListener("touchend", (e) => {
   e.preventDefault();
-  isJumpHeld = false;
+  state.isJumpHeld = false;
 });
 
 // Canvas click handler for desktop
@@ -995,21 +903,21 @@ canvas.addEventListener("click", (e) => {
   const canvasY = coords.y;
 
   // Priority 1: Handle overlay screens (these should block all other interactions)
-  if (showColorPalette) {
+  if (state.showColorPalette) {
     // Check if click is on close button using stored coordinates
     if (
-      canvasX >= closeButtonCoords.x &&
-      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
-      canvasY >= closeButtonCoords.y &&
-      canvasY <= closeButtonCoords.y + closeButtonCoords.size
+      canvasX >= state.closeButtonCoords.x &&
+      canvasX <= state.closeButtonCoords.x + state.closeButtonCoords.size &&
+      canvasY >= state.closeButtonCoords.y &&
+      canvasY <= state.closeButtonCoords.y + state.closeButtonCoords.size
     ) {
-      showColorPalette = false;
+      state.showColorPalette = false;
       return;
     }
 
     // Handle color selection clicks using stored coordinates
-    for (let i = 0; i < colorGridCoords.length; i++) {
-      const colorCoord = colorGridCoords[i];
+    for (let i = 0; i < state.colorGridCoords.length; i++) {
+      const colorCoord = state.colorGridCoords[i];
 
       if (
         canvasX >= colorCoord.x &&
@@ -1023,21 +931,21 @@ canvas.addEventListener("click", (e) => {
     }
 
     return; // Important: prevent any other click handling when color palette is open
-  } else if (showShop) {
+  } else if (state.showShop) {
     // Check if click is on close button
     if (
-      canvasX >= closeButtonCoords.x &&
-      canvasX <= closeButtonCoords.x + closeButtonCoords.size &&
-      canvasY >= closeButtonCoords.y &&
-      canvasY <= closeButtonCoords.y + closeButtonCoords.size
+      canvasX >= state.closeButtonCoords.x &&
+      canvasX <= state.closeButtonCoords.x + state.closeButtonCoords.size &&
+      canvasY >= state.closeButtonCoords.y &&
+      canvasY <= state.closeButtonCoords.y + state.closeButtonCoords.size
     ) {
-      showShop = false;
+      state.showShop = false;
       return;
     }
 
     // Handle shop item selection clicks using stored coordinates
-    for (let i = 0; i < shopGridCoords.length; i++) {
-      const shopCoord = shopGridCoords[i];
+    for (let i = 0; i < state.shopGridCoords.length; i++) {
+      const shopCoord = state.shopGridCoords[i];
 
       if (
         canvasX >= shopCoord.x &&
@@ -1050,35 +958,35 @@ canvas.addEventListener("click", (e) => {
           (item) => item.id === shopCoord.itemId
         );
         if (item && shopCoord.itemId === "magnet") {
-          if (totalCoinsWallet >= item.price && magnetRoundsLeft === 0) {
+          if (state.totalCoinsWallet >= item.price && state.magnetRoundsLeft === 0) {
             buyMagnetItem();
           }
         } else if (item && shopCoord.itemId === "goldMagnet") {
-          if (totalCoinsWallet >= item.price && goldMagnetRoundsLeft === 0) {
+          if (state.totalCoinsWallet >= item.price && state.goldMagnetRoundsLeft === 0) {
             buyGoldMagnetItem();
           }
         } else if (item && shopCoord.itemId === "ghostShroom") {
-          if (totalCoinsWallet >= item.price && ghostShroomCount === 0) {
+          if (state.totalCoinsWallet >= item.price && state.ghostShroomCount === 0) {
             buyGhostShroomItem();
           }
         } else if (item && shopCoord.itemId === "springBoots") {
-          if (totalCoinsWallet >= item.price && springBootsCount === 0) {
+          if (state.totalCoinsWallet >= item.price && state.springBootsCount === 0) {
             buySpringBootsItem();
           }
         } else if (item && shopCoord.itemId === "miniNuke") {
-          if (totalCoinsWallet >= item.price) {
+          if (state.totalCoinsWallet >= item.price) {
             buyMiniNukeItem();
           }
         } else if (item && shopCoord.itemId === "nuke") {
-          if (totalCoinsWallet >= item.price) {
+          if (state.totalCoinsWallet >= item.price) {
             buyNukeItem();
           }
         } else if (item && shopCoord.itemId === "goldNuke") {
-          if (totalCoinsWallet >= item.price) {
+          if (state.totalCoinsWallet >= item.price) {
             buyGoldNukeItem();
           }
         } else if (item && shopCoord.itemId === "energyCape") {
-          if (totalCoinsWallet >= item.price && energyCapeRoundsLeft === 0) {
+          if (state.totalCoinsWallet >= item.price && state.energyCapeRoundsLeft === 0) {
             buyEnergyCapeItem();
           }
         }
@@ -1098,27 +1006,27 @@ canvas.addEventListener("click", (e) => {
       canvasX < shopContentLeft ||
       canvasX > shopContentRight
     ) {
-      showShop = false;
+      state.showShop = false;
     }
     return; // Important: prevent any other click handling when shop is open
-  } else if (showLeaderboard) {
+  } else if (state.showLeaderboard) {
     // Close leaderboard when clicking on canvas
-    showLeaderboard = false;
+    state.showLeaderboard = false;
     return; // Important: prevent any other click handling when leaderboard is open
   }
 
   // Priority 2: Check for pause button click (only when game is running and not paused)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    pauseButtonCoords.x &&
-    canvasX >= pauseButtonCoords.x &&
-    canvasX <= pauseButtonCoords.x + pauseButtonCoords.width &&
-    canvasY >= pauseButtonCoords.y &&
-    canvasY <= pauseButtonCoords.y + pauseButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.pauseButtonCoords.x &&
+    canvasX >= state.pauseButtonCoords.x &&
+    canvasX <= state.pauseButtonCoords.x + state.pauseButtonCoords.width &&
+    canvasY >= state.pauseButtonCoords.y &&
+    canvasY <= state.pauseButtonCoords.y + state.pauseButtonCoords.height
   ) {
     togglePause();
     return;
@@ -1126,19 +1034,19 @@ canvas.addEventListener("click", (e) => {
 
   // Priority 2.5: Check for rocket button click (only when game is running, not paused, and has mini nukes)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasMiniNuke &&
-    miniNukeCount > 0 &&
-    !isRocketActive &&
-    rocketButtonCoords.x &&
-    canvasX >= rocketButtonCoords.x &&
-    canvasX <= rocketButtonCoords.x + rocketButtonCoords.width &&
-    canvasY >= rocketButtonCoords.y &&
-    canvasY <= rocketButtonCoords.y + rocketButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasMiniNuke &&
+    state.miniNukeCount > 0 &&
+    !state.isRocketActive &&
+    state.rocketButtonCoords.x &&
+    canvasX >= state.rocketButtonCoords.x &&
+    canvasX <= state.rocketButtonCoords.x + state.rocketButtonCoords.width &&
+    canvasY >= state.rocketButtonCoords.y &&
+    canvasY <= state.rocketButtonCoords.y + state.rocketButtonCoords.height
   ) {
     launchRocket();
     return;
@@ -1146,19 +1054,19 @@ canvas.addEventListener("click", (e) => {
 
   // Priority 2.6: Check for nuke button click (only when game is running, not paused, and has nukes)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasNuke &&
-    nukeCount > 0 &&
-    !isRocketActive &&
-    nukeButtonCoords.x &&
-    canvasX >= nukeButtonCoords.x &&
-    canvasX <= nukeButtonCoords.x + nukeButtonCoords.width &&
-    canvasY >= nukeButtonCoords.y &&
-    canvasY <= nukeButtonCoords.y + nukeButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasNuke &&
+    state.nukeCount > 0 &&
+    !state.isRocketActive &&
+    state.nukeButtonCoords.x &&
+    canvasX >= state.nukeButtonCoords.x &&
+    canvasX <= state.nukeButtonCoords.x + state.nukeButtonCoords.width &&
+    canvasY >= state.nukeButtonCoords.y &&
+    canvasY <= state.nukeButtonCoords.y + state.nukeButtonCoords.height
   ) {
     launchNuke();
     return;
@@ -1166,19 +1074,19 @@ canvas.addEventListener("click", (e) => {
 
   // Priority 2.7: Check for gold nuke button click (only when game is running, not paused, and has gold nukes)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasGoldNuke &&
-    goldNukeCount > 0 &&
-    !isRocketActive &&
-    goldNukeButtonCoords.x &&
-    canvasX >= goldNukeButtonCoords.x &&
-    canvasX <= goldNukeButtonCoords.x + goldNukeButtonCoords.width &&
-    canvasY >= goldNukeButtonCoords.y &&
-    canvasY <= goldNukeButtonCoords.y + goldNukeButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasGoldNuke &&
+    state.goldNukeCount > 0 &&
+    !state.isRocketActive &&
+    state.goldNukeButtonCoords.x &&
+    canvasX >= state.goldNukeButtonCoords.x &&
+    canvasX <= state.goldNukeButtonCoords.x + state.goldNukeButtonCoords.width &&
+    canvasY >= state.goldNukeButtonCoords.y &&
+    canvasY <= state.goldNukeButtonCoords.y + state.goldNukeButtonCoords.height
   ) {
     launchGoldNuke();
     return;
@@ -1186,29 +1094,29 @@ canvas.addEventListener("click", (e) => {
 
   // Priority 2.8: Check for energy cape dash button click (only when game is running, not paused, and has energy cape)
   if (
-    gameRunning &&
-    gameStarted &&
-    gameNameEntered &&
-    !showAuthScreen &&
-    !gamePaused &&
-    hasEnergyCape &&
-    energyCapeRoundsLeft > 0 &&
-    !energyCapeActive &&
-    energyCapeReloadTimer <= 0 &&
-    !isRocketActive &&
-    energyCapeButtonCoords.x &&
-    canvasX >= energyCapeButtonCoords.x &&
-    canvasX <= energyCapeButtonCoords.x + energyCapeButtonCoords.width &&
-    canvasY >= energyCapeButtonCoords.y &&
-    canvasY <= energyCapeButtonCoords.y + energyCapeButtonCoords.height
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen &&
+    !state.gamePaused &&
+    state.hasEnergyCape &&
+    state.energyCapeRoundsLeft > 0 &&
+    !state.energyCapeActive &&
+    state.energyCapeReloadTimer <= 0 &&
+    !state.isRocketActive &&
+    state.energyCapeButtonCoords.x &&
+    canvasX >= state.energyCapeButtonCoords.x &&
+    canvasX <= state.energyCapeButtonCoords.x + state.energyCapeButtonCoords.width &&
+    canvasY >= state.energyCapeButtonCoords.y &&
+    canvasY <= state.energyCapeButtonCoords.y + state.energyCapeButtonCoords.height
   ) {
     activateDash();
     return;
   }
 
   // Priority 3: Check for in-canvas button clicks when game is over
-  if (!gameRunning && showGameOverButtons && gameOverButtons.length > 0) {
-    for (const button of gameOverButtons) {
+  if (!state.gameRunning && state.showGameOverButtons && state.gameOverButtons.length > 0) {
+    for (const button of state.gameOverButtons) {
       if (
         canvasX >= button.x &&
         canvasX <= button.x + button.width &&
@@ -1222,13 +1130,13 @@ canvas.addEventListener("click", (e) => {
   }
 
   // If game is over but buttons aren't shown yet, show them on click
-  if (!gameRunning && !showGameOverButtons) {
-    showGameOverButtons = true;
+  if (!state.gameRunning && !state.showGameOverButtons) {
+    state.showGameOverButtons = true;
     return;
   }
 
   // Priority 3: Normal game interactions (only when no overlays are open)
-  if (!showAuthScreen && gameNameEntered) {
+  if (!state.showAuthScreen && state.gameNameEntered) {
     handleJump();
   }
 });
@@ -1258,74 +1166,74 @@ function handleGameOverButtonClick(action) {
 
 function handleJump() {
   // Skip if authentication screen is showing
-  if (showAuthScreen) {
+  if (state.showAuthScreen) {
     return;
   }
 
-  if (!gameNameEntered) {
+  if (!state.gameNameEntered) {
     // Wait for authentication to complete - do nothing
     return;
-  } else if (!gameRunning) {
+  } else if (!state.gameRunning) {
     // If game is over but buttons aren't shown yet, show them
-    if (!showGameOverButtons) {
-      showGameOverButtons = true;
+    if (!state.showGameOverButtons) {
+      state.showGameOverButtons = true;
     }
     // Don't restart the game automatically when buttons are shown
     // Player must click the "Play Again" button instead
-  } else if (gamePaused) {
+  } else if (state.gamePaused) {
     // Resume game and jump at the same time
-    gamePaused = false;
-    player.vy = jumpPower;
-  } else if (!gameStarted) {
-    gameStarted = true;
-    player.vy = jumpPower;
+    state.gamePaused = false;
+    state.player.vy = state.jumpPower;
+  } else if (!state.gameStarted) {
+    state.gameStarted = true;
+    state.player.vy = state.jumpPower;
   } else {
-    player.vy = jumpPower;
+    state.player.vy = state.jumpPower;
   }
 }
 
 function handleLeaderboard() {
-  if (gameNameEntered) {
+  if (state.gameNameEntered) {
     // Always allow closing the leaderboard, but only allow opening if game is not running or not started
-    if (showLeaderboard || !gameRunning || !gameStarted) {
-      showLeaderboard = !showLeaderboard;
-      showShop = false; // Close shop when opening leaderboard
-      showColorPalette = false; // Close color palette when opening leaderboard
+    if (state.showLeaderboard || !state.gameRunning || !state.gameStarted) {
+      state.showLeaderboard = !state.showLeaderboard;
+      state.showShop = false; // Close shop when opening leaderboard
+      state.showColorPalette = false; // Close color palette when opening leaderboard
     }
   }
 }
 
 function handleShop() {
-  if (gameNameEntered) {
+  if (state.gameNameEntered) {
     // Always allow closing the shop, but only allow opening if game is not running or not started
-    if (showShop || !gameRunning || !gameStarted) {
-      showShop = !showShop;
-      showLeaderboard = false; // Close leaderboard when opening shop
-      showColorPalette = false; // Close color palette when opening shop
+    if (state.showShop || !state.gameRunning || !state.gameStarted) {
+      state.showShop = !state.showShop;
+      state.showLeaderboard = false; // Close leaderboard when opening shop
+      state.showColorPalette = false; // Close color palette when opening shop
     }
   }
 }
 
 function handleColorPalette() {
-  if (gameNameEntered) {
+  if (state.gameNameEntered) {
     // Always allow closing the color palette, but only allow opening if game is not running or not started
-    if (showColorPalette || !gameRunning || !gameStarted) {
-      showColorPalette = !showColorPalette;
-      showLeaderboard = false; // Close leaderboard when opening color palette
-      showShop = false; // Close shop when opening color palette
+    if (state.showColorPalette || !state.gameRunning || !state.gameStarted) {
+      state.showColorPalette = !state.showColorPalette;
+      state.showLeaderboard = false; // Close leaderboard when opening color palette
+      state.showShop = false; // Close shop when opening color palette
     }
   }
 }
 
 function handleSwitchPlayer() {
-  if (!gameRunning || !gameStarted) {
+  if (!state.gameRunning || !state.gameStarted) {
     // Use the authentication-based switch player function
     switchPlayerWithAuth();
   }
 }
 
 function handleRestart() {
-  if (!gameRunning) {
+  if (!state.gameRunning) {
     resetGame();
   }
 }
@@ -1395,13 +1303,13 @@ function spawnCoin() {
   // Try to find a position that doesn't collide with pipes
   while (!validPosition && attempts < maxAttempts) {
     x = canvas.width + Math.random() * 300; // Even wider spawn range
-    y = Math.random() * (groundY - 140) + 70; // More conservative Y range
+    y = Math.random() * (state.groundY - 140) + 70; // More conservative Y range
     attempts++;
 
     let collides = false;
 
     // Check collision with all existing obstacles
-    for (let obstacle of obstacles) {
+    for (let obstacle of state.obstacles) {
       // Add safety margin to collision detection
       const safetyMargin = 15;
 
@@ -1427,7 +1335,7 @@ function spawnCoin() {
     }
 
     // Additional check: ensure coin is not too close to ground or ceiling
-    if (y - radius < 30 || y + radius > groundY - 30) {
+    if (y - radius < 30 || y + radius > state.groundY - 30) {
       collides = true;
     }
 
@@ -1439,11 +1347,11 @@ function spawnCoin() {
     if (attempts > 20 && !validPosition) {
       // Place coin far to the right where there are likely no obstacles
       x = canvas.width + 200 + Math.random() * 200;
-      y = groundY / 2 + (Math.random() - 0.5) * 100; // Center area
+      y = state.groundY / 2 + (Math.random() - 0.5) * 100; // Center area
 
       // Final collision check
       collides = false;
-      for (let obstacle of obstacles) {
+      for (let obstacle of state.obstacles) {
         if (
           x + radius > obstacle.x &&
           x - radius < obstacle.x + obstacle.width &&
@@ -1463,19 +1371,19 @@ function spawnCoin() {
   // If we still couldn't find a valid position, place it very far right
   if (!validPosition) {
     x = canvas.width + 400;
-    y = groundY / 2;
+    y = state.groundY / 2;
   }
 
-  coins.push({ x, y, r: radius, type, value, color, strokeColor });
+  state.coins.push({ x, y, r: radius, type, value, color, strokeColor });
 }
 
 // Function to check and fix coins that ended up inside pipes
 function validateCoinPositions() {
-  for (let i = coins.length - 1; i >= 0; i--) {
-    let coin = coins[i];
+  for (let i = state.coins.length - 1; i >= 0; i--) {
+    let coin = state.coins[i];
     let isInsidePipe = false;
 
-    for (let obstacle of obstacles) {
+    for (let obstacle of state.obstacles) {
       // Check if coin is inside top pipe
       if (
         coin.x + coin.r > obstacle.x &&
@@ -1499,7 +1407,7 @@ function validateCoinPositions() {
 
     if (isInsidePipe) {
       // Remove the problematic coin - don't immediately respawn to avoid loops
-      coins.splice(i, 1);
+      state.coins.splice(i, 1);
     }
   }
 }
@@ -1509,9 +1417,9 @@ function spawnObstacle() {
   const gapSize = 150;
   const topHeight = Math.random() * 150 + 80;
   const bottomY = topHeight + gapSize;
-  const bottomHeight = groundY - bottomY;
+  const bottomHeight = state.groundY - bottomY;
 
-  obstacles.push({
+  state.obstacles.push({
     x: canvas.width,
     width: 40,
     topHeight: topHeight,
@@ -1522,71 +1430,71 @@ function spawnObstacle() {
 }
 
 async function handleGameOver() {
-  gameRunning = false;
-  showGameOverButtons = false; // Start with just the game over message
+  state.gameRunning = false;
+  state.showGameOverButtons = false; // Start with just the game over message
 
   // Decrease magnet rounds if player has magnets
   if (
-    hasMagnet ||
-    hasGoldMagnet ||
-    hasMiniNuke ||
-    hasSpringBoots ||
-    hasEnergyCape
+    state.hasMagnet ||
+    state.hasGoldMagnet ||
+    state.hasMiniNuke ||
+    state.hasSpringBoots ||
+    state.hasEnergyCape
   ) {
     const inventory = {};
 
-    if (hasMagnet) {
-      magnetRoundsLeft--;
-      if (magnetRoundsLeft <= 0) {
-        hasMagnet = false;
-        magnetRoundsLeft = 0;
+    if (state.hasMagnet) {
+      state.magnetRoundsLeft--;
+      if (state.magnetRoundsLeft <= 0) {
+        state.hasMagnet = false;
+        state.magnetRoundsLeft = 0;
       }
-      inventory.magnetRoundsLeft = magnetRoundsLeft;
+      inventory.magnetRoundsLeft = state.magnetRoundsLeft;
     }
 
-    if (hasGoldMagnet) {
-      goldMagnetRoundsLeft--;
-      if (goldMagnetRoundsLeft <= 0) {
-        hasGoldMagnet = false;
-        goldMagnetRoundsLeft = 0;
+    if (state.hasGoldMagnet) {
+      state.goldMagnetRoundsLeft--;
+      if (state.goldMagnetRoundsLeft <= 0) {
+        state.hasGoldMagnet = false;
+        state.goldMagnetRoundsLeft = 0;
       }
-      inventory.goldMagnetRoundsLeft = goldMagnetRoundsLeft;
+      inventory.goldMagnetRoundsLeft = state.goldMagnetRoundsLeft;
     }
 
-    if (hasSpringBoots) {
-      springBootsCount = 0;
-      hasSpringBoots = false;
+    if (state.hasSpringBoots) {
+      state.springBootsCount = 0;
+      state.hasSpringBoots = false;
       inventory.springBootsCount = 0;
     }
 
-    if (hasEnergyCape) {
-      energyCapeRoundsLeft = 0;
-      hasEnergyCape = false;
+    if (state.hasEnergyCape) {
+      state.energyCapeRoundsLeft = 0;
+      state.hasEnergyCape = false;
       inventory.energyCapeRoundsLeft = 0;
     }
 
     // Always include mini nuke count (doesn't decrease on game over)
-    inventory.miniNukeCount = miniNukeCount;
+    inventory.miniNukeCount = state.miniNukeCount;
 
     // Always include nuke count (doesn't decrease on game over)
-    inventory.nukeCount = nukeCount;
+    inventory.nukeCount = state.nukeCount;
 
     // Always include gold nuke count (doesn't decrease on game over)
-    inventory.goldNukeCount = goldNukeCount;
+    inventory.goldNukeCount = state.goldNukeCount;
 
     // Save updated inventory
-    await savePlayerInventory(currentSession.sessionToken, inventory);
+    await savePlayerInventory(state.currentSession.sessionToken, inventory);
   }
 
   // Use obstacle score for leaderboard (pipes cleared)
-  if (obstacleScore > 0) {
-    await addToLeaderboard(currentSession.sessionToken, obstacleScore);
+  if (state.obstacleScore > 0) {
+    await addToLeaderboard(state.currentSession.sessionToken, state.obstacleScore);
   }
 
   // Update player's personal high score
-  if (obstacleScore > playerHighScore) {
-    playerHighScore = obstacleScore;
-    await savePlayerHighScore(currentSession.sessionToken, playerHighScore);
+  if (state.obstacleScore > state.playerHighScore) {
+    state.playerHighScore = state.obstacleScore;
+    await savePlayerHighScore(state.currentSession.sessionToken, state.playerHighScore);
   }
 }
 
@@ -1595,21 +1503,21 @@ async function handleGameOver() {
 // Function to calculate dynamic game speed based on score
 function calculateGameSpeed() {
   // Ensure obstacleScore is valid and within reasonable bounds
-  const safeScore = Math.max(0, Math.min(obstacleScore, 1500)); // Cap at 1500 points for safety
+  const safeScore = Math.max(0, Math.min(state.obstacleScore, 1500)); // Cap at 1500 points for safety
 
   // Increase speed by 0.3 for every 75 points from the start
   const speedIncreaseIntervals = Math.floor(safeScore / 75);
   const speedIncrease = speedIncreaseIntervals * 0.3;
-  const calculatedSpeed = baseGameSpeed + speedIncrease;
+  const calculatedSpeed = state.baseGameSpeed + speedIncrease;
 
   // Add maximum speed cap to prevent unplayable speeds
-  const maxGameSpeed = baseGameSpeed + 10.0; // Increased cap for more challenge
+  const maxGameSpeed = state.baseGameSpeed + 10.0; // Increased cap for more challenge
   const finalSpeed = Math.min(calculatedSpeed, maxGameSpeed);
 
   // Debug logging for speed spikes
-  if (finalSpeed > baseGameSpeed + 2.0) {
+  if (finalSpeed > state.baseGameSpeed + 2.0) {
     console.log(
-      `Warning: High game speed detected. Score: ${obstacleScore}, Speed: ${finalSpeed.toFixed(
+      `Warning: High game speed detected. Score: ${state.obstacleScore}, Speed: ${finalSpeed.toFixed(
         2
       )}`
     );
@@ -1619,43 +1527,43 @@ function calculateGameSpeed() {
 }
 
 function resetGame() {
-  player.x = 70;
-  player.y = 300;
-  player.vx = 0;
-  player.vy = 0;
-  player.onGround = false;
-  obstacleScore = 0;
-  gameSpeed = baseGameSpeed; // Reset game speed to base speed
+  state.player.x = 70;
+  state.player.y = 300;
+  state.player.vx = 0;
+  state.player.vy = 0;
+  state.player.onGround = false;
+  state.obstacleScore = 0;
+  state.gameSpeed = state.baseGameSpeed; // Reset game speed to base speed
 
   // Extra safety check to ensure baseGameSpeed is valid
-  if (baseGameSpeed <= 0 || baseGameSpeed > 10) {
+  if (state.baseGameSpeed <= 0 || state.baseGameSpeed > 10) {
     console.warn(
-      `Invalid baseGameSpeed detected: ${baseGameSpeed}, resetting to 2.5`
+      `Invalid baseGameSpeed detected: ${state.baseGameSpeed}, resetting to 2.5`
     );
-    baseGameSpeed = 2.5;
-    gameSpeed = 2.5;
+    state.baseGameSpeed = 2.5;
+    state.gameSpeed = 2.5;
   }
 
-  coins = [];
-  obstacles = [];
-  gameRunning = true;
-  gameStarted = false;
-  gamePaused = false; // Reset pause state
-  showLeaderboard = false;
-  showShop = false;
-  showColorPalette = false; // Reset color palette state
-  showGameOverButtons = false; // Reset game over button state
-  switchingPlayer = false;
-  obstacleSpawnTimer = 0;
-  validationTimer = 0;
-  isJumpHeld = false;
-  jumpHoldTimer = 0;
-  isRocketActive = false; // Reset rocket state
-  rocket = null; // Clear rocket object
-  explosion = null; // Clear explosion state
-  lastExplosionType = null; // Reset last explosion type
-  isGhostActive = false; // Reset ghost mode state
-  ghostModeActivationTime = 0; // Reset ghost mode timer
+  state.coins = [];
+  state.obstacles = [];
+  state.gameRunning = true;
+  state.gameStarted = false;
+  state.gamePaused = false; // Reset pause state
+  state.showLeaderboard = false;
+  state.showShop = false;
+  state.showColorPalette = false; // Reset color palette state
+  state.showGameOverButtons = false; // Reset game over button state
+  state.switchingPlayer = false;
+  state.obstacleSpawnTimer = 0;
+  state.validationTimer = 0;
+  state.isJumpHeld = false;
+  state.jumpHoldTimer = 0;
+  state.isRocketActive = false; // Reset rocket state
+  state.rocket = null; // Clear rocket object
+  state.explosion = null; // Clear explosion state
+  state.lastExplosionType = null; // Reset last explosion type
+  state.isGhostActive = false; // Reset ghost mode state
+  state.ghostModeActivationTime = 0; // Reset ghost mode timer
   for (let i = 0; i < 3; i++) spawnCoin();
 }
 
@@ -1667,186 +1575,186 @@ function switchPlayer() {
 function update() {
   // Desktop keyboard controls
   if (!isMobile) {
-    if (keys["KeyN"] && !gameRunning) {
+    if (state.keys["KeyN"] && !state.gameRunning) {
       switchPlayer();
     }
 
-    if (keys["KeyL"]) {
-      if (gameNameEntered) {
-        showLeaderboard = !showLeaderboard;
-        showShop = false; // Close shop when opening leaderboard
-        showColorPalette = false; // Close color palette when opening leaderboard
-        keys["KeyL"] = false; // Prevent key repeat
+    if (state.keys["KeyL"]) {
+      if (state.gameNameEntered) {
+        state.showLeaderboard = !state.showLeaderboard;
+        state.showShop = false; // Close shop when opening leaderboard
+        state.showColorPalette = false; // Close color palette when opening leaderboard
+        state.keys["KeyL"] = false; // Prevent key repeat
       }
     }
 
-    if (keys["KeyS"]) {
-      if (gameNameEntered && (!gameRunning || !gameStarted)) {
-        showShop = !showShop;
-        showLeaderboard = false; // Close leaderboard when opening shop
-        showColorPalette = false; // Close color palette when opening shop
-        keys["KeyS"] = false; // Prevent key repeat
+    if (state.keys["KeyS"]) {
+      if (state.gameNameEntered && (!state.gameRunning || !state.gameStarted)) {
+        state.showShop = !state.showShop;
+        state.showLeaderboard = false; // Close leaderboard when opening shop
+        state.showColorPalette = false; // Close color palette when opening shop
+        state.keys["KeyS"] = false; // Prevent key repeat
       }
     }
 
-    if (keys["KeyB"]) {
-      if (showShop) {
+    if (state.keys["KeyB"]) {
+      if (state.showShop) {
         buyMagnetItem();
-        keys["KeyB"] = false; // Prevent key repeat
+        state.keys["KeyB"] = false; // Prevent key repeat
       }
     }
 
-    if (keys["KeyC"]) {
-      if (gameNameEntered && (!gameRunning || !gameStarted)) {
-        showColorPalette = !showColorPalette;
-        showLeaderboard = false; // Close other menus
-        showShop = false;
-        keys["KeyC"] = false; // Prevent key repeat
+    if (state.keys["KeyC"]) {
+      if (state.gameNameEntered && (!state.gameRunning || !state.gameStarted)) {
+        state.showColorPalette = !state.showColorPalette;
+        state.showLeaderboard = false; // Close other menus
+        state.showShop = false;
+        state.keys["KeyC"] = false; // Prevent key repeat
       }
     }
 
-    if (keys["KeyP"]) {
-      if (gameNameEntered && gameRunning && gameStarted) {
+    if (state.keys["KeyP"]) {
+      if (state.gameNameEntered && state.gameRunning && state.gameStarted) {
         togglePause();
-        keys["KeyP"] = false; // Prevent key repeat
+        state.keys["KeyP"] = false; // Prevent key repeat
       }
     }
 
-    if (keys["Space"] || keys["ArrowUp"]) {
+    if (state.keys["Space"] || state.keys["ArrowUp"]) {
       // Skip if authentication screen is showing
-      if (showAuthScreen) {
+      if (state.showAuthScreen) {
         return;
       }
 
-      if (!gameNameEntered) {
+      if (!state.gameNameEntered) {
         // Wait for authentication to complete - do nothing
         return;
-      } else if (!gameRunning) {
+      } else if (!state.gameRunning) {
         // If game is over but buttons aren't shown yet, show them
-        if (!showGameOverButtons) {
-          showGameOverButtons = true;
+        if (!state.showGameOverButtons) {
+          state.showGameOverButtons = true;
         }
         // Don't restart the game automatically when buttons are shown
         // Player must click the "Play Again" button instead
-      } else if (gamePaused) {
+      } else if (state.gamePaused) {
         // Resume game and jump at the same time
-        gamePaused = false;
-        player.vy = jumpPower;
-      } else if (!gameStarted) {
-        gameStarted = true;
-        player.vy = jumpPower;
+        state.gamePaused = false;
+        state.player.vy = state.jumpPower;
+      } else if (!state.gameStarted) {
+        state.gameStarted = true;
+        state.player.vy = state.jumpPower;
       } else {
-        player.vy = jumpPower;
+        state.player.vy = state.jumpPower;
       }
     }
 
     // Handle any other key press to show game over buttons
-    if (!gameRunning && !showGameOverButtons && gameNameEntered) {
-      const anyKeyPressed = Object.values(keys).some((key) => key);
+    if (!state.gameRunning && !state.showGameOverButtons && state.gameNameEntered) {
+      const anyKeyPressed = Object.values(state.keys).some((key) => key);
       if (anyKeyPressed) {
-        showGameOverButtons = true;
+        state.showGameOverButtons = true;
         // Clear all keys to prevent immediate actions
-        Object.keys(keys).forEach((key) => (keys[key] = false));
+        Object.keys(state.keys).forEach((key) => (state.keys[key] = false));
       }
     }
   }
 
-  if (gameRunning && gameStarted) {
+  if (state.gameRunning && state.gameStarted) {
     // Mobile hold-to-jump logic
-    if (isMobile && isJumpHeld) {
-      jumpHoldTimer += deltaTime;
-      if (jumpHoldTimer >= 83.33) {
+    if (isMobile && state.isJumpHeld) {
+      state.jumpHoldTimer += state.deltaTime;
+      if (state.jumpHoldTimer >= 83.33) {
         // Every ~83ms (equivalent to every 5 frames at 60fps)
         // Apply jump when holding
-        player.vy = jumpPower * 0.8; // Slightly less powerful for continuous jumps
-        jumpHoldTimer = 0;
+        state.player.vy = state.jumpPower * 0.8; // Slightly less powerful for continuous jumps
+        state.jumpHoldTimer = 0;
       }
     }
   }
 
-  if (!gameRunning) return;
+  if (!state.gameRunning) return;
 
   // Check if game is paused
-  if (gamePaused) return;
+  if (state.gamePaused) return;
 
   // Update rocket if active
   updateRocket();
 
   // Update energy cape cooldown
-  if (energyCapeReloadTimer > 0) {
-    energyCapeReloadTimer -= deltaTime;
+  if (state.energyCapeReloadTimer > 0) {
+    state.energyCapeReloadTimer -= state.deltaTime;
   }
 
   // Update explosion if active
   updateExplosion();
 
   // Calculate delta time multiplier (1.0 at 60fps)
-  const deltaMultiplier = deltaTime / targetFrameTime;
+  const deltaMultiplier = state.deltaTime / targetFrameTime;
 
   // Only apply gravity and movement if game has started
-  if (gameStarted) {
-    if (energyCapeActive) {
+  if (state.gameStarted) {
+    if (state.energyCapeActive) {
       // Dash physics: fly forward/right, ignore gravity
-      player.x += player.vx * deltaMultiplier;
-      player.y += player.vy * deltaMultiplier; // Should be 0 usually
+      state.player.x += state.player.vx * deltaMultiplier;
+      state.player.y += state.player.vy * deltaMultiplier; // Should be 0 usually
 
       // Cap x position to avoid going too far
-      if (player.x > canvas.width * 0.7) {
-        player.x = canvas.width * 0.7;
+      if (state.player.x > canvas.width * 0.7) {
+        state.player.x = canvas.width * 0.7;
       }
     } else {
       // Normal physics
       // If player is ahead of normal position (after dash), drift back
-      if (player.x > 70) {
-        player.x -= 3 * deltaMultiplier; // Drift back speed
-        if (player.x < 70) player.x = 70;
+      if (state.player.x > 70) {
+        state.player.x -= 3 * deltaMultiplier; // Drift back speed
+        if (state.player.x < 70) state.player.x = 70;
       }
 
       // Gravity (frame-rate independent)
-      player.vy += gravity * deltaMultiplier;
-      player.y += player.vy * deltaMultiplier;
+      state.player.vy += state.gravity * deltaMultiplier;
+      state.player.y += state.player.vy * deltaMultiplier;
     }
   }
 
   // Ground collision
-  if (player.y + player.h > groundY) {
-    if (hasSpringBoots && springBootsCount > 0) {
+  if (state.player.y + state.player.h > state.groundY) {
+    if (state.hasSpringBoots && state.springBootsCount > 0) {
       playBoingSound();
-      player.vy = -16.3; // High vertical jump but safe from ceiling
-      player.y = groundY - player.h - 10; // Immediate height boost
+      state.player.vy = -16.3; // High vertical jump but safe from ceiling
+      state.player.y = state.groundY - state.player.h - 10; // Immediate height boost
       console.log("Spring boots bounce!");
-    } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
       // Activate ghost mode on first hit
-      isGhostActive = true;
-      ghostModeActivationTime = performance.now(); // Record activation time
-      ghostShroomCount--;
-      if (ghostShroomCount <= 0) {
-        hasGhostShroom = false;
+      state.isGhostActive = true;
+      state.ghostModeActivationTime = performance.now(); // Record activation time
+      state.ghostShroomCount--;
+      if (state.ghostShroomCount <= 0) {
+        state.hasGhostShroom = false;
       }
       // Save updated inventory
-      savePlayerInventory(currentSession.sessionToken, {
-        magnetRoundsLeft: magnetRoundsLeft || 0,
-        miniNukeCount: miniNukeCount,
-        nukeCount: nukeCount,
-        ghostShroomCount: ghostShroomCount,
+      savePlayerInventory(state.currentSession.sessionToken, {
+        magnetRoundsLeft: state.magnetRoundsLeft || 0,
+        miniNukeCount: state.miniNukeCount,
+        nukeCount: state.nukeCount,
+        ghostShroomCount: state.ghostShroomCount,
       });
       console.log(
         "Ghost mode activated (ground hit)! Ghost shrooms left:",
-        ghostShroomCount
+        state.ghostShroomCount
       );
       // Bounce back up slightly to prevent getting stuck
-      player.y = groundY - player.h;
-      player.vy = -2;
-    } else if (isGhostActive) {
+      state.player.y = state.groundY - state.player.h;
+      state.player.vy = -2;
+    } else if (state.isGhostActive) {
       // Check if grace period has expired
-      const timeSinceActivation = performance.now() - ghostModeActivationTime;
-      if (timeSinceActivation > ghostModeGracePeriod) {
+      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+      if (timeSinceActivation > state.ghostModeGracePeriod) {
         // Grace period expired, trigger game over
         handleGameOver();
       } else {
         // During grace period, bounce back
-        player.y = groundY - player.h;
-        player.vy = -2;
+        state.player.y = state.groundY - state.player.h;
+        state.player.vy = -2;
       }
     } else {
       // No ghost shroom available
@@ -1855,44 +1763,44 @@ function update() {
   }
 
   // Ceiling collision
-  if (player.y < 0) {
-    if (hasSpringBoots && springBootsCount > 0) {
+  if (state.player.y < 0) {
+    if (state.hasSpringBoots && state.springBootsCount > 0) {
       playBoingSound();
-      player.vy = 16.3; // Bounce down
-      player.y = 10; // Push away from ceiling
+      state.player.vy = 16.3; // Bounce down
+      state.player.y = 10; // Push away from ceiling
       console.log("Spring boots ceiling bounce!");
-    } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
       // Activate ghost mode on first hit
-      isGhostActive = true;
-      ghostModeActivationTime = performance.now(); // Record activation time
-      ghostShroomCount--;
-      if (ghostShroomCount <= 0) {
-        hasGhostShroom = false;
+      state.isGhostActive = true;
+      state.ghostModeActivationTime = performance.now(); // Record activation time
+      state.ghostShroomCount--;
+      if (state.ghostShroomCount <= 0) {
+        state.hasGhostShroom = false;
       }
       // Save updated inventory
-      savePlayerInventory(currentSession.sessionToken, {
-        magnetRoundsLeft: magnetRoundsLeft || 0,
-        miniNukeCount: miniNukeCount,
-        nukeCount: nukeCount,
-        ghostShroomCount: ghostShroomCount,
+      savePlayerInventory(state.currentSession.sessionToken, {
+        magnetRoundsLeft: state.magnetRoundsLeft || 0,
+        miniNukeCount: state.miniNukeCount,
+        nukeCount: state.nukeCount,
+        ghostShroomCount: state.ghostShroomCount,
       });
       console.log(
         "Ghost mode activated (ceiling hit)! Ghost shrooms left:",
-        ghostShroomCount
+        state.ghostShroomCount
       );
       // Bounce back down slightly to prevent getting stuck
-      player.y = 0;
-      player.vy = 2;
-    } else if (isGhostActive) {
+      state.player.y = 0;
+      state.player.vy = 2;
+    } else if (state.isGhostActive) {
       // Check if grace period has expired
-      const timeSinceActivation = performance.now() - ghostModeActivationTime;
-      if (timeSinceActivation > ghostModeGracePeriod) {
+      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+      if (timeSinceActivation > state.ghostModeGracePeriod) {
         // Grace period expired, trigger game over
         handleGameOver();
       } else {
         // During grace period, bounce back
-        player.y = 0;
-        player.vy = 2;
+        state.player.y = 0;
+        state.player.vy = 2;
       }
     } else {
       // No ghost shroom available
@@ -1901,95 +1809,95 @@ function update() {
   }
 
   // Only move world objects if game has started
-  if (gameStarted) {
+  if (state.gameStarted) {
     // Move obstacles (frame-rate independent)
-    for (let obstacle of obstacles) {
-      obstacle.x -= gameSpeed * deltaMultiplier;
+    for (let obstacle of state.obstacles) {
+      obstacle.x -= state.gameSpeed * deltaMultiplier;
     }
 
     // Move coins (frame-rate independent)
-    for (let coin of coins) {
-      coin.x -= gameSpeed * deltaMultiplier;
+    for (let coin of state.coins) {
+      coin.x -= state.gameSpeed * deltaMultiplier;
     }
 
     // Remove off-screen obstacles
-    obstacles = obstacles.filter((obstacle) => obstacle.x > -obstacle.width);
+    state.obstacles = state.obstacles.filter((obstacle) => obstacle.x > -obstacle.width);
 
     // Remove off-screen coins
-    coins = coins.filter((coin) => coin.x > -coin.r);
+    state.coins = state.coins.filter((coin) => coin.x > -coin.r);
 
     // Validate coin positions occasionally (every 1 second in real time)
-    validationTimer += deltaTime;
-    if (validationTimer > 1000) {
+    state.validationTimer += state.deltaTime;
+    if (state.validationTimer > 1000) {
       // 1000ms = 1 second
       validateCoinPositions();
-      validationTimer = 0;
+      state.validationTimer = 0;
     }
 
     // Spawn obstacles (every 2 seconds in real time)
-    obstacleSpawnTimer += deltaTime;
-    if (obstacleSpawnTimer > 2000) {
+    state.obstacleSpawnTimer += state.deltaTime;
+    if (state.obstacleSpawnTimer > 2000) {
       // 2000ms = 2 seconds
       spawnObstacle();
-      obstacleSpawnTimer = 0;
+      state.obstacleSpawnTimer = 0;
     }
 
     // Check coin collision
-    for (let i = coins.length - 1; i >= 0; i--) {
-      let coin = coins[i];
-      let dx = player.x + player.w / 2 - coin.x;
-      let dy = player.y + player.h / 2 - coin.y;
+    for (let i = state.coins.length - 1; i >= 0; i--) {
+      let coin = state.coins[i];
+      let dx = state.player.x + state.player.w / 2 - coin.x;
+      let dy = state.player.y + state.player.h / 2 - coin.y;
       let distance = Math.sqrt(dx * dx + dy * dy);
 
       // Magnet attraction (frame-rate independent)
       // Check for regular magnet first
       if (
-        hasMagnet &&
-        magnetRoundsLeft > 0 &&
-        distance < magnetRadius &&
-        distance > coin.r + player.w / 2
+        state.hasMagnet &&
+        state.magnetRoundsLeft > 0 &&
+        distance < state.magnetRadius &&
+        distance > coin.r + state.player.w / 2
       ) {
         // Pull coin towards player with regular magnet
         const pullStrength = 0.7;
         const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * gameSpeed * deltaMultiplier;
-        coin.y += Math.sin(angle) * pullStrength * gameSpeed * deltaMultiplier;
+        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
       }
       // Check for gold magnet (stronger and wider range)
       else if (
-        hasGoldMagnet &&
-        goldMagnetRoundsLeft > 0 &&
-        distance < goldMagnetRadius &&
-        distance > coin.r + player.w / 2
+        state.hasGoldMagnet &&
+        state.goldMagnetRoundsLeft > 0 &&
+        distance < state.goldMagnetRadius &&
+        distance > coin.r + state.player.w / 2
       ) {
         // Pull coin towards player with gold magnet (stronger pull)
         const pullStrength = 1.4; // Double the strength of regular magnet
         const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * gameSpeed * deltaMultiplier;
-        coin.y += Math.sin(angle) * pullStrength * gameSpeed * deltaMultiplier;
+        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
       }
 
       // Collision detection
-      if (distance < coin.r + player.w / 2) {
-        coins.splice(i, 1);
+      if (distance < coin.r + state.player.w / 2) {
+        state.coins.splice(i, 1);
         // Play coin pickup sound
         playCoinSound();
         // Add coin value directly to wallet
-        totalCoinsWallet += coin.value;
-        savePlayerWallet(currentSession.sessionToken, totalCoinsWallet);
+        state.totalCoinsWallet += coin.value;
+        savePlayerWallet(state.currentSession.sessionToken, state.totalCoinsWallet);
         spawnCoin();
       }
     }
 
     // Check obstacle collision
-    for (let obstacle of obstacles) {
+    for (let obstacle of state.obstacles) {
       // Top pipe collision
       if (
-        player.x < obstacle.x + obstacle.width &&
-        player.x + player.w > obstacle.x &&
-        player.y < obstacle.topHeight
+        state.player.x < obstacle.x + obstacle.width &&
+        state.player.x + state.player.w > obstacle.x &&
+        state.player.y < obstacle.topHeight
       ) {
-        if (energyCapeActive) {
+        if (state.energyCapeActive) {
           // Dash destroys the pipe!
           createExplosion(obstacle.x + obstacle.width / 2, obstacle.topHeight);
           playExplosionSound("miniNuke");
@@ -2002,30 +1910,30 @@ function update() {
 
           console.log("Dash destroyed top pipe!");
           continue;
-        } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
           // Activate ghost mode on first hit
-          isGhostActive = true;
-          ghostModeActivationTime = performance.now(); // Record activation time
-          ghostShroomCount--;
-          if (ghostShroomCount <= 0) {
-            hasGhostShroom = false;
+          state.isGhostActive = true;
+          state.ghostModeActivationTime = performance.now(); // Record activation time
+          state.ghostShroomCount--;
+          if (state.ghostShroomCount <= 0) {
+            state.hasGhostShroom = false;
           }
           // Save updated inventory
-          savePlayerInventory(currentSession.sessionToken, {
-            magnetRoundsLeft: magnetRoundsLeft || 0,
-            miniNukeCount: miniNukeCount,
-            nukeCount: nukeCount,
-            ghostShroomCount: ghostShroomCount,
+          savePlayerInventory(state.currentSession.sessionToken, {
+            magnetRoundsLeft: state.magnetRoundsLeft || 0,
+            miniNukeCount: state.miniNukeCount,
+            nukeCount: state.nukeCount,
+            ghostShroomCount: state.ghostShroomCount,
           });
           console.log(
             "Ghost mode activated! Ghost shrooms left:",
-            ghostShroomCount
+            state.ghostShroomCount
           );
-        } else if (isGhostActive) {
+        } else if (state.isGhostActive) {
           // Check if grace period has expired
           const timeSinceActivation =
-            performance.now() - ghostModeActivationTime;
-          if (timeSinceActivation > ghostModeGracePeriod) {
+            performance.now() - state.ghostModeActivationTime;
+          if (timeSinceActivation > state.ghostModeGracePeriod) {
             // Grace period expired, trigger game over
             handleGameOver();
           }
@@ -2038,11 +1946,11 @@ function update() {
 
       // Bottom pipe collision
       if (
-        player.x < obstacle.x + obstacle.width &&
-        player.x + player.w > obstacle.x &&
-        player.y + player.h > obstacle.bottomY
+        state.player.x < obstacle.x + obstacle.width &&
+        state.player.x + state.player.w > obstacle.x &&
+        state.player.y + state.player.h > obstacle.bottomY
       ) {
-        if (energyCapeActive) {
+        if (state.energyCapeActive) {
           // Dash destroys the pipe!
           createExplosion(obstacle.x + obstacle.width / 2, obstacle.bottomY);
           playExplosionSound("miniNuke");
@@ -2055,30 +1963,30 @@ function update() {
 
           console.log("Dash destroyed bottom pipe!");
           continue;
-        } else if (hasGhostShroom && ghostShroomCount > 0 && !isGhostActive) {
+        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
           // Activate ghost mode on first hit
-          isGhostActive = true;
-          ghostModeActivationTime = performance.now(); // Record activation time
-          ghostShroomCount--;
-          if (ghostShroomCount <= 0) {
-            hasGhostShroom = false;
+          state.isGhostActive = true;
+          state.ghostModeActivationTime = performance.now(); // Record activation time
+          state.ghostShroomCount--;
+          if (state.ghostShroomCount <= 0) {
+            state.hasGhostShroom = false;
           }
           // Save updated inventory
-          savePlayerInventory(currentSession.sessionToken, {
-            magnetRoundsLeft: magnetRoundsLeft || 0,
-            miniNukeCount: miniNukeCount,
-            nukeCount: nukeCount,
-            ghostShroomCount: ghostShroomCount,
+          savePlayerInventory(state.currentSession.sessionToken, {
+            magnetRoundsLeft: state.magnetRoundsLeft || 0,
+            miniNukeCount: state.miniNukeCount,
+            nukeCount: state.nukeCount,
+            ghostShroomCount: state.ghostShroomCount,
           });
           console.log(
             "Ghost mode activated! Ghost shrooms left:",
-            ghostShroomCount
+            state.ghostShroomCount
           );
-        } else if (isGhostActive) {
+        } else if (state.isGhostActive) {
           // Check if grace period has expired
           const timeSinceActivation =
-            performance.now() - ghostModeActivationTime;
-          if (timeSinceActivation > ghostModeGracePeriod) {
+            performance.now() - state.ghostModeActivationTime;
+          if (timeSinceActivation > state.ghostModeGracePeriod) {
             // Grace period expired, trigger game over
             handleGameOver();
           }
@@ -2090,17 +1998,17 @@ function update() {
       }
 
       // Score when passing obstacle
-      if (!obstacle.passed && player.x > obstacle.x + obstacle.width) {
+      if (!obstacle.passed && state.player.x > obstacle.x + obstacle.width) {
         obstacle.passed = true;
-        obstacleScore += 5;
+        state.obstacleScore += 5;
         // Update game speed based on new score with safeguards
         const newSpeed = calculateGameSpeed();
         // Only update if the new speed is reasonable (prevent sudden spikes)
-        if (newSpeed <= gameSpeed + 0.5) {
-          gameSpeed = newSpeed;
+        if (newSpeed <= state.gameSpeed + 0.5) {
+          state.gameSpeed = newSpeed;
         } else {
           console.warn(
-            `Prevented speed spike: ${gameSpeed} → ${newSpeed}, keeping current speed`
+            `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`
           );
         }
       }
@@ -2108,8 +2016,8 @@ function update() {
 
     // Ensure there are always coins on screen
     const coinLimit =
-      obstacleSpawnTimer < 0 && lastExplosionType === "goldNuke" ? 6 : 3;
-    if (coins.length < coinLimit) {
+      state.obstacleSpawnTimer < 0 && state.lastExplosionType === "goldNuke" ? 6 : 3;
+    if (state.coins.length < coinLimit) {
       spawnCoin();
     }
   } // End of gameStarted condition
@@ -2117,100 +2025,100 @@ function update() {
 
 // Shop functions
 async function buyMagnetItem() {
-  const result = await buyMagnet(currentSession.sessionToken, totalCoinsWallet);
+  const result = await buyMagnet(state.currentSession.sessionToken, state.totalCoinsWallet);
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    magnetRoundsLeft = result.inventory.magnetRoundsLeft;
-    hasMagnet = magnetRoundsLeft > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.magnetRoundsLeft = result.inventory.magnetRoundsLeft;
+    state.hasMagnet = state.magnetRoundsLeft > 0;
   }
 }
 
 async function buyGoldMagnetItem() {
   const result = await buyGoldMagnet(
-    currentSession.sessionToken,
-    totalCoinsWallet
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet
   );
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    goldMagnetRoundsLeft = result.inventory.goldMagnetRoundsLeft;
-    hasGoldMagnet = goldMagnetRoundsLeft > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.goldMagnetRoundsLeft = result.inventory.goldMagnetRoundsLeft;
+    state.hasGoldMagnet = state.goldMagnetRoundsLeft > 0;
   }
 }
 
 async function buyMiniNukeItem() {
   const result = await buyMiniNuke(
-    currentSession.sessionToken,
-    totalCoinsWallet
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet
   );
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    miniNukeCount = result.inventory.miniNukeCount;
-    hasMiniNuke = miniNukeCount > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.miniNukeCount = result.inventory.miniNukeCount;
+    state.hasMiniNuke = state.miniNukeCount > 0;
   }
 }
 
 async function buyNukeItem() {
-  const result = await buyNuke(currentSession.sessionToken, totalCoinsWallet);
+  const result = await buyNuke(state.currentSession.sessionToken, state.totalCoinsWallet);
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    nukeCount = result.inventory.nukeCount;
-    hasNuke = nukeCount > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.nukeCount = result.inventory.nukeCount;
+    state.hasNuke = state.nukeCount > 0;
   }
 }
 
 async function buyGoldNukeItem() {
   const result = await buyGoldNuke(
-    currentSession.sessionToken,
-    totalCoinsWallet
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet
   );
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    goldNukeCount = result.inventory.goldNukeCount;
-    hasGoldNuke = goldNukeCount > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.goldNukeCount = result.inventory.goldNukeCount;
+    state.hasGoldNuke = state.goldNukeCount > 0;
   }
 }
 
 async function buyGhostShroomItem() {
   const result = await buyGhostShroom(
-    currentSession.sessionToken,
-    totalCoinsWallet
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet
   );
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    ghostShroomCount = result.inventory.ghostShroomCount;
-    hasGhostShroom = ghostShroomCount > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.ghostShroomCount = result.inventory.ghostShroomCount;
+    state.hasGhostShroom = state.ghostShroomCount > 0;
   }
 }
 
 async function buySpringBootsItem() {
   const result = await buySpringBoots(
-    currentSession.sessionToken,
-    totalCoinsWallet
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet
   );
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    springBootsCount = result.inventory.springBootsCount;
-    hasSpringBoots = springBootsCount > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.springBootsCount = result.inventory.springBootsCount;
+    state.hasSpringBoots = state.springBootsCount > 0;
   }
 }
 
 async function buyEnergyCapeItem() {
   const result = await buyEnergyCape(
-    currentSession.sessionToken,
-    totalCoinsWallet
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet
   );
   if (result.success) {
-    totalCoinsWallet = result.newWallet;
-    energyCapeRoundsLeft = result.inventory.energyCapeRoundsLeft;
-    hasEnergyCape = energyCapeRoundsLeft > 0;
+    state.totalCoinsWallet = result.newWallet;
+    state.energyCapeRoundsLeft = result.inventory.energyCapeRoundsLeft;
+    state.hasEnergyCape = state.energyCapeRoundsLeft > 0;
   }
 }
 
 // Color palette functions
 async function selectCatColor(colorName) {
   try {
-    selectedCatColor = colorName;
-    await savePlayerColor(currentSession.sessionToken, colorName);
+    state.selectedCatColor = colorName;
+    await savePlayerColor(state.currentSession.sessionToken, colorName);
     console.log("Color saved:", colorName);
   } catch (error) {
     console.error("Failed to save color:", error);
@@ -2219,119 +2127,119 @@ async function selectCatColor(colorName) {
 
 // Pause function
 function togglePause() {
-  if (gameRunning && gameStarted) {
-    gamePaused = !gamePaused;
+  if (state.gameRunning && state.gameStarted) {
+    state.gamePaused = !state.gamePaused;
   }
 }
 
 // Rocket functions
 function launchRocket() {
-  if (!hasMiniNuke || miniNukeCount <= 0 || isRocketActive) {
+  if (!state.hasMiniNuke || state.miniNukeCount <= 0 || state.isRocketActive) {
     return;
   }
 
   // Initialize rocket at player position
-  rocket = {
-    x: player.x + player.w,
-    y: player.y + player.h / 2 - 7.5, // Center vertically with player
+  state.rocket = {
+    x: state.player.x + state.player.w,
+    y: state.player.y + state.player.h / 2 - 7.5, // Center vertically with player
     speed: 8, // Fast movement speed
     type: "miniNuke", // Track rocket type
   };
 
-  isRocketActive = true;
-  miniNukeCount--;
+  state.isRocketActive = true;
+  state.miniNukeCount--;
 
   // Save updated inventory
-  savePlayerInventory(currentSession.sessionToken, {
-    magnetRoundsLeft: magnetRoundsLeft || 0,
-    miniNukeCount: miniNukeCount,
-    nukeCount: nukeCount,
-    goldNukeCount: goldNukeCount,
-    ghostShroomCount: ghostShroomCount,
+  savePlayerInventory(state.currentSession.sessionToken, {
+    magnetRoundsLeft: state.magnetRoundsLeft || 0,
+    miniNukeCount: state.miniNukeCount,
+    nukeCount: state.nukeCount,
+    goldNukeCount: state.goldNukeCount,
+    ghostShroomCount: state.ghostShroomCount,
   });
 
-  console.log("Mini nuke launched! Mini nukes left:", miniNukeCount);
+  console.log("Mini nuke launched! Mini nukes left:", state.miniNukeCount);
 }
 
 function launchNuke() {
-  if (!hasNuke || nukeCount <= 0 || isRocketActive) {
+  if (!state.hasNuke || state.nukeCount <= 0 || state.isRocketActive) {
     return;
   }
 
   // Initialize nuke rocket at player position
-  rocket = {
-    x: player.x + player.w,
-    y: player.y + player.h / 2 - 7.5, // Center vertically with player
+  state.rocket = {
+    x: state.player.x + state.player.w,
+    y: state.player.y + state.player.h / 2 - 7.5, // Center vertically with player
     speed: 8, // Fast movement speed
     type: "nuke", // Track rocket type
   };
 
-  isRocketActive = true;
-  nukeCount--;
+  state.isRocketActive = true;
+  state.nukeCount--;
 
   // Save updated inventory
-  savePlayerInventory(currentSession.sessionToken, {
-    magnetRoundsLeft: magnetRoundsLeft || 0,
-    miniNukeCount: miniNukeCount,
-    nukeCount: nukeCount,
-    goldNukeCount: goldNukeCount,
-    ghostShroomCount: ghostShroomCount,
+  savePlayerInventory(state.currentSession.sessionToken, {
+    magnetRoundsLeft: state.magnetRoundsLeft || 0,
+    miniNukeCount: state.miniNukeCount,
+    nukeCount: state.nukeCount,
+    goldNukeCount: state.goldNukeCount,
+    ghostShroomCount: state.ghostShroomCount,
   });
 
-  console.log("Nuke launched! Nukes left:", nukeCount);
+  console.log("Nuke launched! Nukes left:", state.nukeCount);
 }
 
 function launchGoldNuke() {
-  if (!hasGoldNuke || goldNukeCount <= 0 || isRocketActive) {
+  if (!state.hasGoldNuke || state.goldNukeCount <= 0 || state.isRocketActive) {
     return;
   }
 
   // Initialize gold nuke rocket at player position
-  rocket = {
-    x: player.x + player.w,
-    y: player.y + player.h / 2 - 7.5, // Center vertically with player
+  state.rocket = {
+    x: state.player.x + state.player.w,
+    y: state.player.y + state.player.h / 2 - 7.5, // Center vertically with player
     speed: 8, // Fast movement speed
     type: "goldNuke", // Track rocket type
   };
 
-  isRocketActive = true;
-  goldNukeCount--;
+  state.isRocketActive = true;
+  state.goldNukeCount--;
 
   // Save updated inventory
-  savePlayerInventory(currentSession.sessionToken, {
-    magnetRoundsLeft: magnetRoundsLeft || 0,
-    miniNukeCount: miniNukeCount,
-    nukeCount: nukeCount,
-    goldNukeCount: goldNukeCount,
-    ghostShroomCount: ghostShroomCount,
+  savePlayerInventory(state.currentSession.sessionToken, {
+    magnetRoundsLeft: state.magnetRoundsLeft || 0,
+    miniNukeCount: state.miniNukeCount,
+    nukeCount: state.nukeCount,
+    goldNukeCount: state.goldNukeCount,
+    ghostShroomCount: state.ghostShroomCount,
   });
 
-  console.log("Gold Nuke launched! Gold Nukes left:", goldNukeCount);
+  console.log("Gold Nuke launched! Gold Nukes left:", state.goldNukeCount);
 }
 
 function activateDash() {
   if (
-    !hasEnergyCape ||
-    energyCapeRoundsLeft <= 0 ||
-    energyCapeReloadTimer > 0 ||
-    isRocketActive ||
-    energyCapeActive ||
-    !gameStarted ||
-    gamePaused
+    !state.hasEnergyCape ||
+    state.energyCapeRoundsLeft <= 0 ||
+    state.energyCapeReloadTimer > 0 ||
+    state.isRocketActive ||
+    state.energyCapeActive ||
+    !state.gameStarted ||
+    state.gamePaused
   ) {
     return;
   }
 
-  energyCapeActive = true;
-  energyCapeReloadTimer = energyCapeCooldown;
+  state.energyCapeActive = true;
+  state.energyCapeReloadTimer = state.energyCapeCooldown;
 
   // Apply initial boost
-  player.vx = 15; // Fast forward speed
-  player.vy = 0; // Float
+  state.player.vx = 15; // Fast forward speed
+  state.player.vy = 0; // Float
 
   // Dash lasts for 500ms
   setTimeout(() => {
-    energyCapeActive = false;
+    state.energyCapeActive = false;
     // Note: We'll rely on update loop to handle deceleration/return
   }, 500);
 
@@ -2341,24 +2249,24 @@ function activateDash() {
 }
 
 function updateRocket() {
-  if (!isRocketActive || !rocket) {
+  if (!state.isRocketActive || !state.rocket) {
     return;
   }
 
   // Move rocket to the right
-  rocket.x += rocket.speed * gameSpeed * (deltaTime / targetFrameTime);
+  state.rocket.x += state.rocket.speed * state.gameSpeed * (state.deltaTime / targetFrameTime);
 
   // Check if rocket reached the end of the screen
-  if (rocket.x >= canvas.width) {
+  if (state.rocket.x >= canvas.width) {
     // Create explosion at the edge of the screen
-    createExplosion(canvas.width - 50, rocket.y + 12.5); // Center explosion on rocket
+    createExplosion(canvas.width - 50, state.rocket.y + 12.5); // Center explosion on rocket
     explodeRocket();
   }
 }
 
 function createExplosion(x, y) {
-  const isNuke = rocket && rocket.type === "nuke";
-  const isGoldNuke = rocket && rocket.type === "goldNuke";
+  const isNuke = state.rocket && state.rocket.type === "nuke";
+  const isGoldNuke = state.rocket && state.rocket.type === "goldNuke";
 
   let particleCount = 20;
   let maxVelocity = 2;
@@ -2398,7 +2306,7 @@ function createExplosion(x, y) {
     });
   }
 
-  explosion = {
+  state.explosion = {
     x: x,
     y: y,
     timer: 0,
@@ -2409,31 +2317,31 @@ function createExplosion(x, y) {
 }
 
 function updateExplosion() {
-  if (!explosion) {
+  if (!state.explosion) {
     return;
   }
 
-  explosion.timer += deltaTime;
+  state.explosion.timer += state.deltaTime;
 
   // Remove explosion when done
-  if (explosion.timer >= explosion.duration) {
-    explosion = null;
+  if (state.explosion.timer >= state.explosion.duration) {
+    state.explosion = null;
   }
 }
 
 function explodeRocket() {
-  if (!isRocketActive) {
+  if (!state.isRocketActive) {
     return;
   }
 
-  const isNuke = rocket && rocket.type === "nuke";
-  const isGoldNuke = rocket && rocket.type === "goldNuke";
+  const isNuke = state.rocket && state.rocket.type === "nuke";
+  const isGoldNuke = state.rocket && state.rocket.type === "goldNuke";
 
   // Store explosion type for coin spawning logic
-  lastExplosionType = rocket.type;
+  state.lastExplosionType = state.rocket.type;
 
   // Play appropriate explosion sound based on rocket type
-  playExplosionSound(rocket.type);
+  playExplosionSound(state.rocket.type);
 
   let maxPipesToRemove = 3;
   let delayTime = -4000;
@@ -2446,10 +2354,10 @@ function explodeRocket() {
     delayTime = -16000; // Even longer clear path
   }
 
-  const playerRightEdge = player.x + player.w;
+  const playerRightEdge = state.player.x + state.player.w;
 
   // Find and remove pipes that are ahead of the player (x position greater than player)
-  const pipesAhead = obstacles
+  const pipesAhead = state.obstacles
     .map((obstacle, index) => ({ obstacle, index }))
     .filter(({ obstacle }) => obstacle.x > playerRightEdge)
     .sort((a, b) => a.obstacle.x - b.obstacle.x); // Sort by x position (closest first)
@@ -2459,29 +2367,29 @@ function explodeRocket() {
   pipesToRemove
     .sort((a, b) => b.index - a.index) // Sort by index in reverse order
     .forEach(({ index }) => {
-      obstacles.splice(index, 1);
+      state.obstacles.splice(index, 1);
     });
 
   const pipesRemovedCount = pipesToRemove.length;
 
   // Reset obstacle spawn timer to create a longer clear path
-  obstacleSpawnTimer = delayTime;
+  state.obstacleSpawnTimer = delayTime;
 
   // Create delayed point awards for the full potential points (regardless of pipes actually removed)
   const pointDelay = Math.abs(delayTime) / maxPipesToRemove; // Divide delay evenly across max potential pipes
 
   for (let i = 0; i < maxPipesToRemove; i++) {
     setTimeout(() => {
-      obstacleScore += 5; // Award 5 points per pipe
+      state.obstacleScore += 5; // Award 5 points per pipe
 
       // Update game speed based on new score with safeguards
       const newSpeed = calculateGameSpeed();
       // Only update if the new speed is reasonable (prevent sudden spikes)
-      if (newSpeed <= gameSpeed + 0.5) {
-        gameSpeed = newSpeed;
+      if (newSpeed <= state.gameSpeed + 0.5) {
+        state.gameSpeed = newSpeed;
       } else {
         console.warn(
-          `Prevented speed spike: ${gameSpeed} → ${newSpeed}, keeping current speed`
+          `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`
         );
       }
 
@@ -2508,18 +2416,18 @@ function explodeRocket() {
   );
 
   // Reset rocket state
-  isRocketActive = false;
-  rocket = null;
+  state.isRocketActive = false;
+  state.rocket = null;
 
   // Update inventory state
-  if (miniNukeCount <= 0) {
-    hasMiniNuke = false;
+  if (state.miniNukeCount <= 0) {
+    state.hasMiniNuke = false;
   }
-  if (nukeCount <= 0) {
-    hasNuke = false;
+  if (state.nukeCount <= 0) {
+    state.hasNuke = false;
   }
-  if (goldNukeCount <= 0) {
-    hasGoldNuke = false;
+  if (state.goldNukeCount <= 0) {
+    state.hasGoldNuke = false;
   }
 }
 
@@ -2550,19 +2458,19 @@ function draw() {
   // Draw cloudy background image for sky area
   if (backgroundImage.complete && backgroundImage.naturalWidth > 0) {
     // Draw the background image tiled/stretched to fill the sky area
-    ctx.drawImage(backgroundImage, 0, 0, canvas.width, groundY);
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, state.groundY);
   } else {
     // Fallback to solid color if image isn't loaded yet
     ctx.fillStyle = "#87ceeb";
-    ctx.fillRect(0, 0, canvas.width, groundY);
+    ctx.fillRect(0, 0, canvas.width, state.groundY);
   }
 
   // Draw ground
   ctx.fillStyle = "#654321";
-  ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+  ctx.fillRect(0, state.groundY, canvas.width, canvas.height - state.groundY);
 
   // Draw obstacles (pipes) - Mario-style
-  for (let obstacle of obstacles) {
+  for (let obstacle of state.obstacles) {
     // Mario-style pipe colors
     const pipeGreen = "#228B22";
     const pipeDarkGreen = "#006400";
@@ -2583,10 +2491,10 @@ function draw() {
   }
 
   // Draw player
-  if (isGhostActive) {
+  if (state.isGhostActive) {
     // Check if we're in grace period
-    const timeSinceActivation = performance.now() - ghostModeActivationTime;
-    const inGracePeriod = timeSinceActivation <= ghostModeGracePeriod;
+    const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+    const inGracePeriod = timeSinceActivation <= state.ghostModeGracePeriod;
 
     // Draw ghost cat when in ghost mode
     if (
@@ -2606,7 +2514,7 @@ function draw() {
         ctx.globalAlpha = 0.7;
       }
 
-      ctx.drawImage(ghostCatImage, player.x, player.y, player.w, player.h);
+      ctx.drawImage(ghostCatImage, state.player.x, state.player.y, state.player.w, state.player.h);
       ctx.globalAlpha = 1.0; // Reset alpha
       ctx.shadowBlur = 0; // Reset shadow
     } else {
@@ -2617,29 +2525,29 @@ function draw() {
       } else {
         ctx.fillStyle = "rgba(200, 200, 255, 0.5)";
       }
-      ctx.fillRect(player.x, player.y, player.w, player.h);
+      ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
     }
   } else if (
-    catImages[selectedCatColor] &&
-    catImages[selectedCatColor].complete &&
-    catImages[selectedCatColor].naturalHeight !== 0
+    catImages[state.selectedCatColor] &&
+    catImages[state.selectedCatColor].complete &&
+    catImages[state.selectedCatColor].naturalHeight !== 0
   ) {
     // Draw cat image if loaded
     ctx.drawImage(
-      catImages[selectedCatColor],
-      player.x,
-      player.y,
-      player.w,
-      player.h
+      catImages[state.selectedCatColor],
+      state.player.x,
+      state.player.y,
+      state.player.w,
+      state.player.h
     );
   } else {
     // Fallback to colored rectangle if image not loaded
-    ctx.fillStyle = gameRunning ? "#ff0" : "#f00";
-    ctx.fillRect(player.x, player.y, player.w, player.h);
+    ctx.fillStyle = state.gameRunning ? "#ff0" : "#f00";
+    ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
   }
 
   // Draw energy cape if equipped (on top of player)
-  if (hasEnergyCape && energyCapeRoundsLeft > 0 && !isGhostActive) {
+  if (state.hasEnergyCape && state.energyCapeRoundsLeft > 0 && !state.isGhostActive) {
     if (
       energyCapeImage &&
       energyCapeImage.complete &&
@@ -2647,12 +2555,12 @@ function draw() {
     ) {
       // Draw cape on top of player
       // Adjust position to align with cat's back
-      ctx.drawImage(energyCapeImage, player.x - 18, player.y - 5, 45, 45);
+      ctx.drawImage(energyCapeImage, state.player.x - 18, state.player.y - 5, 45, 45);
     }
   }
 
   // Draw coins
-  for (let coin of coins) {
+  for (let coin of state.coins) {
     // Add glow effect for rare coins
     if (coin.type === "red" || coin.type === "blue") {
       ctx.shadowColor = coin.color;
@@ -2696,31 +2604,31 @@ function draw() {
   }
 
   // Draw rocket if active
-  if (isRocketActive && rocket) {
+  if (state.isRocketActive && state.rocket) {
     // Draw rocket trail
     ctx.fillStyle = "rgba(255, 165, 0, 0.6)"; // Orange trail
-    ctx.fillRect(rocket.x - 20, rocket.y + 5, 20, 10);
+    ctx.fillRect(state.rocket.x - 20, state.rocket.y + 5, 20, 10);
 
     // Determine which image to use based on rocket type
     let rocketImage = miniNukeImage;
-    if (rocket.type === "nuke") {
+    if (state.rocket.type === "nuke") {
       rocketImage = nukeImage;
-    } else if (rocket.type === "goldNuke") {
+    } else if (state.rocket.type === "goldNuke") {
       rocketImage = goldNukeImage;
     }
 
     // Draw rocket image if loaded, otherwise use rectangle
     if (rocketImage && rocketImage.complete && rocketImage.naturalWidth > 0) {
       const rocketSize = 25;
-      ctx.drawImage(rocketImage, rocket.x, rocket.y, rocketSize, rocketSize);
+      ctx.drawImage(rocketImage, state.rocket.x, state.rocket.y, rocketSize, rocketSize);
     } else {
       // Fallback rocket
       ctx.fillStyle = "#32CD32"; // Green color
-      ctx.fillRect(rocket.x, rocket.y, 25, 15);
+      ctx.fillRect(state.rocket.x, state.rocket.y, 25, 15);
       // Add simple rocket tip
       ctx.beginPath();
-      ctx.moveTo(rocket.x + 25, rocket.y + 7.5);
-      ctx.lineTo(rocket.x + 35, rocket.y + 7.5);
+      ctx.moveTo(state.rocket.x + 25, state.rocket.y + 7.5);
+      ctx.lineTo(state.rocket.x + 35, state.rocket.y + 7.5);
       ctx.strokeStyle = "#228B22";
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -2728,9 +2636,9 @@ function draw() {
   }
 
   // Draw explosion if active
-  if (explosion) {
-    const progress = explosion.timer / explosion.duration;
-    const maxRadius = explosion.maxRadius;
+  if (state.explosion) {
+    const progress = state.explosion.timer / state.explosion.duration;
+    const maxRadius = state.explosion.maxRadius;
     const currentRadius = maxRadius * progress;
 
     // Draw multiple explosion rings
@@ -2742,14 +2650,14 @@ function draw() {
       if (ringRadius > 0) {
         // Outer explosion ring (orange/red)
         ctx.beginPath();
-        ctx.arc(explosion.x, explosion.y, ringRadius, 0, Math.PI * 2);
+        ctx.arc(state.explosion.x, state.explosion.y, ringRadius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255, ${100 - i * 30}, 0, ${alpha * 0.6})`;
         ctx.fill();
 
         // Inner explosion ring (yellow/white)
         if (ringRadius > 10) {
           ctx.beginPath();
-          ctx.arc(explosion.x, explosion.y, ringRadius * 0.6, 0, Math.PI * 2);
+          ctx.arc(state.explosion.x, state.explosion.y, ringRadius * 0.6, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(255, 255, ${100 + i * 50}, ${alpha * 0.8})`;
           ctx.fill();
         }
@@ -2757,8 +2665,8 @@ function draw() {
     }
 
     // Draw explosion particles
-    for (let particle of explosion.particles) {
-      const particleProgress = explosion.timer / explosion.duration;
+    for (let particle of state.explosion.particles) {
+      const particleProgress = state.explosion.timer / state.explosion.duration;
       const alpha = Math.max(0, 1 - particleProgress);
 
       ctx.beginPath();
@@ -2778,12 +2686,12 @@ function draw() {
   ctx.fillStyle = "#fff";
   ctx.font = "16px Arial";
   ctx.textAlign = "right";
-  ctx.fillText("High Score: " + playerHighScore, canvas.width - 20, 25);
-  ctx.fillText("💰 Wallet: " + totalCoinsWallet, canvas.width - 20, 45);
+  ctx.fillText("High Score: " + state.playerHighScore, canvas.width - 20, 25);
+  ctx.fillText("💰 Wallet: " + state.totalCoinsWallet, canvas.width - 20, 45);
 
   // Show magnet status if active
   let uiLineOffset = 65;
-  if (hasMagnet && magnetRoundsLeft > 0) {
+  if (state.hasMagnet && state.magnetRoundsLeft > 0) {
     // Draw red magnet image
     if (
       redMagnetImage &&
@@ -2794,19 +2702,19 @@ function draw() {
       const imageX =
         canvas.width -
         20 -
-        ctx.measureText(" " + magnetRoundsLeft + " rounds").width -
+        ctx.measureText(" " + state.magnetRoundsLeft + " rounds").width -
         imageSize;
       const imageY = uiLineOffset - 12; // Center vertically with text
       ctx.drawImage(redMagnetImage, imageX, imageY, imageSize, imageSize);
       ctx.fillText(
-        magnetRoundsLeft + " rounds",
+        state.magnetRoundsLeft + " rounds",
         canvas.width - 20,
         uiLineOffset
       );
     } else {
       // Fallback to emoji
       ctx.fillText(
-        "🧲 " + magnetRoundsLeft + " rounds",
+        "🧲 " + state.magnetRoundsLeft + " rounds",
         canvas.width - 20,
         uiLineOffset
       );
@@ -2814,7 +2722,7 @@ function draw() {
     uiLineOffset += 20;
   }
 
-  if (hasGoldMagnet && goldMagnetRoundsLeft > 0) {
+  if (state.hasGoldMagnet && state.goldMagnetRoundsLeft > 0) {
     // Draw gold magnet image
     if (
       goldMagnetImage &&
@@ -2825,19 +2733,19 @@ function draw() {
       const imageX =
         canvas.width -
         20 -
-        ctx.measureText(" " + goldMagnetRoundsLeft + " rounds").width -
+        ctx.measureText(" " + state.goldMagnetRoundsLeft + " rounds").width -
         imageSize;
       const imageY = uiLineOffset - 12; // Center vertically with text
       ctx.drawImage(goldMagnetImage, imageX, imageY, imageSize, imageSize);
       ctx.fillText(
-        goldMagnetRoundsLeft + " rounds",
+        state.goldMagnetRoundsLeft + " rounds",
         canvas.width - 20,
         uiLineOffset
       );
     } else {
       // Fallback to emoji
       ctx.fillText(
-        "🟡 " + goldMagnetRoundsLeft + " rounds",
+        "🟡 " + state.goldMagnetRoundsLeft + " rounds",
         canvas.width - 20,
         uiLineOffset
       );
@@ -2846,7 +2754,7 @@ function draw() {
   }
 
   // Show ghost shroom status if active or in ghost mode
-  if ((hasGhostShroom && ghostShroomCount > 0) || isGhostActive) {
+  if ((state.hasGhostShroom && state.ghostShroomCount > 0) || state.isGhostActive) {
     // Draw ghost shroom image
     if (
       ghostShroomImage &&
@@ -2854,14 +2762,14 @@ function draw() {
       ghostShroomImage.naturalWidth > 0
     ) {
       const imageSize = 16;
-      const text = isGhostActive ? "GHOST MODE!" : ghostShroomCount + " left";
+      const text = state.isGhostActive ? "GHOST MODE!" : state.ghostShroomCount + " left";
       const imageX =
         canvas.width - 20 - ctx.measureText(" " + text).width - imageSize;
       const imageY = uiLineOffset - 12; // Center vertically with text
       ctx.drawImage(ghostShroomImage, imageX, imageY, imageSize, imageSize);
 
       // Add glow effect when ghost mode is active
-      if (isGhostActive) {
+      if (state.isGhostActive) {
         ctx.shadowColor = "#88ff88";
         ctx.shadowBlur = 10;
       }
@@ -2872,12 +2780,12 @@ function draw() {
       ctx.shadowBlur = 0;
     } else {
       // Fallback to emoji
-      const text = isGhostActive
+      const text = state.isGhostActive
         ? "👻 GHOST MODE!"
-        : "👻 " + ghostShroomCount + " left";
+        : "👻 " + state.ghostShroomCount + " left";
 
       // Add glow effect when ghost mode is active
-      if (isGhostActive) {
+      if (state.isGhostActive) {
         ctx.shadowColor = "#88ff88";
         ctx.shadowBlur = 10;
       }
@@ -2891,7 +2799,7 @@ function draw() {
   }
 
   // Show spring boots status if active
-  if (hasSpringBoots && springBootsCount > 0) {
+  if (state.hasSpringBoots && state.springBootsCount > 0) {
     // Draw spring boots image
     if (
       springBootsImage &&
@@ -2902,15 +2810,15 @@ function draw() {
       const imageX =
         canvas.width -
         20 -
-        ctx.measureText(" " + springBootsCount + " left").width -
+        ctx.measureText(" " + state.springBootsCount + " left").width -
         imageSize;
       const imageY = uiLineOffset - 12; // Center vertically with text
       ctx.drawImage(springBootsImage, imageX, imageY, imageSize, imageSize);
-      ctx.fillText(springBootsCount + " left", canvas.width - 20, uiLineOffset);
+      ctx.fillText(state.springBootsCount + " left", canvas.width - 20, uiLineOffset);
     } else {
       // Fallback to emoji
       ctx.fillText(
-        "👢 " + springBootsCount + " left",
+        "👢 " + state.springBootsCount + " left",
         canvas.width - 20,
         uiLineOffset
       );
@@ -2919,13 +2827,13 @@ function draw() {
   }
 
   // Draw pause button (only when game is running and started)
-  if (gameRunning && gameStarted && gameNameEntered && !showAuthScreen) {
+  if (state.gameRunning && state.gameStarted && state.gameNameEntered && !state.showAuthScreen) {
     const buttonSize = 30; // Size for the emoji area
     const buttonX = canvas.width - buttonSize - 15;
     const buttonY = uiLineOffset;
 
     // Store button coordinates for click detection
-    pauseButtonCoords = {
+    state.pauseButtonCoords = {
       x: buttonX,
       y: buttonY,
       width: buttonSize,
@@ -2937,22 +2845,22 @@ function draw() {
     ctx.font = "32px Arial";
     ctx.textAlign = "center";
     ctx.fillText(
-      gamePaused ? "▶️" : "⏸️",
+      state.gamePaused ? "▶️" : "⏸️",
       buttonX + buttonSize / 2,
       buttonY + buttonSize / 2 + 8
     );
 
     // Reset action button coordinates
-    rocketButtonCoords = {};
-    nukeButtonCoords = {};
-    goldNukeButtonCoords = {};
-    energyCapeButtonCoords = {};
+    state.rocketButtonCoords = {};
+    state.nukeButtonCoords = {};
+    state.goldNukeButtonCoords = {};
+    state.energyCapeButtonCoords = {};
 
     // Draw action buttons (bottom bar)
     // Ground area starts at groundY and goes to canvas.height (~80px height)
     const actionBtnSize = 50;
     const actionBtnGap = 15;
-    const actionBtnY = groundY + (canvas.height - groundY - actionBtnSize) / 2;
+    const actionBtnY = state.groundY + (canvas.height - state.groundY - actionBtnSize) / 2;
 
     // We will lay them out from Right to Left, starting near the right edge
     let currentActionX = canvas.width - 20 - actionBtnSize;
@@ -3053,54 +2961,54 @@ function draw() {
     // Draw buttons from Right to Left
 
     // 1. Energy Cape (Rightmost)
-    if (hasEnergyCape && energyCapeRoundsLeft > 0) {
-      energyCapeButtonCoords = drawActionSlot(
+    if (state.hasEnergyCape && state.energyCapeRoundsLeft > 0) {
+      state.energyCapeButtonCoords = drawActionSlot(
         energyCapeImage,
         "⚡",
-        energyCapeRoundsLeft,
-        energyCapeActive,
-        energyCapeReloadTimer > 0 || isRocketActive,
-        energyCapeReloadTimer > 0
-          ? energyCapeReloadTimer / energyCapeCooldown
-          : isRocketActive
+        state.energyCapeRoundsLeft,
+        state.energyCapeActive,
+        state.energyCapeReloadTimer > 0 || state.isRocketActive,
+        state.energyCapeReloadTimer > 0
+          ? state.energyCapeReloadTimer / state.energyCapeCooldown
+          : state.isRocketActive
           ? 1
           : 0
       );
     }
 
     // 2. Gold Nuke
-    if (hasGoldNuke && goldNukeCount > 0) {
-      goldNukeButtonCoords = drawActionSlot(
+    if (state.hasGoldNuke && state.goldNukeCount > 0) {
+      state.goldNukeButtonCoords = drawActionSlot(
         goldNukeImage,
         "☢️",
-        goldNukeCount,
+        state.goldNukeCount,
         false,
-        isRocketActive,
-        isRocketActive ? 1 : 0
+        state.isRocketActive,
+        state.isRocketActive ? 1 : 0
       );
     }
 
     // 3. Nuke
-    if (hasNuke && nukeCount > 0) {
-      nukeButtonCoords = drawActionSlot(
+    if (state.hasNuke && state.nukeCount > 0) {
+      state.nukeButtonCoords = drawActionSlot(
         nukeImage,
         "💥",
-        nukeCount,
+        state.nukeCount,
         false,
-        isRocketActive,
-        isRocketActive ? 1 : 0
+        state.isRocketActive,
+        state.isRocketActive ? 1 : 0
       );
     }
 
     // 4. Mini Nuke (Leftmost)
-    if (hasMiniNuke && miniNukeCount > 0) {
-      rocketButtonCoords = drawActionSlot(
+    if (state.hasMiniNuke && state.miniNukeCount > 0) {
+      state.rocketButtonCoords = drawActionSlot(
         miniNukeImage,
         "🚀",
-        miniNukeCount,
+        state.miniNukeCount,
         false,
-        isRocketActive,
-        isRocketActive ? 1 : 0
+        state.isRocketActive,
+        state.isRocketActive ? 1 : 0
       );
     }
 
@@ -3112,14 +3020,14 @@ function draw() {
   // Reset text properties for score display
   ctx.textAlign = "left";
   ctx.fillStyle = "#fff"; // Reset to white for score text
-  ctx.fillText("Score: " + obstacleScore, 20, 25);
+  ctx.fillText("Score: " + state.obstacleScore, 20, 25);
 
   // Add shadow to online count for better contrast
   ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
   ctx.shadowBlur = 3;
   ctx.shadowOffsetX = 2;
   ctx.shadowOffsetY = 2;
-  ctx.fillText("👥 Online: " + onlineCount, 20, groundY - 10); // Bottom left corner
+  ctx.fillText("👥 Online: " + state.onlineCount, 20, state.groundY - 10); // Bottom left corner
 
   // Reset shadow
   ctx.shadowBlur = 0;
@@ -3127,7 +3035,7 @@ function draw() {
   ctx.shadowOffsetY = 0;
 
   // Pause overlay
-  if (gamePaused && gameRunning) {
+  if (state.gamePaused && state.gameRunning) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3156,7 +3064,7 @@ function draw() {
   }
 
   // Game over message
-  if (!gameRunning) {
+  if (!state.gameRunning) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3167,17 +3075,17 @@ function draw() {
 
     ctx.font = "18px Arial";
     ctx.fillText(
-      `Final Score: ${obstacleScore}`,
+      `Final Score: ${state.obstacleScore}`,
       canvas.width / 2,
       canvas.height / 2 - 20
     );
     ctx.fillText(
-      `💰 Total Wallet: ${totalCoinsWallet}`,
+      `💰 Total Wallet: ${state.totalCoinsWallet}`,
       canvas.width / 2,
       canvas.height / 2 + 5
     );
 
-    if (!showGameOverButtons) {
+    if (!state.showGameOverButtons) {
       // Show "tap to continue" message
       ctx.font = "16px Arial";
       if (isMobile) {
@@ -3195,7 +3103,7 @@ function draw() {
       }
     } else {
       // Clear previous buttons
-      gameOverButtons = [];
+      state.gameOverButtons = [];
 
       // Draw in-canvas buttons
       const buttonWidth = 140;
@@ -3216,7 +3124,7 @@ function draw() {
         buttonHeight,
         "#4CAF50"
       );
-      gameOverButtons.push({
+      state.gameOverButtons.push({
         x: canvas.width / 2 - buttonWidth / 2,
         y: playAgainY,
         width: buttonWidth,
@@ -3234,7 +3142,7 @@ function draw() {
         buttonHeight,
         "#2196F3"
       );
-      gameOverButtons.push({
+      state.gameOverButtons.push({
         x: canvas.width / 2 - buttonWidth / 2,
         y: leaderboardY,
         width: buttonWidth,
@@ -3252,7 +3160,7 @@ function draw() {
         buttonHeight,
         "#FF9800"
       );
-      gameOverButtons.push({
+      state.gameOverButtons.push({
         x: canvas.width / 2 - buttonWidth / 2,
         y: shopY,
         width: buttonWidth,
@@ -3270,7 +3178,7 @@ function draw() {
         buttonHeight,
         "#E91E63"
       );
-      gameOverButtons.push({
+      state.gameOverButtons.push({
         x: canvas.width / 2 - buttonWidth / 2,
         y: colorPaletteY,
         width: buttonWidth,
@@ -3288,7 +3196,7 @@ function draw() {
         buttonHeight,
         "#9C27B0"
       );
-      gameOverButtons.push({
+      state.gameOverButtons.push({
         x: canvas.width / 2 - buttonWidth / 2,
         y: switchPlayerY,
         width: buttonWidth,
@@ -3301,7 +3209,7 @@ function draw() {
   }
 
   // Authentication screen
-  if (showAuthScreen) {
+  if (state.showAuthScreen) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3331,7 +3239,7 @@ function draw() {
   }
 
   // Skip legacy name entry if using authentication
-  if (!gameNameEntered && !showAuthScreen && authMode !== "authenticated") {
+  if (!state.gameNameEntered && !state.showAuthScreen && state.authMode !== "authenticated") {
     ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3349,7 +3257,7 @@ function draw() {
   }
 
   // Start message
-  if (!gameStarted && gameRunning) {
+  if (!state.gameStarted && state.gameRunning) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3357,7 +3265,7 @@ function draw() {
     ctx.font = "30px Arial";
     ctx.textAlign = "center";
     ctx.fillText(
-      `Ready, ${playerName}?`,
+      `Ready, ${state.playerName}?`,
       canvas.width / 2,
       canvas.height / 2 - 20
     );
@@ -3401,7 +3309,7 @@ function draw() {
   }
 
   // Leaderboard overlay
-  if (showLeaderboard) {
+  if (state.showLeaderboard) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3415,8 +3323,8 @@ function draw() {
     const lineHeight = 25;
     const catSize = 18; // Small cat icon size
 
-    for (let i = 0; i < Math.min(leaderboard.length, 20); i++) {
-      const entry = leaderboard[i];
+    for (let i = 0; i < Math.min(state.leaderboard.length, 20); i++) {
+      const entry = state.leaderboard[i];
       const y = startY + i * lineHeight;
       const rank = i + 1;
       const medal =
@@ -3465,7 +3373,7 @@ function draw() {
   }
 
   // Shop overlay
-  if (showShop) {
+  if (state.showShop) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3476,7 +3384,7 @@ function draw() {
 
     ctx.font = "16px Arial";
     ctx.fillText(
-      `💰 Your Wallet: ${totalCoinsWallet} coins`,
+      `💰 Your Wallet: ${state.totalCoinsWallet} coins`,
       canvas.width / 2,
       80
     );
@@ -3487,7 +3395,7 @@ function draw() {
     const closeButtonY = 10;
 
     // Store close button coordinates for click detection
-    closeButtonCoords = {
+    state.closeButtonCoords = {
       x: closeButtonX,
       y: closeButtonY,
       size: closeButtonSize,
@@ -3534,7 +3442,7 @@ function draw() {
     const startY = 120;
 
     // Clear the shop grid coordinates array
-    shopGridCoords = [];
+    state.shopGridCoords = [];
 
     for (let i = 0; i < availableShopItems.length; i++) {
       const item = availableShopItems[i];
@@ -3546,7 +3454,7 @@ function draw() {
       const y = startY + row * spacingY - itemSize / 2;
 
       // Store coordinates for click detection with larger touch area
-      shopGridCoords.push({
+      state.shopGridCoords.push({
         itemId: item.id,
         itemName: item.name,
         x: x - touchPadding,
@@ -3556,16 +3464,16 @@ function draw() {
       });
 
       // Determine if item can be purchased
-      const canAfford = totalCoinsWallet >= item.price;
+      const canAfford = state.totalCoinsWallet >= item.price;
       const isOwned =
-        (item.id === "magnet" && magnetRoundsLeft > 0) ||
-        (item.id === "goldMagnet" && goldMagnetRoundsLeft > 0) ||
-        (item.id === "ghostShroom" && ghostShroomCount > 0) ||
-        (item.id === "springBoots" && springBootsCount > 0) ||
-        (item.id === "miniNuke" && miniNukeCount > 0) ||
-        (item.id === "nuke" && nukeCount > 0) ||
-        (item.id === "goldNuke" && goldNukeCount > 0) ||
-        (item.id === "energyCape" && energyCapeRoundsLeft > 0);
+        (item.id === "magnet" && state.magnetRoundsLeft > 0) ||
+        (item.id === "goldMagnet" && state.goldMagnetRoundsLeft > 0) ||
+        (item.id === "ghostShroom" && state.ghostShroomCount > 0) ||
+        (item.id === "springBoots" && state.springBootsCount > 0) ||
+        (item.id === "miniNuke" && state.miniNukeCount > 0) ||
+        (item.id === "nuke" && state.nukeCount > 0) ||
+        (item.id === "goldNuke" && state.goldNukeCount > 0) ||
+        (item.id === "energyCape" && state.energyCapeRoundsLeft > 0);
 
       // Draw item box background with better colors
       if (isOwned) {
@@ -3651,21 +3559,21 @@ function draw() {
         ctx.font = isMobile ? "8px Arial" : "9px Arial";
         let statusText = "✓ Owned";
         if (item.id === "magnet") {
-          statusText = `✓ ${magnetRoundsLeft} left`;
+          statusText = `✓ ${state.magnetRoundsLeft} left`;
         } else if (item.id === "goldMagnet") {
-          statusText = `✓ ${goldMagnetRoundsLeft} left`;
+          statusText = `✓ ${state.goldMagnetRoundsLeft} left`;
         } else if (item.id === "ghostShroom") {
-          statusText = `✓ ${ghostShroomCount} left`;
+          statusText = `✓ ${state.ghostShroomCount} left`;
         } else if (item.id === "springBoots") {
-          statusText = `✓ ${springBootsCount} left`;
+          statusText = `✓ ${state.springBootsCount} left`;
         } else if (item.id === "miniNuke") {
-          statusText = `✓ ${miniNukeCount} left`;
+          statusText = `✓ ${state.miniNukeCount} left`;
         } else if (item.id === "nuke") {
-          statusText = `✓ ${nukeCount} left`;
+          statusText = `✓ ${state.nukeCount} left`;
         } else if (item.id === "energyCape") {
-          statusText = `✓ ${energyCapeRoundsLeft} left`;
+          statusText = `✓ ${state.energyCapeRoundsLeft} left`;
         } else if (item.id === "goldNuke") {
-          statusText = `✓ ${goldNukeCount} left`;
+          statusText = `✓ ${state.goldNukeCount} left`;
         }
         ctx.fillText(statusText, x + itemSize / 2, y + itemSize + 40);
       } else if (!canAfford) {
@@ -3691,7 +3599,7 @@ function draw() {
   }
 
   // Color palette overlay
-  if (showColorPalette) {
+  if (state.showColorPalette) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -3706,7 +3614,7 @@ function draw() {
     const closeButtonY = 10;
 
     // Store close button coordinates for click detection
-    closeButtonCoords = {
+    state.closeButtonCoords = {
       x: closeButtonX,
       y: closeButtonY,
       size: closeButtonSize,
@@ -3754,7 +3662,7 @@ function draw() {
     const startY = 120;
 
     // Clear the color grid coordinates array
-    colorGridCoords = [];
+    state.colorGridCoords = [];
 
     for (let i = 0; i < availableColors.length; i++) {
       const color = availableColors[i];
@@ -3766,7 +3674,7 @@ function draw() {
       const y = startY + row * spacing - colorSize / 2;
 
       // Store coordinates for click detection with larger touch area
-      colorGridCoords.push({
+      state.colorGridCoords.push({
         color: color.name,
         x: x - touchPadding,
         y: y - touchPadding,
@@ -3785,7 +3693,7 @@ function draw() {
       }
 
       // Draw selection border
-      if (selectedCatColor === color.name) {
+      if (state.selectedCatColor === color.name) {
         ctx.strokeStyle = "#FFD700";
         ctx.lineWidth = 4;
         ctx.strokeRect(x - 2, y - 2, colorSize + 4, colorSize + 4);
@@ -3905,14 +3813,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (session) {
       const isValid = await validateSession(session.sessionToken);
       if (isValid) {
-        currentSession = session;
-        authMode = "authenticated";
-        playerName = session.username;
-        showAuthScreen = false;
+        state.currentSession = session;
+        state.authMode = "authenticated";
+        state.playerName = session.username;
+        state.showAuthScreen = false;
 
         // Set game state flags properly
-        gameNameEntered = true;
-        nameInputActive = false;
+        state.gameNameEntered = true;
+        state.nameInputActive = false;
 
         await initializeGameData();
         startHeartbeat(session.sessionToken); // Start tracking online status
@@ -3925,13 +3833,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // No valid session, show auth form
-    showAuthScreen = true;
-    authMode = "login";
+    state.showAuthScreen = true;
+    state.authMode = "login";
     showAuthForm();
   } catch (error) {
     console.error("Auth initialization error:", error);
-    showAuthScreen = true;
-    authMode = "login";
+    state.showAuthScreen = true;
+    state.authMode = "login";
     showAuthForm();
   }
 
@@ -3942,12 +3850,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Add window close detection to properly log out user
 window.addEventListener("beforeunload", (event) => {
-  if (currentSession && currentSession.sessionToken) {
+  if (state.currentSession && state.currentSession.sessionToken) {
     // Use sendBeacon with proper content type for logout on page close
     const blob = new Blob(
       [
         JSON.stringify({
-          sessionToken: currentSession.sessionToken,
+          sessionToken: state.currentSession.sessionToken,
         }),
       ],
       { type: "application/json" }
@@ -3959,7 +3867,7 @@ window.addEventListener("beforeunload", (event) => {
 
 // Also handle visibility change (tab switching, minimizing)
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && currentSession) {
+  if (!document.hidden && state.currentSession) {
     // Tab became visible again, send heartbeat
     updateOnlineCount();
   }
@@ -3969,8 +3877,8 @@ async function updateOnlineCount() {
   try {
     console.log("Calling getOnlineCount...");
     const count = await getOnlineCount();
-    onlineCount = count;
-    console.log("Updated onlineCount to:", onlineCount);
+    state.onlineCount = count;
+    console.log("Updated onlineCount to:", state.onlineCount);
   } catch (error) {
     console.error("Failed to get online count:", error);
   }
@@ -3988,14 +3896,14 @@ function setupAuthentication() {
 
   // Toggle between login and signup
   authToggleBtn.addEventListener("click", () => {
-    if (authMode === "login") {
-      authMode = "signup";
+    if (state.authMode === "login") {
+      state.authMode = "signup";
       loginBtn.style.display = "none";
       signupBtn.style.display = "block";
       authToggleText.textContent = "Already have an account?";
       authToggleBtn.textContent = "Login here";
     } else {
-      authMode = "login";
+      state.authMode = "login";
       loginBtn.style.display = "block";
       signupBtn.style.display = "none";
       authToggleText.textContent = "Don't have an account?";
@@ -4016,14 +3924,14 @@ function setupAuthentication() {
       const session = await loginPlayer(username, password);
       if (session) {
         saveSession(session);
-        currentSession = session;
-        playerName = username;
-        authMode = "authenticated";
-        showAuthScreen = false;
+        state.currentSession = session;
+        state.playerName = username;
+        state.authMode = "authenticated";
+        state.showAuthScreen = false;
 
         // Set game state flags properly
-        gameNameEntered = true;
-        nameInputActive = false;
+        state.gameNameEntered = true;
+        state.nameInputActive = false;
 
         hideAuthForm();
         await initializeGameData();
@@ -4049,14 +3957,14 @@ function setupAuthentication() {
       const session = await signupPlayer(username, password);
       if (session) {
         saveSession(session);
-        currentSession = session;
-        playerName = username;
-        authMode = "authenticated";
-        showAuthScreen = false;
+        state.currentSession = session;
+        state.playerName = username;
+        state.authMode = "authenticated";
+        state.showAuthScreen = false;
 
         // Set game state flags properly
-        gameNameEntered = true;
-        nameInputActive = false;
+        state.gameNameEntered = true;
+        state.nameInputActive = false;
 
         hideAuthForm();
         await initializeGameData();
@@ -4078,7 +3986,7 @@ function setupAuthentication() {
 
   passwordInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
-      if (authMode === "login") {
+      if (state.authMode === "login") {
         loginBtn.click();
       } else {
         signupBtn.click();
@@ -4168,15 +4076,15 @@ function startGame() {
   for (let i = 0; i < 3; i++) spawnCoin();
 
   // Initialize delta time
-  lastTime = performance.now();
+  state.lastTime = performance.now();
 
   function gameLoop(currentTime) {
     // Calculate delta time
-    deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
+    state.deltaTime = currentTime - state.lastTime;
+    state.lastTime = currentTime;
 
     // Normalize delta time to target frame time (prevents huge jumps)
-    deltaTime = Math.min(deltaTime, targetFrameTime * 3);
+    state.deltaTime = Math.min(state.deltaTime, targetFrameTime * 3);
 
     update();
     draw();
@@ -4189,18 +4097,18 @@ function startGame() {
 async function switchPlayerWithAuth() {
   try {
     // Logout current session properly
-    if (currentSession && currentSession.sessionToken) {
-      await logout(currentSession.sessionToken);
+    if (state.currentSession && state.currentSession.sessionToken) {
+      await logout(state.currentSession.sessionToken);
     }
 
-    currentSession = null;
+    state.currentSession = null;
 
     // Reset game state
     resetGameForNewPlayer();
 
     // Show auth form for new login
-    showAuthScreen = true;
-    authMode = "login";
+    state.showAuthScreen = true;
+    state.authMode = "login";
     showAuthForm();
   } catch (error) {
     console.error("Error switching player:", error);
@@ -4209,35 +4117,35 @@ async function switchPlayerWithAuth() {
 
 function resetGameForNewPlayer() {
   // Reset all player-specific data
-  playerName = "";
-  totalCoinsWallet = 0;
-  playerHighScore = 0;
-  hasMagnet = false;
-  magnetRoundsLeft = 0;
-  hasMiniNuke = false;
-  miniNukeCount = 0;
-  hasNuke = false;
-  nukeCount = 0;
-  hasGhostShroom = false;
-  ghostShroomCount = 0;
-  hasEnergyCape = false;
-  energyCapeRoundsLeft = 0;
-  energyCapeActive = false;
-  energyCapeReloadTimer = 0;
-  isGhostActive = false;
-  ghostModeActivationTime = 0;
-  isRocketActive = false;
-  rocket = null;
-  explosion = null;
-  selectedCatColor = "gray"; // Reset to default color
+  state.playerName = "";
+  state.totalCoinsWallet = 0;
+  state.playerHighScore = 0;
+  state.hasMagnet = false;
+  state.magnetRoundsLeft = 0;
+  state.hasMiniNuke = false;
+  state.miniNukeCount = 0;
+  state.hasNuke = false;
+  state.nukeCount = 0;
+  state.hasGhostShroom = false;
+  state.ghostShroomCount = 0;
+  state.hasEnergyCape = false;
+  state.energyCapeRoundsLeft = 0;
+  state.energyCapeActive = false;
+  state.energyCapeReloadTimer = 0;
+  state.isGhostActive = false;
+  state.ghostModeActivationTime = 0;
+  state.isRocketActive = false;
+  state.rocket = null;
+  state.explosion = null;
+  state.selectedCatColor = "gray"; // Reset to default color
 
   // Reset UI states
-  showLeaderboard = false;
-  showShop = false;
-  showColorPalette = false;
-  switchingPlayer = false;
+  state.showLeaderboard = false;
+  state.showShop = false;
+  state.showColorPalette = false;
+  state.switchingPlayer = false;
 
   // Clear leaderboard data
-  leaderboard = [];
+  state.leaderboard = [];
 }
 
