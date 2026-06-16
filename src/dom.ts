@@ -1,7 +1,7 @@
 import { state } from "./state";
 
-export const canvas = document.getElementById("gameCanvas");
-export const ctx = canvas.getContext("2d");
+export const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+export const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 // Responsive canvas sizing
 export function resizeCanvas() {

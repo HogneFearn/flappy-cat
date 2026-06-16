@@ -1,7 +1,7 @@
 import { state } from "./state";
 
 // API helper functions
-export async function apiRequest(url, options = {}) {
+export async function apiRequest(url: string, options: RequestInit = {}) {
   try {
     // Log the request details
     if (options.method === "POST") {

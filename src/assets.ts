@@ -83,7 +83,7 @@ export const availableColors = [
 ];
 
 // Cat images - load all color variants
-export const catImages = {};
+export const catImages: Record<string, HTMLImageElement> = {};
 availableColors.forEach((color) => {
   catImages[color.name] = new Image();
   catImages[color.name].src = color.filename;

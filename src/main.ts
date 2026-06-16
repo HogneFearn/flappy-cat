@@ -661,7 +661,7 @@ async function handleGameOver() {
     state.hasSpringBoots ||
     state.hasEnergyCape
   ) {
-    const inventory = {};
+    const inventory: Record<string, number> = {};
 
     if (state.hasMagnet) {
       state.magnetRoundsLeft--;
@@ -1419,8 +1419,8 @@ async function updateOnlineCount() {
 
 function setupAuthentication() {
   const authForm = document.getElementById("authForm");
-  const usernameInput = document.getElementById("usernameInput");
-  const passwordInput = document.getElementById("passwordInput");
+  const usernameInput = document.getElementById("usernameInput") as HTMLInputElement;
+  const passwordInput = document.getElementById("passwordInput") as HTMLInputElement;
   const loginBtn = document.getElementById("loginBtn");
   const signupBtn = document.getElementById("signupBtn");
   const authToggleBtn = document.getElementById("authToggleBtn");
@@ -1569,8 +1569,8 @@ function hideAuthForm() {
 }
 
 function clearAuthInputs() {
-  document.getElementById("usernameInput").value = "";
-  document.getElementById("passwordInput").value = "";
+  (document.getElementById("usernameInput") as HTMLInputElement).value = "";
+  (document.getElementById("passwordInput") as HTMLInputElement).value = "";
   clearAuthError();
 }
 
@@ -1585,10 +1585,10 @@ function clearAuthError() {
 }
 
 function setAuthLoading(loading) {
-  const loginBtn = document.getElementById("loginBtn");
-  const signupBtn = document.getElementById("signupBtn");
-  const usernameInput = document.getElementById("usernameInput");
-  const passwordInput = document.getElementById("passwordInput");
+  const loginBtn = document.getElementById("loginBtn") as HTMLButtonElement;
+  const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement;
+  const usernameInput = document.getElementById("usernameInput") as HTMLInputElement;
+  const passwordInput = document.getElementById("passwordInput") as HTMLInputElement;
 
   loginBtn.disabled = loading;
   signupBtn.disabled = loading;
