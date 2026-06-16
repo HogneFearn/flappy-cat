@@ -191,8 +191,9 @@ function getExpirationDate() {
   return date.toISOString();
 }
 
-// Middleware to validate session
-function validateSession(req, res, next) {
+// Shared session authentication. Validates the Bearer token against the
+// sessions table; when `trackOnline` is set it also updates the online-users map.
+function authenticateRequest(req, res, next, trackOnline) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "No valid session token provided" });
@@ -210,15 +211,35 @@ function validateSession(req, res, next) {
         return res.status(500).json({ error: err.message });
       }
       if (!row) {
+        if (trackOnline) {
+          // Remove from online users if session is invalid
+          onlineUsers.delete(sessionToken);
+        }
         return res.status(401).json({ error: "Invalid or expired session" });
       }
 
       req.user = { id: row.user_id, username: row.username };
-      console.log("Session validated for user:", req.user);
+
+      if (trackOnline) {
+        // Update online status
+        onlineUsers.set(sessionToken, {
+          username: row.username,
+          lastSeen: Date.now(),
+        });
+      } else {
+        console.log("Session validated for user:", req.user);
+      }
+
       next();
     }
   );
 }
+
+// Middleware to validate session
+function validateSession(req, res, next) {
+  authenticateRequest(req, res, next, false);
+}
+
 
 // Track online users
 let onlineUsers = new Map(); // sessionToken -> { username, lastSeen }
@@ -244,38 +265,7 @@ setInterval(() => {
 
 // Enhanced session validation middleware that tracks online status
 function validateSessionAndTrackOnline(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "No valid session token provided" });
-  }
-
-  const sessionToken = authHeader.substring(7);
-
-  db.get(
-    `SELECT s.user_id, u.username FROM sessions s 
-     JOIN users u ON s.user_id = u.id 
-     WHERE s.session_token = ? AND s.expires_at > datetime('now')`,
-    [sessionToken],
-    (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (!row) {
-        // Remove from online users if session is invalid
-        onlineUsers.delete(sessionToken);
-        return res.status(401).json({ error: "Invalid or expired session" });
-      }
-
-      // Update online status
-      onlineUsers.set(sessionToken, {
-        username: row.username,
-        lastSeen: Date.now(),
-      });
-
-      req.user = { id: row.user_id, username: row.username };
-      next();
-    }
-  );
+  authenticateRequest(req, res, next, true);
 }
 
 // Add heartbeat endpoint for keeping users online
