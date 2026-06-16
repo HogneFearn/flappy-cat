@@ -416,6 +416,214 @@ export function draw() {
 
   // Draw pause button (only when game is running and started)
   if (state.gameRunning && state.gameStarted && state.gameNameEntered && !state.showAuthScreen) {
+    drawActionButtons(uiLineOffset);
+  }
+
+  // Reset text properties for score display
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#fff"; // Reset to white for score text
+  ctx.fillText("Score: " + state.obstacleScore, 20, 25);
+
+  // Add shadow to online count for better contrast
+  ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  ctx.fillText("👥 Online: " + state.onlineCount, 20, state.groundY - 10); // Bottom left corner
+
+  // Reset shadow
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+
+  // Pause overlay
+  if (state.gamePaused && state.gameRunning) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "40px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 20);
+
+    ctx.font = "18px Arial";
+    if (isMobile) {
+      ctx.fillText(
+        "Tap to resume and jump",
+        canvas.width / 2,
+        canvas.height / 2 + 20
+      );
+    } else {
+      ctx.fillText(
+        "Press SPACE to resume and jump",
+        canvas.width / 2,
+        canvas.height / 2 + 20
+      );
+    }
+
+    ctx.textAlign = "left";
+    return; // Don't draw other overlays when paused
+  }
+
+  // Game over message
+  if (!state.gameRunning) {
+    drawGameOverScreen();
+  }
+
+  // Authentication screen
+  if (state.showAuthScreen) {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "30px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "Welcome to Flappy Cat!",
+      canvas.width / 2,
+      canvas.height / 2 - 100
+    );
+
+    ctx.font = "20px Arial";
+    ctx.fillText(
+      "Please login or sign up to play",
+      canvas.width / 2,
+      canvas.height / 2 - 20
+    );
+    ctx.fillText(
+      "and save your progress!",
+      canvas.width / 2,
+      canvas.height / 2 + 10
+    );
+
+    ctx.textAlign = "left";
+    return; // Don't draw game elements during authentication
+  }
+
+  // Skip legacy name entry if using authentication
+  if (!state.gameNameEntered && !state.showAuthScreen && state.authMode !== "authenticated") {
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "Please use the login form to continue",
+      canvas.width / 2,
+      canvas.height / 2
+    );
+
+    ctx.textAlign = "left";
+    return;
+  }
+
+  // Start message
+  if (!state.gameStarted && state.gameRunning) {
+    drawStartMessage();
+  }
+
+  // Leaderboard overlay
+  if (state.showLeaderboard) {
+    drawLeaderboardOverlay();
+  }
+
+  // Shop overlay
+  if (state.showShop) {
+    drawShopOverlay();
+  }
+
+  // Color palette overlay
+  if (state.showColorPalette) {
+    drawColorPaletteOverlay();
+  }
+}
+
+// Mario-style pipe drawing function
+export function drawMarioPipe(x, y, width, height, isTop) {
+  const rimHeight = 20;
+  const pipeBodyHeight = isTop ? height - rimHeight : height - rimHeight;
+  const pipeBodyY = isTop ? y : y + rimHeight;
+  const rimY = isTop ? height - rimHeight : y;
+  const rimWidth = width + 8; // Slightly wider rim
+  const rimX = x - 4;
+
+  // Main pipe colors
+  const pipeGreen = "#228B22";
+  const pipeDarkGreen = "#006400";
+  const pipeHighlight = "#32CD32";
+  const pipeShadow = "#1F5F1F";
+
+  // Draw pipe rim (the lip/opening)
+  ctx.fillStyle = pipeGreen;
+  ctx.fillRect(rimX, rimY, rimWidth, rimHeight);
+
+  // Rim highlights and shadows for 3D effect
+  ctx.fillStyle = pipeHighlight;
+  ctx.fillRect(rimX, rimY, rimWidth, 3); // Top highlight
+  ctx.fillRect(rimX, rimY, 3, rimHeight); // Left highlight
+
+  ctx.fillStyle = pipeShadow;
+  ctx.fillRect(rimX, rimY + rimHeight - 3, rimWidth, 3); // Bottom shadow
+  ctx.fillRect(rimX + rimWidth - 3, rimY, 3, rimHeight); // Right shadow
+
+  // Draw main pipe body
+  ctx.fillStyle = pipeGreen;
+  ctx.fillRect(x, pipeBodyY, width, pipeBodyHeight);
+
+  // Pipe body highlights and shadows
+  ctx.fillStyle = pipeHighlight;
+  ctx.fillRect(x, pipeBodyY, 4, pipeBodyHeight); // Left highlight strip
+
+  ctx.fillStyle = pipeShadow;
+  ctx.fillRect(x + width - 4, pipeBodyY, 4, pipeBodyHeight); // Right shadow strip
+
+  // Add vertical highlight lines for texture
+  ctx.fillStyle = pipeHighlight;
+  for (let i = 12; i < width - 12; i += 8) {
+    ctx.fillRect(x + i, pipeBodyY, 1, pipeBodyHeight);
+  }
+
+  // Dark border around everything
+  ctx.strokeStyle = pipeDarkGreen;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(rimX, rimY, rimWidth, rimHeight); // Rim border
+  ctx.strokeRect(x, pipeBodyY, width, pipeBodyHeight); // Body border
+
+  // Inner rim shadow for depth
+  if (isTop) {
+    ctx.fillStyle = pipeShadow;
+    ctx.fillRect(rimX + 2, rimY + rimHeight - 6, rimWidth - 4, 4);
+  } else {
+    ctx.fillStyle = pipeHighlight;
+    ctx.fillRect(rimX + 2, rimY + 2, rimWidth - 4, 4);
+  }
+}
+
+// Helper function to get hex color for fallback rectangles
+export function getColorHex(colorName) {
+  const colorMap = {
+    gray: "#808080",
+    blue: "#0066FF",
+    brown: "#8B4513",
+    cyan: "#00FFFF",
+    fire: "#FF4500",
+    galaxy: "#663399",
+    green: "#00FF00",
+    ice: "#B0E0E6",
+    lime: "#32CD32",
+    magenta: "#FF00FF",
+    orange: "#FFA500",
+    pink: "#FFC0CB",
+    purple: "#800080",
+    rainbow: "#FF69B4",
+    red: "#FF0000",
+    yellow: "#FFFF00",
+  };
+  return colorMap[colorName] || "#808080";
+}
+
+function drawActionButtons(uiLineOffset) {
     const buttonSize = 30; // Size for the emoji area
     const buttonX = canvas.width - buttonSize - 15;
     const buttonY = uiLineOffset;
@@ -605,54 +813,7 @@ export function draw() {
     ctx.font = "16px Arial"; // Reset font size back to normal
   }
 
-  // Reset text properties for score display
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#fff"; // Reset to white for score text
-  ctx.fillText("Score: " + state.obstacleScore, 20, 25);
-
-  // Add shadow to online count for better contrast
-  ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-  ctx.shadowBlur = 3;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 2;
-  ctx.fillText("👥 Online: " + state.onlineCount, 20, state.groundY - 10); // Bottom left corner
-
-  // Reset shadow
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-
-  // Pause overlay
-  if (state.gamePaused && state.gameRunning) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "40px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2 - 20);
-
-    ctx.font = "18px Arial";
-    if (isMobile) {
-      ctx.fillText(
-        "Tap to resume and jump",
-        canvas.width / 2,
-        canvas.height / 2 + 20
-      );
-    } else {
-      ctx.fillText(
-        "Press SPACE to resume and jump",
-        canvas.width / 2,
-        canvas.height / 2 + 20
-      );
-    }
-
-    ctx.textAlign = "left";
-    return; // Don't draw other overlays when paused
-  }
-
-  // Game over message
-  if (!state.gameRunning) {
+function drawGameOverScreen() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -796,56 +957,7 @@ export function draw() {
     ctx.textAlign = "left";
   }
 
-  // Authentication screen
-  if (state.showAuthScreen) {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "Welcome to Flappy Cat!",
-      canvas.width / 2,
-      canvas.height / 2 - 100
-    );
-
-    ctx.font = "20px Arial";
-    ctx.fillText(
-      "Please login or sign up to play",
-      canvas.width / 2,
-      canvas.height / 2 - 20
-    );
-    ctx.fillText(
-      "and save your progress!",
-      canvas.width / 2,
-      canvas.height / 2 + 10
-    );
-
-    ctx.textAlign = "left";
-    return; // Don't draw game elements during authentication
-  }
-
-  // Skip legacy name entry if using authentication
-  if (!state.gameNameEntered && !state.showAuthScreen && state.authMode !== "authenticated") {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#fff";
-    ctx.font = "20px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "Please use the login form to continue",
-      canvas.width / 2,
-      canvas.height / 2
-    );
-
-    ctx.textAlign = "left";
-    return;
-  }
-
-  // Start message
-  if (!state.gameStarted && state.gameRunning) {
+function drawStartMessage() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -896,8 +1008,7 @@ export function draw() {
     ctx.textAlign = "left";
   }
 
-  // Leaderboard overlay
-  if (state.showLeaderboard) {
+function drawLeaderboardOverlay() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -960,8 +1071,7 @@ export function draw() {
     ctx.textAlign = "left";
   }
 
-  // Shop overlay
-  if (state.showShop) {
+function drawShopOverlay() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1186,8 +1296,7 @@ export function draw() {
     ctx.textAlign = "left";
   }
 
-  // Color palette overlay
-  if (state.showColorPalette) {
+function drawColorPaletteOverlay() {
     ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1303,88 +1412,3 @@ export function draw() {
     ctx.fillText("Tap a color to select", canvas.width / 2, canvas.height - 50);
     ctx.textAlign = "left";
   }
-}
-
-// Mario-style pipe drawing function
-export function drawMarioPipe(x, y, width, height, isTop) {
-  const rimHeight = 20;
-  const pipeBodyHeight = isTop ? height - rimHeight : height - rimHeight;
-  const pipeBodyY = isTop ? y : y + rimHeight;
-  const rimY = isTop ? height - rimHeight : y;
-  const rimWidth = width + 8; // Slightly wider rim
-  const rimX = x - 4;
-
-  // Main pipe colors
-  const pipeGreen = "#228B22";
-  const pipeDarkGreen = "#006400";
-  const pipeHighlight = "#32CD32";
-  const pipeShadow = "#1F5F1F";
-
-  // Draw pipe rim (the lip/opening)
-  ctx.fillStyle = pipeGreen;
-  ctx.fillRect(rimX, rimY, rimWidth, rimHeight);
-
-  // Rim highlights and shadows for 3D effect
-  ctx.fillStyle = pipeHighlight;
-  ctx.fillRect(rimX, rimY, rimWidth, 3); // Top highlight
-  ctx.fillRect(rimX, rimY, 3, rimHeight); // Left highlight
-
-  ctx.fillStyle = pipeShadow;
-  ctx.fillRect(rimX, rimY + rimHeight - 3, rimWidth, 3); // Bottom shadow
-  ctx.fillRect(rimX + rimWidth - 3, rimY, 3, rimHeight); // Right shadow
-
-  // Draw main pipe body
-  ctx.fillStyle = pipeGreen;
-  ctx.fillRect(x, pipeBodyY, width, pipeBodyHeight);
-
-  // Pipe body highlights and shadows
-  ctx.fillStyle = pipeHighlight;
-  ctx.fillRect(x, pipeBodyY, 4, pipeBodyHeight); // Left highlight strip
-
-  ctx.fillStyle = pipeShadow;
-  ctx.fillRect(x + width - 4, pipeBodyY, 4, pipeBodyHeight); // Right shadow strip
-
-  // Add vertical highlight lines for texture
-  ctx.fillStyle = pipeHighlight;
-  for (let i = 12; i < width - 12; i += 8) {
-    ctx.fillRect(x + i, pipeBodyY, 1, pipeBodyHeight);
-  }
-
-  // Dark border around everything
-  ctx.strokeStyle = pipeDarkGreen;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(rimX, rimY, rimWidth, rimHeight); // Rim border
-  ctx.strokeRect(x, pipeBodyY, width, pipeBodyHeight); // Body border
-
-  // Inner rim shadow for depth
-  if (isTop) {
-    ctx.fillStyle = pipeShadow;
-    ctx.fillRect(rimX + 2, rimY + rimHeight - 6, rimWidth - 4, 4);
-  } else {
-    ctx.fillStyle = pipeHighlight;
-    ctx.fillRect(rimX + 2, rimY + 2, rimWidth - 4, 4);
-  }
-}
-
-// Helper function to get hex color for fallback rectangles
-export function getColorHex(colorName) {
-  const colorMap = {
-    gray: "#808080",
-    blue: "#0066FF",
-    brown: "#8B4513",
-    cyan: "#00FFFF",
-    fire: "#FF4500",
-    galaxy: "#663399",
-    green: "#00FF00",
-    ice: "#B0E0E6",
-    lime: "#32CD32",
-    magenta: "#FF00FF",
-    orange: "#FFA500",
-    pink: "#FFC0CB",
-    purple: "#800080",
-    rainbow: "#FF69B4",
-    red: "#FF0000",
-    yellow: "#FFFF00",
-  };
-  return colorMap[colorName] || "#808080";
-}
