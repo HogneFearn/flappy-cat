@@ -1,26 +1,28 @@
 {
   "name": "flappy-bird-game",
   "version": "1.0.0",
-  "description": "A flappy bird game with SQLite database",
-  "main": "server.js",
+  "description": "A flappy bird game on Cloudflare Pages + Functions + D1",
   "scripts": {
-    "start": "node server.js",
-    "dev:server": "node server.js",
     "dev:web": "vite",
+    "dev:api": "wrangler pages dev",
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "deploy": "npm run build && wrangler pages deploy",
+    "db:migrate:local": "wrangler d1 execute flappy-cat-db --local --file=./schema.sql",
+    "db:migrate:remote": "wrangler d1 execute flappy-cat-db --remote --file=./schema.sql",
+    "typecheck": "tsc --noEmit",
+    "typecheck:api": "tsc -p tsconfig.worker.json --noEmit"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.18.2",
-    "sqlite3": "^5.1.6"
+    "hono": "^4.6.14"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241205.0",
     "@types/node": "^25.9.3",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "wrangler": "^3.99.0"
   }
 }

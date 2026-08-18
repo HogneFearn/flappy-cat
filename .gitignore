@@ -38,3 +38,11 @@ deployment-package
 game.db
 cloudpanel-pw.rtf
 fallow-report.json
+
+# Cloudflare / Wrangler
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Generated D1 import (contains password hashes)
+d1-data.sql
