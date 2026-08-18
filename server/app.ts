@@ -83,6 +83,23 @@ function expiresInDays(days: number): string {
   return new Date(Date.now() + days * 86400000).toISOString();
 }
 
+// Reject non-integer / negative / absurd values from the client. This does not
+// stop a determined cheat (the game is scored client-side) but caps the blast
+// radius, e.g. no wallet = 1e308 or negative leaderboard entries.
+const MAX_INT = 1_000_000_000_000;
+
+function toInt(v: unknown): number | null {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isInteger(n) || n < 0 || n > MAX_INT) return null;
+  return n;
+}
+
+function clampInt(v: unknown): number {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(Math.max(Math.trunc(n), 0), MAX_INT);
+}
+
 async function onlineCount(db: D1Database): Promise<number> {
   const row = await db
     .prepare(
@@ -190,7 +207,7 @@ app.post("/auth/signup", async (c) => {
     if (String((e as Error).message).includes("UNIQUE")) {
       return c.json({ error: "Username already exists" }, 409);
     }
-    return c.json({ error: (e as Error).message }, 500);
+    return c.json({ error: "Could not create account" }, 500);
   }
 
   const sessionToken = randomHex(64);
@@ -294,9 +311,7 @@ app.post("/auth/validate", async (c) => {
 
 app.post("/auth/logout", auth(true), async (c) => {
   const token = c.req.header("Authorization")!.slice(7);
-  await c.env.DB.prepare(
-    "UPDATE sessions SET last_seen = NULL WHERE session_token = ?",
-  )
+  await c.env.DB.prepare("DELETE FROM sessions WHERE session_token = ?")
     .bind(token)
     .run();
   return c.json({ success: true, message: "Logged out successfully" });
@@ -307,9 +322,7 @@ app.post("/auth/logout-beacon", async (c) => {
   if (!sessionToken) {
     return c.json({ success: false, message: "No session token provided" });
   }
-  await c.env.DB.prepare(
-    "UPDATE sessions SET last_seen = NULL WHERE session_token = ?",
-  )
+  await c.env.DB.prepare("DELETE FROM sessions WHERE session_token = ?")
     .bind(sessionToken)
     .run();
   return c.json({ success: true, message: "Logged out successfully" });
@@ -348,12 +361,16 @@ app.get("/player/wallet", auth(true), async (c) => {
 app.post("/player/wallet", auth(true), async (c) => {
   const name = c.get("user").username;
   const { wallet } = await c.req.json();
+  const value = toInt(wallet);
+  if (value === null) {
+    return c.json({ error: "Invalid wallet value" }, 400);
+  }
   await c.env.DB.prepare(
     "INSERT OR REPLACE INTO players (name, wallet) VALUES (?, ?)",
   )
-    .bind(name, wallet)
+    .bind(name, value)
     .run();
-  return c.json({ success: true, wallet });
+  return c.json({ success: true, wallet: value });
 });
 
 // ---- player inventory -----------------------------------------------------
@@ -402,16 +419,16 @@ app.post("/player/inventory", auth(true), async (c) => {
   )
     .bind(
       name,
-      b.magnetRoundsLeft || 0,
-      b.miniNukeCount || 0,
-      b.nukeCount || 0,
-      b.goldNukeCount || 0,
-      b.goldMagnetRoundsLeft || 0,
-      b.ghostShroomCount || 0,
-      b.energyCapeRoundsLeft || 0,
+      clampInt(b.magnetRoundsLeft),
+      clampInt(b.miniNukeCount),
+      clampInt(b.nukeCount),
+      clampInt(b.goldNukeCount),
+      clampInt(b.goldMagnetRoundsLeft),
+      clampInt(b.ghostShroomCount),
+      clampInt(b.energyCapeRoundsLeft),
     )
     .run();
-  return c.json({ success: true, magnetRoundsLeft: b.magnetRoundsLeft });
+  return c.json({ success: true, magnetRoundsLeft: clampInt(b.magnetRoundsLeft) });
 });
 
 // ---- player high score & color -------------------------------------------
@@ -429,12 +446,16 @@ app.get("/player/highscore", auth(true), async (c) => {
 app.post("/player/highscore", auth(true), async (c) => {
   const name = c.get("user").username;
   const { score } = await c.req.json();
+  const value = toInt(score);
+  if (value === null) {
+    return c.json({ error: "Invalid score" }, 400);
+  }
   await c.env.DB.prepare(
     "INSERT OR REPLACE INTO player_high_scores (player_name, high_score, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
   )
-    .bind(name, score)
+    .bind(name, value)
     .run();
-  return c.json({ success: true, score });
+  return c.json({ success: true, score: value });
 });
 
 app.get("/player/color", auth(true), async (c) => {
@@ -459,17 +480,6 @@ app.post("/player/color", auth(true), async (c) => {
     .bind(name, selectedColor)
     .run();
   return c.json({ success: true, selectedColor });
-});
-
-// Public high-score write by name (kept for parity with the old server).
-app.post("/player/:name/highscore", async (c) => {
-  const { score } = await c.req.json();
-  await c.env.DB.prepare(
-    "INSERT OR REPLACE INTO player_high_scores (player_name, high_score, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
-  )
-    .bind(c.req.param("name"), score)
-    .run();
-  return c.json({ success: true, score });
 });
 
 // ---- leaderboard ----------------------------------------------------------
@@ -503,14 +513,15 @@ app.post("/leaderboard", auth(true), async (c) => {
     return c.json({ success: true });
   }
 
-  if (score === undefined || score === null) {
-    return c.json({ error: "Score is required" }, 400);
+  const value = toInt(score);
+  if (value === null) {
+    return c.json({ error: "Invalid score" }, 400);
   }
 
   await c.env.DB.prepare(
     "INSERT INTO leaderboard (player_name, score) VALUES (?, ?)",
   )
-    .bind(name, score)
+    .bind(name, value)
     .run();
   return c.json({ success: true });
 });
@@ -528,10 +539,14 @@ app.get("/highscore/:type", async (c) => {
 
 app.post("/highscore/:type", async (c) => {
   const { score } = await c.req.json();
+  const value = toInt(score);
+  if (value === null) {
+    return c.json({ error: "Invalid score" }, 400);
+  }
   await c.env.DB.prepare(
     "UPDATE high_scores SET score = ?, updated_at = CURRENT_TIMESTAMP WHERE score_type = ?",
   )
-    .bind(score, c.req.param("type"))
+    .bind(value, c.req.param("type"))
     .run();
   return c.json({ success: true });
 });
