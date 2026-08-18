@@ -15,7 +15,9 @@ export async function initializeAudio() {
   if (!audioInitialized) {
     try {
       // Create AudioContext
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContext = new (
+        window.AudioContext || (window as any).webkitAudioContext
+      )();
 
       // Create master gain node for volume control
       masterGain = audioContext.createGain();

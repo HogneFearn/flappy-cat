@@ -129,22 +129,34 @@ function handleCanvasPointer(canvasX, canvasY, isTouch) {
       ) {
         // Find the item and check if it can be purchased
         const item = availableShopItems.find(
-          (item) => item.id === shopCoord.itemId
+          (item) => item.id === shopCoord.itemId,
         );
         if (item && shopCoord.itemId === "magnet") {
-          if (state.totalCoinsWallet >= item.price && state.magnetRoundsLeft === 0) {
+          if (
+            state.totalCoinsWallet >= item.price &&
+            state.magnetRoundsLeft === 0
+          ) {
             buyMagnetItem();
           }
         } else if (item && shopCoord.itemId === "goldMagnet") {
-          if (state.totalCoinsWallet >= item.price && state.goldMagnetRoundsLeft === 0) {
+          if (
+            state.totalCoinsWallet >= item.price &&
+            state.goldMagnetRoundsLeft === 0
+          ) {
             buyGoldMagnetItem();
           }
         } else if (item && shopCoord.itemId === "ghostShroom") {
-          if (state.totalCoinsWallet >= item.price && state.ghostShroomCount === 0) {
+          if (
+            state.totalCoinsWallet >= item.price &&
+            state.ghostShroomCount === 0
+          ) {
             buyGhostShroomItem();
           }
         } else if (item && shopCoord.itemId === "springBoots") {
-          if (state.totalCoinsWallet >= item.price && state.springBootsCount === 0) {
+          if (
+            state.totalCoinsWallet >= item.price &&
+            state.springBootsCount === 0
+          ) {
             buySpringBootsItem();
           }
         } else if (item && shopCoord.itemId === "miniNuke") {
@@ -160,7 +172,10 @@ function handleCanvasPointer(canvasX, canvasY, isTouch) {
             buyGoldNukeItem();
           }
         } else if (item && shopCoord.itemId === "energyCape") {
-          if (state.totalCoinsWallet >= item.price && state.energyCapeRoundsLeft === 0) {
+          if (
+            state.totalCoinsWallet >= item.price &&
+            state.energyCapeRoundsLeft === 0
+          ) {
             buyEnergyCapeItem();
           }
         }
@@ -258,7 +273,8 @@ function handleCanvasPointer(canvasX, canvasY, isTouch) {
     !state.isRocketActive &&
     state.goldNukeButtonCoords.x &&
     canvasX >= state.goldNukeButtonCoords.x &&
-    canvasX <= state.goldNukeButtonCoords.x + state.goldNukeButtonCoords.width &&
+    canvasX <=
+      state.goldNukeButtonCoords.x + state.goldNukeButtonCoords.width &&
     canvasY >= state.goldNukeButtonCoords.y &&
     canvasY <= state.goldNukeButtonCoords.y + state.goldNukeButtonCoords.height
   ) {
@@ -280,16 +296,22 @@ function handleCanvasPointer(canvasX, canvasY, isTouch) {
     !state.isRocketActive &&
     state.energyCapeButtonCoords.x &&
     canvasX >= state.energyCapeButtonCoords.x &&
-    canvasX <= state.energyCapeButtonCoords.x + state.energyCapeButtonCoords.width &&
+    canvasX <=
+      state.energyCapeButtonCoords.x + state.energyCapeButtonCoords.width &&
     canvasY >= state.energyCapeButtonCoords.y &&
-    canvasY <= state.energyCapeButtonCoords.y + state.energyCapeButtonCoords.height
+    canvasY <=
+      state.energyCapeButtonCoords.y + state.energyCapeButtonCoords.height
   ) {
     activateDash();
     return;
   }
 
   // Priority 3: Check for in-canvas button clicks when game is over (handle on touchstart for better responsiveness)
-  if (!state.gameRunning && state.showGameOverButtons && state.gameOverButtons.length > 0) {
+  if (
+    !state.gameRunning &&
+    state.showGameOverButtons &&
+    state.gameOverButtons.length > 0
+  ) {
     // Find the clicked button by checking from bottom to top (reverse order)
     // to handle any potential overlaps
     for (let i = state.gameOverButtons.length - 1; i >= 0; i--) {
@@ -332,7 +354,7 @@ canvas.addEventListener("touchstart", (e) => {
 
   const coords = getCanvasCoordinates(
     e.touches[0].clientX,
-    e.touches[0].clientY
+    e.touches[0].clientY,
   );
   handleCanvasPointer(coords.x, coords.y, true);
 });
@@ -452,7 +474,7 @@ document.addEventListener(
   function (e) {
     e.preventDefault();
   },
-  { passive: false }
+  { passive: false },
 );
 document.addEventListener(
   "touchstart",
@@ -461,7 +483,7 @@ document.addEventListener(
       e.preventDefault();
     }
   },
-  { passive: false }
+  { passive: false },
 );
 document.addEventListener(
   "touchend",
@@ -470,7 +492,7 @@ document.addEventListener(
       e.preventDefault();
     }
   },
-  { passive: false }
+  { passive: false },
 );
 
 // ===================== game.js =====================
@@ -695,13 +717,19 @@ async function handleGameOver() {
 
   // Use obstacle score for leaderboard (pipes cleared)
   if (state.obstacleScore > 0) {
-    await addToLeaderboard(state.currentSession.sessionToken, state.obstacleScore);
+    await addToLeaderboard(
+      state.currentSession.sessionToken,
+      state.obstacleScore,
+    );
   }
 
   // Update player's personal high score
   if (state.obstacleScore > state.playerHighScore) {
     state.playerHighScore = state.obstacleScore;
-    await savePlayerHighScore(state.currentSession.sessionToken, state.playerHighScore);
+    await savePlayerHighScore(
+      state.currentSession.sessionToken,
+      state.playerHighScore,
+    );
   }
 }
 
@@ -725,8 +753,8 @@ function calculateGameSpeed() {
   if (finalSpeed > state.baseGameSpeed + 2.0) {
     console.log(
       `Warning: High game speed detected. Score: ${state.obstacleScore}, Speed: ${finalSpeed.toFixed(
-        2
-      )}`
+        2,
+      )}`,
     );
   }
 
@@ -745,7 +773,7 @@ function resetGame() {
   // Extra safety check to ensure baseGameSpeed is valid
   if (state.baseGameSpeed <= 0 || state.baseGameSpeed > 10) {
     console.warn(
-      `Invalid baseGameSpeed detected: ${state.baseGameSpeed}, resetting to 2.5`
+      `Invalid baseGameSpeed detected: ${state.baseGameSpeed}, resetting to 2.5`,
     );
     state.baseGameSpeed = 2.5;
     state.gameSpeed = 2.5;
@@ -856,7 +884,11 @@ function update() {
     }
 
     // Handle any other key press to show game over buttons
-    if (!state.gameRunning && !state.showGameOverButtons && state.gameNameEntered) {
+    if (
+      !state.gameRunning &&
+      !state.showGameOverButtons &&
+      state.gameNameEntered
+    ) {
       const anyKeyPressed = Object.values(state.keys).some((key) => key);
       if (anyKeyPressed) {
         state.showGameOverButtons = true;
@@ -913,7 +945,10 @@ function update() {
 
 // Shop functions
 async function buyMagnetItem() {
-  const result = await buyMagnet(state.currentSession.sessionToken, state.totalCoinsWallet);
+  const result = await buyMagnet(
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet,
+  );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
     state.magnetRoundsLeft = result.inventory.magnetRoundsLeft;
@@ -924,7 +959,7 @@ async function buyMagnetItem() {
 async function buyGoldMagnetItem() {
   const result = await buyGoldMagnet(
     state.currentSession.sessionToken,
-    state.totalCoinsWallet
+    state.totalCoinsWallet,
   );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
@@ -936,7 +971,7 @@ async function buyGoldMagnetItem() {
 async function buyMiniNukeItem() {
   const result = await buyMiniNuke(
     state.currentSession.sessionToken,
-    state.totalCoinsWallet
+    state.totalCoinsWallet,
   );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
@@ -946,7 +981,10 @@ async function buyMiniNukeItem() {
 }
 
 async function buyNukeItem() {
-  const result = await buyNuke(state.currentSession.sessionToken, state.totalCoinsWallet);
+  const result = await buyNuke(
+    state.currentSession.sessionToken,
+    state.totalCoinsWallet,
+  );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
     state.nukeCount = result.inventory.nukeCount;
@@ -957,7 +995,7 @@ async function buyNukeItem() {
 async function buyGoldNukeItem() {
   const result = await buyGoldNuke(
     state.currentSession.sessionToken,
-    state.totalCoinsWallet
+    state.totalCoinsWallet,
   );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
@@ -969,7 +1007,7 @@ async function buyGoldNukeItem() {
 async function buyGhostShroomItem() {
   const result = await buyGhostShroom(
     state.currentSession.sessionToken,
-    state.totalCoinsWallet
+    state.totalCoinsWallet,
   );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
@@ -981,7 +1019,7 @@ async function buyGhostShroomItem() {
 async function buySpringBootsItem() {
   const result = await buySpringBoots(
     state.currentSession.sessionToken,
-    state.totalCoinsWallet
+    state.totalCoinsWallet,
   );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
@@ -993,7 +1031,7 @@ async function buySpringBootsItem() {
 async function buyEnergyCapeItem() {
   const result = await buyEnergyCape(
     state.currentSession.sessionToken,
-    state.totalCoinsWallet
+    state.totalCoinsWallet,
   );
   if (result.success) {
     state.totalCoinsWallet = result.newWallet;
@@ -1142,7 +1180,8 @@ function updateRocket() {
   }
 
   // Move rocket to the right
-  state.rocket.x += state.rocket.speed * state.gameSpeed * (state.deltaTime / targetFrameTime);
+  state.rocket.x +=
+    state.rocket.speed * state.gameSpeed * (state.deltaTime / targetFrameTime);
 
   // Check if rocket reached the end of the screen
   if (state.rocket.x >= canvas.width) {
@@ -1267,30 +1306,33 @@ function explodeRocket() {
   const pointDelay = Math.abs(delayTime) / maxPipesToRemove; // Divide delay evenly across max potential pipes
 
   for (let i = 0; i < maxPipesToRemove; i++) {
-    setTimeout(() => {
-      state.obstacleScore += 5; // Award 5 points per pipe
+    setTimeout(
+      () => {
+        state.obstacleScore += 5; // Award 5 points per pipe
 
-      // Update game speed based on new score with safeguards
-      const newSpeed = calculateGameSpeed();
-      // Only update if the new speed is reasonable (prevent sudden spikes)
-      if (newSpeed <= state.gameSpeed + 0.5) {
-        state.gameSpeed = newSpeed;
-      } else {
-        console.warn(
-          `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`
+        // Update game speed based on new score with safeguards
+        const newSpeed = calculateGameSpeed();
+        // Only update if the new speed is reasonable (prevent sudden spikes)
+        if (newSpeed <= state.gameSpeed + 0.5) {
+          state.gameSpeed = newSpeed;
+        } else {
+          console.warn(
+            `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`,
+          );
+        }
+
+        let explosionName = "mini nuke";
+        if (isNuke) explosionName = "nuke";
+        if (isGoldNuke) explosionName = "gold nuke";
+
+        console.log(
+          `Awarded 5 points from ${explosionName} explosion (${
+            i + 1
+          }/${maxPipesToRemove})`,
         );
-      }
-
-      let explosionName = "mini nuke";
-      if (isNuke) explosionName = "nuke";
-      if (isGoldNuke) explosionName = "gold nuke";
-
-      console.log(
-        `Awarded 5 points from ${explosionName} explosion (${
-          i + 1
-        }/${maxPipesToRemove})`
-      );
-    }, pointDelay * (i + 1));
+      },
+      pointDelay * (i + 1),
+    );
   }
 
   let explosionName = "Mini nuke";
@@ -1300,7 +1342,7 @@ function explodeRocket() {
   console.log(
     `${explosionName} exploded! Removed ${pipesRemovedCount} pipes, delayed spawning, will award ${
       pipesRemovedCount * 5
-    } points over time`
+    } points over time`,
   );
 
   // Reset rocket state
@@ -1378,7 +1420,7 @@ window.addEventListener("beforeunload", (event) => {
           sessionToken: state.currentSession.sessionToken,
         }),
       ],
-      { type: "application/json" }
+      { type: "application/json" },
     );
 
     navigator.sendBeacon("/api/auth/logout-beacon", blob);
@@ -1406,8 +1448,12 @@ async function updateOnlineCount() {
 
 function setupAuthentication() {
   const authForm = document.getElementById("authForm");
-  const usernameInput = document.getElementById("usernameInput") as HTMLInputElement;
-  const passwordInput = document.getElementById("passwordInput") as HTMLInputElement;
+  const usernameInput = document.getElementById(
+    "usernameInput",
+  ) as HTMLInputElement;
+  const passwordInput = document.getElementById(
+    "passwordInput",
+  ) as HTMLInputElement;
   const loginBtn = document.getElementById("loginBtn");
   const signupBtn = document.getElementById("signupBtn");
   const authToggleBtn = document.getElementById("authToggleBtn");
@@ -1574,8 +1620,12 @@ function clearAuthError() {
 function setAuthLoading(loading) {
   const loginBtn = document.getElementById("loginBtn") as HTMLButtonElement;
   const signupBtn = document.getElementById("signupBtn") as HTMLButtonElement;
-  const usernameInput = document.getElementById("usernameInput") as HTMLInputElement;
-  const passwordInput = document.getElementById("passwordInput") as HTMLInputElement;
+  const usernameInput = document.getElementById(
+    "usernameInput",
+  ) as HTMLInputElement;
+  const passwordInput = document.getElementById(
+    "passwordInput",
+  ) as HTMLInputElement;
 
   loginBtn.disabled = loading;
   signupBtn.disabled = loading;
@@ -1702,7 +1752,11 @@ function handleGroundCollision() {
       state.player.vy = -16.3; // High vertical jump but safe from ceiling
       state.player.y = state.groundY - state.player.h - 10; // Immediate height boost
       console.log("Spring boots bounce!");
-    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+    } else if (
+      state.hasGhostShroom &&
+      state.ghostShroomCount > 0 &&
+      !state.isGhostActive
+    ) {
       // Activate ghost mode on first hit
       state.isGhostActive = true;
       state.ghostModeActivationTime = performance.now(); // Record activation time
@@ -1719,14 +1773,15 @@ function handleGroundCollision() {
       });
       console.log(
         "Ghost mode activated (ground hit)! Ghost shrooms left:",
-        state.ghostShroomCount
+        state.ghostShroomCount,
       );
       // Bounce back up slightly to prevent getting stuck
       state.player.y = state.groundY - state.player.h;
       state.player.vy = -2;
     } else if (state.isGhostActive) {
       // Check if grace period has expired
-      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+      const timeSinceActivation =
+        performance.now() - state.ghostModeActivationTime;
       if (timeSinceActivation > state.ghostModeGracePeriod) {
         // Grace period expired, trigger game over
         handleGameOver();
@@ -1749,7 +1804,11 @@ function handleCeilingCollision() {
       state.player.vy = 16.3; // Bounce down
       state.player.y = 10; // Push away from ceiling
       console.log("Spring boots ceiling bounce!");
-    } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+    } else if (
+      state.hasGhostShroom &&
+      state.ghostShroomCount > 0 &&
+      !state.isGhostActive
+    ) {
       // Activate ghost mode on first hit
       state.isGhostActive = true;
       state.ghostModeActivationTime = performance.now(); // Record activation time
@@ -1766,14 +1825,15 @@ function handleCeilingCollision() {
       });
       console.log(
         "Ghost mode activated (ceiling hit)! Ghost shrooms left:",
-        state.ghostShroomCount
+        state.ghostShroomCount,
       );
       // Bounce back down slightly to prevent getting stuck
       state.player.y = 0;
       state.player.vy = 2;
     } else if (state.isGhostActive) {
       // Check if grace period has expired
-      const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+      const timeSinceActivation =
+        performance.now() - state.ghostModeActivationTime;
       if (timeSinceActivation > state.ghostModeGracePeriod) {
         // Grace period expired, trigger game over
         handleGameOver();
@@ -1802,7 +1862,9 @@ function updateWorld(deltaMultiplier) {
     }
 
     // Remove off-screen obstacles
-    state.obstacles = state.obstacles.filter((obstacle) => obstacle.x > -obstacle.width);
+    state.obstacles = state.obstacles.filter(
+      (obstacle) => obstacle.x > -obstacle.width,
+    );
 
     // Remove off-screen coins
     state.coins = state.coins.filter((coin) => coin.x > -coin.r);
@@ -1841,8 +1903,10 @@ function updateWorld(deltaMultiplier) {
         // Pull coin towards player with regular magnet
         const pullStrength = 0.7;
         const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
-        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.x +=
+          Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.y +=
+          Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
       }
       // Check for gold magnet (stronger and wider range)
       else if (
@@ -1854,8 +1918,10 @@ function updateWorld(deltaMultiplier) {
         // Pull coin towards player with gold magnet (stronger pull)
         const pullStrength = 1.4; // Double the strength of regular magnet
         const angle = Math.atan2(dy, dx);
-        coin.x += Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
-        coin.y += Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.x +=
+          Math.cos(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
+        coin.y +=
+          Math.sin(angle) * pullStrength * state.gameSpeed * deltaMultiplier;
       }
 
       // Collision detection
@@ -1865,7 +1931,10 @@ function updateWorld(deltaMultiplier) {
         playCoinSound();
         // Add coin value directly to wallet
         state.totalCoinsWallet += coin.value;
-        savePlayerWallet(state.currentSession.sessionToken, state.totalCoinsWallet);
+        savePlayerWallet(
+          state.currentSession.sessionToken,
+          state.totalCoinsWallet,
+        );
         spawnCoin();
       }
     }
@@ -1891,7 +1960,11 @@ function updateWorld(deltaMultiplier) {
 
           console.log("Dash destroyed top pipe!");
           continue;
-        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+        } else if (
+          state.hasGhostShroom &&
+          state.ghostShroomCount > 0 &&
+          !state.isGhostActive
+        ) {
           // Activate ghost mode on first hit
           state.isGhostActive = true;
           state.ghostModeActivationTime = performance.now(); // Record activation time
@@ -1908,7 +1981,7 @@ function updateWorld(deltaMultiplier) {
           });
           console.log(
             "Ghost mode activated! Ghost shrooms left:",
-            state.ghostShroomCount
+            state.ghostShroomCount,
           );
         } else if (state.isGhostActive) {
           // Check if grace period has expired
@@ -1944,7 +2017,11 @@ function updateWorld(deltaMultiplier) {
 
           console.log("Dash destroyed bottom pipe!");
           continue;
-        } else if (state.hasGhostShroom && state.ghostShroomCount > 0 && !state.isGhostActive) {
+        } else if (
+          state.hasGhostShroom &&
+          state.ghostShroomCount > 0 &&
+          !state.isGhostActive
+        ) {
           // Activate ghost mode on first hit
           state.isGhostActive = true;
           state.ghostModeActivationTime = performance.now(); // Record activation time
@@ -1961,7 +2038,7 @@ function updateWorld(deltaMultiplier) {
           });
           console.log(
             "Ghost mode activated! Ghost shrooms left:",
-            state.ghostShroomCount
+            state.ghostShroomCount,
           );
         } else if (state.isGhostActive) {
           // Check if grace period has expired
@@ -1989,7 +2066,7 @@ function updateWorld(deltaMultiplier) {
           state.gameSpeed = newSpeed;
         } else {
           console.warn(
-            `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`
+            `Prevented speed spike: ${state.gameSpeed} → ${newSpeed}, keeping current speed`,
           );
         }
       }
@@ -1997,7 +2074,9 @@ function updateWorld(deltaMultiplier) {
 
     // Ensure there are always coins on screen
     const coinLimit =
-      state.obstacleSpawnTimer < 0 && state.lastExplosionType === "goldNuke" ? 6 : 3;
+      state.obstacleSpawnTimer < 0 && state.lastExplosionType === "goldNuke"
+        ? 6
+        : 3;
     if (state.coins.length < coinLimit) {
       spawnCoin();
     }

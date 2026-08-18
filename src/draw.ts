@@ -74,14 +74,15 @@ export function draw() {
       obstacle.bottomY,
       obstacle.width,
       obstacle.bottomHeight,
-      false
+      false,
     );
   }
 
   // Draw player
   if (state.isGhostActive) {
     // Check if we're in grace period
-    const timeSinceActivation = performance.now() - state.ghostModeActivationTime;
+    const timeSinceActivation =
+      performance.now() - state.ghostModeActivationTime;
     const inGracePeriod = timeSinceActivation <= state.ghostModeGracePeriod;
 
     // Draw ghost cat when in ghost mode
@@ -102,7 +103,13 @@ export function draw() {
         ctx.globalAlpha = 0.7;
       }
 
-      ctx.drawImage(ghostCatImage, state.player.x, state.player.y, state.player.w, state.player.h);
+      ctx.drawImage(
+        ghostCatImage,
+        state.player.x,
+        state.player.y,
+        state.player.w,
+        state.player.h,
+      );
       ctx.globalAlpha = 1.0; // Reset alpha
       ctx.shadowBlur = 0; // Reset shadow
     } else {
@@ -113,7 +120,12 @@ export function draw() {
       } else {
         ctx.fillStyle = "rgba(200, 200, 255, 0.5)";
       }
-      ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
+      ctx.fillRect(
+        state.player.x,
+        state.player.y,
+        state.player.w,
+        state.player.h,
+      );
     }
   } else if (
     catImages[state.selectedCatColor] &&
@@ -126,16 +138,25 @@ export function draw() {
       state.player.x,
       state.player.y,
       state.player.w,
-      state.player.h
+      state.player.h,
     );
   } else {
     // Fallback to colored rectangle if image not loaded
     ctx.fillStyle = state.gameRunning ? "#ff0" : "#f00";
-    ctx.fillRect(state.player.x, state.player.y, state.player.w, state.player.h);
+    ctx.fillRect(
+      state.player.x,
+      state.player.y,
+      state.player.w,
+      state.player.h,
+    );
   }
 
   // Draw energy cape if equipped (on top of player)
-  if (state.hasEnergyCape && state.energyCapeRoundsLeft > 0 && !state.isGhostActive) {
+  if (
+    state.hasEnergyCape &&
+    state.energyCapeRoundsLeft > 0 &&
+    !state.isGhostActive
+  ) {
     if (
       energyCapeImage &&
       energyCapeImage.complete &&
@@ -143,7 +164,13 @@ export function draw() {
     ) {
       // Draw cape on top of player
       // Adjust position to align with cat's back
-      ctx.drawImage(energyCapeImage, state.player.x - 18, state.player.y - 5, 45, 45);
+      ctx.drawImage(
+        energyCapeImage,
+        state.player.x - 18,
+        state.player.y - 5,
+        45,
+        45,
+      );
     }
   }
 
@@ -174,7 +201,7 @@ export function draw() {
         coin.x - coin.r, // Center the image
         coin.y - coin.r,
         imageSize,
-        imageSize
+        imageSize,
       );
     } else {
       // Fallback to circle if image not loaded
@@ -208,7 +235,13 @@ export function draw() {
     // Draw rocket image if loaded, otherwise use rectangle
     if (rocketImage && rocketImage.complete && rocketImage.naturalWidth > 0) {
       const rocketSize = 25;
-      ctx.drawImage(rocketImage, state.rocket.x, state.rocket.y, rocketSize, rocketSize);
+      ctx.drawImage(
+        rocketImage,
+        state.rocket.x,
+        state.rocket.y,
+        rocketSize,
+        rocketSize,
+      );
     } else {
       // Fallback rocket
       ctx.fillStyle = "#32CD32"; // Green color
@@ -238,14 +271,26 @@ export function draw() {
       if (ringRadius > 0) {
         // Outer explosion ring (orange/red)
         ctx.beginPath();
-        ctx.arc(state.explosion.x, state.explosion.y, ringRadius, 0, Math.PI * 2);
+        ctx.arc(
+          state.explosion.x,
+          state.explosion.y,
+          ringRadius,
+          0,
+          Math.PI * 2,
+        );
         ctx.fillStyle = `rgba(255, ${100 - i * 30}, 0, ${alpha * 0.6})`;
         ctx.fill();
 
         // Inner explosion ring (yellow/white)
         if (ringRadius > 10) {
           ctx.beginPath();
-          ctx.arc(state.explosion.x, state.explosion.y, ringRadius * 0.6, 0, Math.PI * 2);
+          ctx.arc(
+            state.explosion.x,
+            state.explosion.y,
+            ringRadius * 0.6,
+            0,
+            Math.PI * 2,
+          );
           ctx.fillStyle = `rgba(255, 255, ${100 + i * 50}, ${alpha * 0.8})`;
           ctx.fill();
         }
@@ -263,7 +308,7 @@ export function draw() {
         particle.y + particle.vy * particleProgress * 100,
         particle.size * (1 - particleProgress * 0.5),
         0,
-        Math.PI * 2
+        Math.PI * 2,
       );
       ctx.fillStyle = `rgba(${particle.color.r}, ${particle.color.g}, ${particle.color.b}, ${alpha})`;
       ctx.fill();
@@ -297,14 +342,14 @@ export function draw() {
       ctx.fillText(
         state.magnetRoundsLeft + " rounds",
         canvas.width - 20,
-        uiLineOffset
+        uiLineOffset,
       );
     } else {
       // Fallback to emoji
       ctx.fillText(
         "🧲 " + state.magnetRoundsLeft + " rounds",
         canvas.width - 20,
-        uiLineOffset
+        uiLineOffset,
       );
     }
     uiLineOffset += 20;
@@ -328,21 +373,24 @@ export function draw() {
       ctx.fillText(
         state.goldMagnetRoundsLeft + " rounds",
         canvas.width - 20,
-        uiLineOffset
+        uiLineOffset,
       );
     } else {
       // Fallback to emoji
       ctx.fillText(
         "🟡 " + state.goldMagnetRoundsLeft + " rounds",
         canvas.width - 20,
-        uiLineOffset
+        uiLineOffset,
       );
     }
     uiLineOffset += 20;
   }
 
   // Show ghost shroom status if active or in ghost mode
-  if ((state.hasGhostShroom && state.ghostShroomCount > 0) || state.isGhostActive) {
+  if (
+    (state.hasGhostShroom && state.ghostShroomCount > 0) ||
+    state.isGhostActive
+  ) {
     // Draw ghost shroom image
     if (
       ghostShroomImage &&
@@ -350,7 +398,9 @@ export function draw() {
       ghostShroomImage.naturalWidth > 0
     ) {
       const imageSize = 16;
-      const text = state.isGhostActive ? "GHOST MODE!" : state.ghostShroomCount + " left";
+      const text = state.isGhostActive
+        ? "GHOST MODE!"
+        : state.ghostShroomCount + " left";
       const imageX =
         canvas.width - 20 - ctx.measureText(" " + text).width - imageSize;
       const imageY = uiLineOffset - 12; // Center vertically with text
@@ -402,20 +452,29 @@ export function draw() {
         imageSize;
       const imageY = uiLineOffset - 12; // Center vertically with text
       ctx.drawImage(springBootsImage, imageX, imageY, imageSize, imageSize);
-      ctx.fillText(state.springBootsCount + " left", canvas.width - 20, uiLineOffset);
+      ctx.fillText(
+        state.springBootsCount + " left",
+        canvas.width - 20,
+        uiLineOffset,
+      );
     } else {
       // Fallback to emoji
       ctx.fillText(
         "👢 " + state.springBootsCount + " left",
         canvas.width - 20,
-        uiLineOffset
+        uiLineOffset,
       );
     }
     uiLineOffset += 20;
   }
 
   // Draw pause button (only when game is running and started)
-  if (state.gameRunning && state.gameStarted && state.gameNameEntered && !state.showAuthScreen) {
+  if (
+    state.gameRunning &&
+    state.gameStarted &&
+    state.gameNameEntered &&
+    !state.showAuthScreen
+  ) {
     drawActionButtons(uiLineOffset);
   }
 
@@ -451,13 +510,13 @@ export function draw() {
       ctx.fillText(
         "Tap to resume and jump",
         canvas.width / 2,
-        canvas.height / 2 + 20
+        canvas.height / 2 + 20,
       );
     } else {
       ctx.fillText(
         "Press SPACE to resume and jump",
         canvas.width / 2,
-        canvas.height / 2 + 20
+        canvas.height / 2 + 20,
       );
     }
 
@@ -481,19 +540,19 @@ export function draw() {
     ctx.fillText(
       "Welcome to Flappy Cat!",
       canvas.width / 2,
-      canvas.height / 2 - 100
+      canvas.height / 2 - 100,
     );
 
     ctx.font = "20px Arial";
     ctx.fillText(
       "Please login or sign up to play",
       canvas.width / 2,
-      canvas.height / 2 - 20
+      canvas.height / 2 - 20,
     );
     ctx.fillText(
       "and save your progress!",
       canvas.width / 2,
-      canvas.height / 2 + 10
+      canvas.height / 2 + 10,
     );
 
     ctx.textAlign = "left";
@@ -501,7 +560,11 @@ export function draw() {
   }
 
   // Skip legacy name entry if using authentication
-  if (!state.gameNameEntered && !state.showAuthScreen && state.authMode !== "authenticated") {
+  if (
+    !state.gameNameEntered &&
+    !state.showAuthScreen &&
+    state.authMode !== "authenticated"
+  ) {
     ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -511,7 +574,7 @@ export function draw() {
     ctx.fillText(
       "Please use the login form to continue",
       canvas.width / 2,
-      canvas.height / 2
+      canvas.height / 2,
     );
 
     ctx.textAlign = "left";
@@ -624,791 +687,774 @@ function getColorHex(colorName) {
 }
 
 function drawActionButtons(uiLineOffset) {
-    const buttonSize = 30; // Size for the emoji area
-    const buttonX = canvas.width - buttonSize - 15;
-    const buttonY = uiLineOffset;
+  const buttonSize = 30; // Size for the emoji area
+  const buttonX = canvas.width - buttonSize - 15;
+  const buttonY = uiLineOffset;
 
-    // Store button coordinates for click detection
-    state.pauseButtonCoords = {
-      x: buttonX,
-      y: buttonY,
-      width: buttonSize,
-      height: buttonSize,
+  // Store button coordinates for click detection
+  state.pauseButtonCoords = {
+    x: buttonX,
+    y: buttonY,
+    width: buttonSize,
+    height: buttonSize,
+  };
+
+  // Just draw the emoji (no background or border)
+  ctx.fillStyle = "#fff";
+  ctx.font = "32px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(
+    state.gamePaused ? "▶️" : "⏸️",
+    buttonX + buttonSize / 2,
+    buttonY + buttonSize / 2 + 8,
+  );
+
+  // Reset action button coordinates
+  state.rocketButtonCoords = {};
+  state.nukeButtonCoords = {};
+  state.goldNukeButtonCoords = {};
+  state.energyCapeButtonCoords = {};
+
+  // Draw action buttons (bottom bar)
+  // Ground area starts at groundY and goes to canvas.height (~80px height)
+  const actionBtnSize = 50;
+  const actionBtnGap = 15;
+  const actionBtnY =
+    state.groundY + (canvas.height - state.groundY - actionBtnSize) / 2;
+
+  // We will lay them out from Right to Left, starting near the right edge
+  let currentActionX = canvas.width - 20 - actionBtnSize;
+
+  // Helper function to draw an action button slot
+  const drawActionSlot = (
+    image,
+    fallbackEmoji,
+    count,
+    isActive,
+    isCooldown,
+    cooldownProgress,
+  ) => {
+    // Draw background box
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent dark background
+    ctx.fillRect(currentActionX, actionBtnY, actionBtnSize, actionBtnSize);
+
+    // Draw border
+    ctx.strokeStyle = isActive ? "#FFFF00" : "#FFFFFF"; // Yellow if active, White otherwise
+    ctx.lineWidth = 2;
+    ctx.strokeRect(currentActionX, actionBtnY, actionBtnSize, actionBtnSize);
+
+    // Draw image or emoji
+    if (image && image.complete && image.naturalWidth > 0) {
+      const imgSize = actionBtnSize - 10;
+      ctx.drawImage(
+        image,
+        currentActionX + 5,
+        actionBtnY + 5,
+        imgSize,
+        imgSize,
+      );
+    } else {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText(
+        fallbackEmoji,
+        currentActionX + actionBtnSize / 2,
+        actionBtnY + actionBtnSize / 2 + 8,
+      );
+    }
+
+    // Draw count badge
+    if (count !== undefined && count !== null) {
+      const countText = count + "x";
+      ctx.fillStyle = "#FFD700";
+      ctx.font = "bold 14px Arial";
+      ctx.textAlign = "right";
+      // Shadow for better visibility
+      ctx.shadowColor = "black";
+      ctx.shadowBlur = 2;
+      ctx.fillText(
+        countText,
+        currentActionX + actionBtnSize - 5,
+        actionBtnY + actionBtnSize - 5,
+      );
+      ctx.shadowBlur = 0; // Reset shadow
+      ctx.textAlign = "left"; // Reset defaults
+    }
+
+    // Draw cooldown overlay
+    if (isCooldown && cooldownProgress > 0) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.beginPath();
+      ctx.moveTo(
+        currentActionX + actionBtnSize / 2,
+        actionBtnY + actionBtnSize / 2,
+      );
+      ctx.arc(
+        currentActionX + actionBtnSize / 2,
+        actionBtnY + actionBtnSize / 2,
+        actionBtnSize / 2,
+        -Math.PI / 2,
+        -Math.PI / 2 + Math.PI * 2 * cooldownProgress,
+      );
+      ctx.lineTo(
+        currentActionX + actionBtnSize / 2,
+        actionBtnY + actionBtnSize / 2,
+      );
+      ctx.fill();
+    }
+
+    // Return coordinates for click detection
+    const coords = {
+      x: currentActionX,
+      y: actionBtnY,
+      width: actionBtnSize,
+      height: actionBtnSize,
     };
 
-    // Just draw the emoji (no background or border)
-    ctx.fillStyle = "#fff";
-    ctx.font = "32px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      state.gamePaused ? "▶️" : "⏸️",
-      buttonX + buttonSize / 2,
-      buttonY + buttonSize / 2 + 8
-    );
+    // Move X to the left for the next button
+    currentActionX -= actionBtnSize + actionBtnGap;
 
-    // Reset action button coordinates
-    state.rocketButtonCoords = {};
-    state.nukeButtonCoords = {};
-    state.goldNukeButtonCoords = {};
-    state.energyCapeButtonCoords = {};
+    return coords;
+  };
 
-    // Draw action buttons (bottom bar)
-    // Ground area starts at groundY and goes to canvas.height (~80px height)
-    const actionBtnSize = 50;
-    const actionBtnGap = 15;
-    const actionBtnY = state.groundY + (canvas.height - state.groundY - actionBtnSize) / 2;
+  // Draw buttons from Right to Left
 
-    // We will lay them out from Right to Left, starting near the right edge
-    let currentActionX = canvas.width - 20 - actionBtnSize;
-
-    // Helper function to draw an action button slot
-    const drawActionSlot = (
-      image,
-      fallbackEmoji,
-      count,
-      isActive,
-      isCooldown,
-      cooldownProgress
-    ) => {
-      // Draw background box
-      ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; // Semi-transparent dark background
-      ctx.fillRect(currentActionX, actionBtnY, actionBtnSize, actionBtnSize);
-
-      // Draw border
-      ctx.strokeStyle = isActive ? "#FFFF00" : "#FFFFFF"; // Yellow if active, White otherwise
-      ctx.lineWidth = 2;
-      ctx.strokeRect(currentActionX, actionBtnY, actionBtnSize, actionBtnSize);
-
-      // Draw image or emoji
-      if (image && image.complete && image.naturalWidth > 0) {
-        const imgSize = actionBtnSize - 10;
-        ctx.drawImage(
-          image,
-          currentActionX + 5,
-          actionBtnY + 5,
-          imgSize,
-          imgSize
-        );
-      } else {
-        ctx.fillStyle = "#FFFFFF";
-        ctx.font = "24px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(
-          fallbackEmoji,
-          currentActionX + actionBtnSize / 2,
-          actionBtnY + actionBtnSize / 2 + 8
-        );
-      }
-
-      // Draw count badge
-      if (count !== undefined && count !== null) {
-        const countText = count + "x";
-        ctx.fillStyle = "#FFD700";
-        ctx.font = "bold 14px Arial";
-        ctx.textAlign = "right";
-        // Shadow for better visibility
-        ctx.shadowColor = "black";
-        ctx.shadowBlur = 2;
-        ctx.fillText(
-          countText,
-          currentActionX + actionBtnSize - 5,
-          actionBtnY + actionBtnSize - 5
-        );
-        ctx.shadowBlur = 0; // Reset shadow
-        ctx.textAlign = "left"; // Reset defaults
-      }
-
-      // Draw cooldown overlay
-      if (isCooldown && cooldownProgress > 0) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-        ctx.beginPath();
-        ctx.moveTo(
-          currentActionX + actionBtnSize / 2,
-          actionBtnY + actionBtnSize / 2
-        );
-        ctx.arc(
-          currentActionX + actionBtnSize / 2,
-          actionBtnY + actionBtnSize / 2,
-          actionBtnSize / 2,
-          -Math.PI / 2,
-          -Math.PI / 2 + Math.PI * 2 * cooldownProgress
-        );
-        ctx.lineTo(
-          currentActionX + actionBtnSize / 2,
-          actionBtnY + actionBtnSize / 2
-        );
-        ctx.fill();
-      }
-
-      // Return coordinates for click detection
-      const coords = {
-        x: currentActionX,
-        y: actionBtnY,
-        width: actionBtnSize,
-        height: actionBtnSize,
-      };
-
-      // Move X to the left for the next button
-      currentActionX -= actionBtnSize + actionBtnGap;
-
-      return coords;
-    };
-
-    // Draw buttons from Right to Left
-
-    // 1. Energy Cape (Rightmost)
-    if (state.hasEnergyCape && state.energyCapeRoundsLeft > 0) {
-      state.energyCapeButtonCoords = drawActionSlot(
-        energyCapeImage,
-        "⚡",
-        state.energyCapeRoundsLeft,
-        state.energyCapeActive,
-        state.energyCapeReloadTimer > 0 || state.isRocketActive,
-        state.energyCapeReloadTimer > 0
-          ? state.energyCapeReloadTimer / state.energyCapeCooldown
-          : state.isRocketActive
+  // 1. Energy Cape (Rightmost)
+  if (state.hasEnergyCape && state.energyCapeRoundsLeft > 0) {
+    state.energyCapeButtonCoords = drawActionSlot(
+      energyCapeImage,
+      "⚡",
+      state.energyCapeRoundsLeft,
+      state.energyCapeActive,
+      state.energyCapeReloadTimer > 0 || state.isRocketActive,
+      state.energyCapeReloadTimer > 0
+        ? state.energyCapeReloadTimer / state.energyCapeCooldown
+        : state.isRocketActive
           ? 1
-          : 0
-      );
-    }
-
-    // 2. Gold Nuke
-    if (state.hasGoldNuke && state.goldNukeCount > 0) {
-      state.goldNukeButtonCoords = drawActionSlot(
-        goldNukeImage,
-        "☢️",
-        state.goldNukeCount,
-        false,
-        state.isRocketActive,
-        state.isRocketActive ? 1 : 0
-      );
-    }
-
-    // 3. Nuke
-    if (state.hasNuke && state.nukeCount > 0) {
-      state.nukeButtonCoords = drawActionSlot(
-        nukeImage,
-        "💥",
-        state.nukeCount,
-        false,
-        state.isRocketActive,
-        state.isRocketActive ? 1 : 0
-      );
-    }
-
-    // 4. Mini Nuke (Leftmost)
-    if (state.hasMiniNuke && state.miniNukeCount > 0) {
-      state.rocketButtonCoords = drawActionSlot(
-        miniNukeImage,
-        "🚀",
-        state.miniNukeCount,
-        false,
-        state.isRocketActive,
-        state.isRocketActive ? 1 : 0
-      );
-    }
-
-    // Reset text alignment and font size
-    ctx.textAlign = "right";
-    ctx.font = "16px Arial"; // Reset font size back to normal
+          : 0,
+    );
   }
+
+  // 2. Gold Nuke
+  if (state.hasGoldNuke && state.goldNukeCount > 0) {
+    state.goldNukeButtonCoords = drawActionSlot(
+      goldNukeImage,
+      "☢️",
+      state.goldNukeCount,
+      false,
+      state.isRocketActive,
+      state.isRocketActive ? 1 : 0,
+    );
+  }
+
+  // 3. Nuke
+  if (state.hasNuke && state.nukeCount > 0) {
+    state.nukeButtonCoords = drawActionSlot(
+      nukeImage,
+      "💥",
+      state.nukeCount,
+      false,
+      state.isRocketActive,
+      state.isRocketActive ? 1 : 0,
+    );
+  }
+
+  // 4. Mini Nuke (Leftmost)
+  if (state.hasMiniNuke && state.miniNukeCount > 0) {
+    state.rocketButtonCoords = drawActionSlot(
+      miniNukeImage,
+      "🚀",
+      state.miniNukeCount,
+      false,
+      state.isRocketActive,
+      state.isRocketActive ? 1 : 0,
+    );
+  }
+
+  // Reset text alignment and font size
+  ctx.textAlign = "right";
+  ctx.font = "16px Arial"; // Reset font size back to normal
+}
 
 function drawGameOverScreen() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2 - 60);
+  ctx.fillStyle = "#fff";
+  ctx.font = "30px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2 - 60);
 
-    ctx.font = "18px Arial";
-    ctx.fillText(
-      `Final Score: ${state.obstacleScore}`,
-      canvas.width / 2,
-      canvas.height / 2 - 20
-    );
-    ctx.fillText(
-      `💰 Total Wallet: ${state.totalCoinsWallet}`,
-      canvas.width / 2,
-      canvas.height / 2 + 5
-    );
+  ctx.font = "18px Arial";
+  ctx.fillText(
+    `Final Score: ${state.obstacleScore}`,
+    canvas.width / 2,
+    canvas.height / 2 - 20,
+  );
+  ctx.fillText(
+    `💰 Total Wallet: ${state.totalCoinsWallet}`,
+    canvas.width / 2,
+    canvas.height / 2 + 5,
+  );
 
-    if (!state.showGameOverButtons) {
-      // Show "tap to continue" message
-      ctx.font = "16px Arial";
-      if (isMobile) {
-        ctx.fillText(
-          "Tap to continue",
-          canvas.width / 2,
-          canvas.height / 2 + 50
-        );
-      } else {
-        ctx.fillText(
-          "Press any key to continue",
-          canvas.width / 2,
-          canvas.height / 2 + 50
-        );
-      }
+  if (!state.showGameOverButtons) {
+    // Show "tap to continue" message
+    ctx.font = "16px Arial";
+    if (isMobile) {
+      ctx.fillText("Tap to continue", canvas.width / 2, canvas.height / 2 + 50);
     } else {
-      // Clear previous buttons
-      state.gameOverButtons = [];
-
-      // Draw in-canvas buttons
-      const buttonWidth = 140;
-      const buttonHeight = isMobile ? 55 : 35; // Even taller buttons on mobile
-      const buttonSpacing = isMobile ? 55 : 50; // Spacing = height to eliminate gaps
-
-      // Position buttons to match visual expectations on mobile
-      // Move buttons UP significantly to align with where they visually appear
-      const startY = isMobile ? 250 : canvas.height / 2 + 10;
-
-      // Play Again button
-      const playAgainY = startY;
-      drawButton(
-        "🔄 Play Again",
-        canvas.width / 2 - buttonWidth / 2,
-        playAgainY,
-        buttonWidth,
-        buttonHeight,
-        "#4CAF50"
+      ctx.fillText(
+        "Press any key to continue",
+        canvas.width / 2,
+        canvas.height / 2 + 50,
       );
-      state.gameOverButtons.push({
-        x: canvas.width / 2 - buttonWidth / 2,
-        y: playAgainY,
-        width: buttonWidth,
-        height: buttonHeight,
-        action: "playAgain",
-      });
-
-      // Leaderboard button
-      const leaderboardY = startY + buttonSpacing;
-      drawButton(
-        "🏆 Leaderboard",
-        canvas.width / 2 - buttonWidth / 2,
-        leaderboardY,
-        buttonWidth,
-        buttonHeight,
-        "#2196F3"
-      );
-      state.gameOverButtons.push({
-        x: canvas.width / 2 - buttonWidth / 2,
-        y: leaderboardY,
-        width: buttonWidth,
-        height: buttonHeight,
-        action: "leaderboard",
-      });
-
-      // Shop button
-      const shopY = startY + buttonSpacing * 2;
-      drawButton(
-        "🛒 Shop",
-        canvas.width / 2 - buttonWidth / 2,
-        shopY,
-        buttonWidth,
-        buttonHeight,
-        "#FF9800"
-      );
-      state.gameOverButtons.push({
-        x: canvas.width / 2 - buttonWidth / 2,
-        y: shopY,
-        width: buttonWidth,
-        height: buttonHeight,
-        action: "shop",
-      });
-
-      // Color Palette button
-      const colorPaletteY = startY + buttonSpacing * 3;
-      drawButton(
-        "🎨 Colors",
-        canvas.width / 2 - buttonWidth / 2,
-        colorPaletteY,
-        buttonWidth,
-        buttonHeight,
-        "#E91E63"
-      );
-      state.gameOverButtons.push({
-        x: canvas.width / 2 - buttonWidth / 2,
-        y: colorPaletteY,
-        width: buttonWidth,
-        height: buttonHeight,
-        action: "colorPalette",
-      });
-
-      // Switch Player button
-      const switchPlayerY = startY + buttonSpacing * 4;
-      drawButton(
-        "👤 Switch Player",
-        canvas.width / 2 - buttonWidth / 2,
-        switchPlayerY,
-        buttonWidth,
-        buttonHeight,
-        "#9C27B0"
-      );
-      state.gameOverButtons.push({
-        x: canvas.width / 2 - buttonWidth / 2,
-        y: switchPlayerY,
-        width: buttonWidth,
-        height: buttonHeight,
-        action: "switchPlayer",
-      });
     }
+  } else {
+    // Clear previous buttons
+    state.gameOverButtons = [];
 
-    ctx.textAlign = "left";
+    // Draw in-canvas buttons
+    const buttonWidth = 140;
+    const buttonHeight = isMobile ? 55 : 35; // Even taller buttons on mobile
+    const buttonSpacing = isMobile ? 55 : 50; // Spacing = height to eliminate gaps
+
+    // Position buttons to match visual expectations on mobile
+    // Move buttons UP significantly to align with where they visually appear
+    const startY = isMobile ? 250 : canvas.height / 2 + 10;
+
+    // Play Again button
+    const playAgainY = startY;
+    drawButton(
+      "🔄 Play Again",
+      canvas.width / 2 - buttonWidth / 2,
+      playAgainY,
+      buttonWidth,
+      buttonHeight,
+      "#4CAF50",
+    );
+    state.gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: playAgainY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "playAgain",
+    });
+
+    // Leaderboard button
+    const leaderboardY = startY + buttonSpacing;
+    drawButton(
+      "🏆 Leaderboard",
+      canvas.width / 2 - buttonWidth / 2,
+      leaderboardY,
+      buttonWidth,
+      buttonHeight,
+      "#2196F3",
+    );
+    state.gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: leaderboardY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "leaderboard",
+    });
+
+    // Shop button
+    const shopY = startY + buttonSpacing * 2;
+    drawButton(
+      "🛒 Shop",
+      canvas.width / 2 - buttonWidth / 2,
+      shopY,
+      buttonWidth,
+      buttonHeight,
+      "#FF9800",
+    );
+    state.gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: shopY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "shop",
+    });
+
+    // Color Palette button
+    const colorPaletteY = startY + buttonSpacing * 3;
+    drawButton(
+      "🎨 Colors",
+      canvas.width / 2 - buttonWidth / 2,
+      colorPaletteY,
+      buttonWidth,
+      buttonHeight,
+      "#E91E63",
+    );
+    state.gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: colorPaletteY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "colorPalette",
+    });
+
+    // Switch Player button
+    const switchPlayerY = startY + buttonSpacing * 4;
+    drawButton(
+      "👤 Switch Player",
+      canvas.width / 2 - buttonWidth / 2,
+      switchPlayerY,
+      buttonWidth,
+      buttonHeight,
+      "#9C27B0",
+    );
+    state.gameOverButtons.push({
+      x: canvas.width / 2 - buttonWidth / 2,
+      y: switchPlayerY,
+      width: buttonWidth,
+      height: buttonHeight,
+      action: "switchPlayer",
+    });
   }
+
+  ctx.textAlign = "left";
+}
 
 function drawStartMessage() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "30px Arial";
-    ctx.textAlign = "center";
+  ctx.fillStyle = "#fff";
+  ctx.font = "30px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(
+    `Ready, ${state.playerName}?`,
+    canvas.width / 2,
+    canvas.height / 2 - 20,
+  );
+  ctx.font = "20px Arial";
+  if (isMobile) {
     ctx.fillText(
-      `Ready, ${state.playerName}?`,
+      "Tap screen to Start!",
       canvas.width / 2,
-      canvas.height / 2 - 20
+      canvas.height / 2 + 20,
     );
-    ctx.font = "20px Arial";
-    if (isMobile) {
-      ctx.fillText(
-        "Tap screen to Start!",
-        canvas.width / 2,
-        canvas.height / 2 + 20
-      );
-    } else {
-      ctx.fillText(
-        "Press SPACE to Start!",
-        canvas.width / 2,
-        canvas.height / 2 + 20
-      );
-    }
-    if (!isMobile) {
-      ctx.fillText(
-        "Press L to view Leaderboard",
-        canvas.width / 2,
-        canvas.height / 2 + 45
-      );
-      ctx.fillText(
-        "Press N to Switch Player",
-        canvas.width / 2,
-        canvas.height / 2 + 70
-      );
-      ctx.fillText(
-        "Press S to open Shop",
-        canvas.width / 2,
-        canvas.height / 2 + 95
-      );
-      ctx.fillText(
-        "Press C for Color Palette",
-        canvas.width / 2,
-        canvas.height / 2 + 120
-      );
-    }
-    ctx.textAlign = "left";
+  } else {
+    ctx.fillText(
+      "Press SPACE to Start!",
+      canvas.width / 2,
+      canvas.height / 2 + 20,
+    );
   }
+  if (!isMobile) {
+    ctx.fillText(
+      "Press L to view Leaderboard",
+      canvas.width / 2,
+      canvas.height / 2 + 45,
+    );
+    ctx.fillText(
+      "Press N to Switch Player",
+      canvas.width / 2,
+      canvas.height / 2 + 70,
+    );
+    ctx.fillText(
+      "Press S to open Shop",
+      canvas.width / 2,
+      canvas.height / 2 + 95,
+    );
+    ctx.fillText(
+      "Press C for Color Palette",
+      canvas.width / 2,
+      canvas.height / 2 + 120,
+    );
+  }
+  ctx.textAlign = "left";
+}
 
 function drawLeaderboardOverlay() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  ctx.fillStyle = "#fff";
+  ctx.font = "24px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("🏆 LEADERBOARD 🏆", canvas.width / 2, 50);
+
+  ctx.font = "16px Arial";
+  const startY = 90;
+  const lineHeight = 25;
+  const catSize = 18; // Small cat icon size
+
+  for (let i = 0; i < Math.min(state.leaderboard.length, 20); i++) {
+    const entry = state.leaderboard[i];
+    const y = startY + i * lineHeight;
+    const rank = i + 1;
+    const medal =
+      rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
+
+    // Get player's cat color (default to gray if not available)
+    const playerColor = entry.color || "gray";
+
+    // Calculate positions for medal, cat, and text
+    const centerX = canvas.width / 2;
+    const textWidth = ctx.measureText(
+      `${medal} ${entry.name} - ${entry.score}`,
+    ).width;
+    const startX = centerX - textWidth / 2;
+
+    // Draw medal first
     ctx.fillStyle = "#fff";
-    ctx.font = "24px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("🏆 LEADERBOARD 🏆", canvas.width / 2, 50);
-
-    ctx.font = "16px Arial";
-    const startY = 90;
-    const lineHeight = 25;
-    const catSize = 18; // Small cat icon size
-
-    for (let i = 0; i < Math.min(state.leaderboard.length, 20); i++) {
-      const entry = state.leaderboard[i];
-      const y = startY + i * lineHeight;
-      const rank = i + 1;
-      const medal =
-        rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `${rank}.`;
-
-      // Get player's cat color (default to gray if not available)
-      const playerColor = entry.color || "gray";
-
-      // Calculate positions for medal, cat, and text
-      const centerX = canvas.width / 2;
-      const textWidth = ctx.measureText(
-        `${medal} ${entry.name} - ${entry.score}`
-      ).width;
-      const startX = centerX - textWidth / 2;
-
-      // Draw medal first
-      ctx.fillStyle = "#fff";
-      ctx.textAlign = "left";
-      ctx.fillText(medal, startX, y);
-
-      // Measure medal width to position cat after it
-      const medalWidth = ctx.measureText(medal + " ").width;
-
-      // Draw tiny cat icon after the medal
-      if (catImages[playerColor] && catImages[playerColor].complete) {
-        const catX = startX + medalWidth;
-        const catY = y - catSize / 2 - 5; // Center vertically with text
-        ctx.drawImage(catImages[playerColor], catX, catY, catSize, catSize);
-      }
-
-      // Draw the rest of the text (name and score) after the cat
-      const nameScoreText = ` ${entry.name} - ${entry.score}`;
-      const nameX = startX + medalWidth + catSize + 4; // 4px padding after cat
-      ctx.fillText(nameScoreText, nameX, y);
-    }
-
-    // Reset text alignment for the close instruction
-    ctx.textAlign = "center";
-    ctx.font = "18px Arial";
-    if (isMobile) {
-      // No text on mobile for leaderboard close instruction
-    } else {
-      ctx.fillText("Press L to close", canvas.width / 2, canvas.height - 50);
-    }
     ctx.textAlign = "left";
+    ctx.fillText(medal, startX, y);
+
+    // Measure medal width to position cat after it
+    const medalWidth = ctx.measureText(medal + " ").width;
+
+    // Draw tiny cat icon after the medal
+    if (catImages[playerColor] && catImages[playerColor].complete) {
+      const catX = startX + medalWidth;
+      const catY = y - catSize / 2 - 5; // Center vertically with text
+      ctx.drawImage(catImages[playerColor], catX, catY, catSize, catSize);
+    }
+
+    // Draw the rest of the text (name and score) after the cat
+    const nameScoreText = ` ${entry.name} - ${entry.score}`;
+    const nameX = startX + medalWidth + catSize + 4; // 4px padding after cat
+    ctx.fillText(nameScoreText, nameX, y);
   }
+
+  // Reset text alignment for the close instruction
+  ctx.textAlign = "center";
+  ctx.font = "18px Arial";
+  if (isMobile) {
+    // No text on mobile for leaderboard close instruction
+  } else {
+    ctx.fillText("Press L to close", canvas.width / 2, canvas.height - 50);
+  }
+  ctx.textAlign = "left";
+}
 
 function drawShopOverlay() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "24px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("🛒 SHOP 🛒", canvas.width / 2, 50);
+  ctx.fillStyle = "#fff";
+  ctx.font = "24px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("🛒 SHOP 🛒", canvas.width / 2, 50);
 
-    ctx.font = "16px Arial";
-    ctx.fillText(
-      `💰 Your Wallet: ${state.totalCoinsWallet} coins`,
-      canvas.width / 2,
-      80
-    );
+  ctx.font = "16px Arial";
+  ctx.fillText(
+    `💰 Your Wallet: ${state.totalCoinsWallet} coins`,
+    canvas.width / 2,
+    80,
+  );
 
-    // Draw close button (X) in top right corner - bigger for mobile
-    const closeButtonSize = isMobile ? 50 : 30;
-    const closeButtonX = canvas.width - closeButtonSize - 10;
-    const closeButtonY = 10;
+  // Draw close button (X) in top right corner - bigger for mobile
+  const closeButtonSize = isMobile ? 50 : 30;
+  const closeButtonX = canvas.width - closeButtonSize - 10;
+  const closeButtonY = 10;
 
-    // Store close button coordinates for click detection
-    state.closeButtonCoords = {
-      x: closeButtonX,
-      y: closeButtonY,
-      size: closeButtonSize,
-    };
+  // Store close button coordinates for click detection
+  state.closeButtonCoords = {
+    x: closeButtonX,
+    y: closeButtonY,
+    size: closeButtonSize,
+  };
 
-    // Close button background
-    ctx.fillStyle = "#ff4444";
-    ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+  // Close button background
+  ctx.fillStyle = "#ff4444";
+  ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
 
-    // Close button border
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(
-      closeButtonX,
-      closeButtonY,
-      closeButtonSize,
-      closeButtonSize
-    );
+  // Close button border
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
 
-    // Close button X
-    ctx.fillStyle = "#fff";
-    ctx.font = isMobile ? "30px Arial" : "20px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "✕",
-      closeButtonX + closeButtonSize / 2,
-      closeButtonY + closeButtonSize / 2 + (isMobile ? 10 : 7)
-    );
+  // Close button X
+  ctx.fillStyle = "#fff";
+  ctx.font = isMobile ? "30px Arial" : "20px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(
+    "✕",
+    closeButtonX + closeButtonSize / 2,
+    closeButtonY + closeButtonSize / 2 + (isMobile ? 10 : 7),
+  );
 
-    // Draw shop items grid with 4-column layout like color palette
-    // Grid configuration - exactly like color palette
-    const itemsPerRow = 4;
+  // Draw shop items grid with 4-column layout like color palette
+  // Grid configuration - exactly like color palette
+  const itemsPerRow = 4;
 
-    // Use fixed canvas dimensions for calculation (mobile = 400px wide)
-    const baseCanvasWidth = isMobile ? 400 : canvas.width;
-    const itemSize = isMobile ? 65 : 60;
-    const spacingX = isMobile ? 85 : 80;
-    const spacingY = isMobile ? 130 : 120; // Increased vertical spacing to prevent overlap
-    const touchPadding = isMobile ? 15 : 5;
+  // Use fixed canvas dimensions for calculation (mobile = 400px wide)
+  const baseCanvasWidth = isMobile ? 400 : canvas.width;
+  const itemSize = isMobile ? 65 : 60;
+  const spacingX = isMobile ? 85 : 80;
+  const spacingY = isMobile ? 130 : 120; // Increased vertical spacing to prevent overlap
+  const touchPadding = isMobile ? 15 : 5;
 
-    // Calculate grid positioning based on logical canvas size
-    const totalGridWidth = itemsPerRow * spacingX;
-    const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacingX / 2;
-    const startY = 120;
+  // Calculate grid positioning based on logical canvas size
+  const totalGridWidth = itemsPerRow * spacingX;
+  const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacingX / 2;
+  const startY = 120;
 
-    // Clear the shop grid coordinates array
-    state.shopGridCoords = [];
+  // Clear the shop grid coordinates array
+  state.shopGridCoords = [];
 
-    for (let i = 0; i < availableShopItems.length; i++) {
-      const item = availableShopItems[i];
-      const row = Math.floor(i / itemsPerRow);
-      const col = i % itemsPerRow;
+  for (let i = 0; i < availableShopItems.length; i++) {
+    const item = availableShopItems[i];
+    const row = Math.floor(i / itemsPerRow);
+    const col = i % itemsPerRow;
 
-      // Calculate exact positions
-      const x = startX + col * spacingX - itemSize / 2;
-      const y = startY + row * spacingY - itemSize / 2;
+    // Calculate exact positions
+    const x = startX + col * spacingX - itemSize / 2;
+    const y = startY + row * spacingY - itemSize / 2;
 
-      // Store coordinates for click detection with larger touch area
-      state.shopGridCoords.push({
-        itemId: item.id,
-        itemName: item.name,
-        x: x - touchPadding,
-        y: y - touchPadding,
-        width: itemSize + touchPadding * 2,
-        height: itemSize + touchPadding * 2,
-      });
+    // Store coordinates for click detection with larger touch area
+    state.shopGridCoords.push({
+      itemId: item.id,
+      itemName: item.name,
+      x: x - touchPadding,
+      y: y - touchPadding,
+      width: itemSize + touchPadding * 2,
+      height: itemSize + touchPadding * 2,
+    });
 
-      // Determine if item can be purchased
-      const canAfford = state.totalCoinsWallet >= item.price;
-      const isOwned =
-        (item.id === "magnet" && state.magnetRoundsLeft > 0) ||
-        (item.id === "goldMagnet" && state.goldMagnetRoundsLeft > 0) ||
-        (item.id === "ghostShroom" && state.ghostShroomCount > 0) ||
-        (item.id === "springBoots" && state.springBootsCount > 0) ||
-        (item.id === "miniNuke" && state.miniNukeCount > 0) ||
-        (item.id === "nuke" && state.nukeCount > 0) ||
-        (item.id === "goldNuke" && state.goldNukeCount > 0) ||
-        (item.id === "energyCape" && state.energyCapeRoundsLeft > 0);
+    // Determine if item can be purchased
+    const canAfford = state.totalCoinsWallet >= item.price;
+    const isOwned =
+      (item.id === "magnet" && state.magnetRoundsLeft > 0) ||
+      (item.id === "goldMagnet" && state.goldMagnetRoundsLeft > 0) ||
+      (item.id === "ghostShroom" && state.ghostShroomCount > 0) ||
+      (item.id === "springBoots" && state.springBootsCount > 0) ||
+      (item.id === "miniNuke" && state.miniNukeCount > 0) ||
+      (item.id === "nuke" && state.nukeCount > 0) ||
+      (item.id === "goldNuke" && state.goldNukeCount > 0) ||
+      (item.id === "energyCape" && state.energyCapeRoundsLeft > 0);
 
-      // Draw item box background with better colors
-      if (isOwned) {
-        ctx.fillStyle = "#4CAF50"; // Green if owned
-      } else if (canAfford) {
-        ctx.fillStyle = "#2196F3"; // Blue if affordable
-      } else {
-        ctx.fillStyle = "#424242"; // Dark gray if can't afford
-      }
-      ctx.fillRect(x, y, itemSize, itemSize);
-
-      // Draw selection/status border
-      if (isOwned) {
-        ctx.strokeStyle = "#4CAF50";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(x - 2, y - 2, itemSize + 4, itemSize + 4);
-      } else if (canAfford) {
-        ctx.strokeStyle = "#FFD700"; // Gold border if can afford
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x - 1, y - 1, itemSize + 2, itemSize + 2);
-      } else {
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, itemSize, itemSize);
-      }
-
-      // Draw item icon (image instead of emoji when available)
-      let itemImage = null;
-      if (item.id === "magnet") {
-        itemImage = redMagnetImage;
-      } else if (item.id === "goldMagnet") {
-        itemImage = goldMagnetImage;
-      } else if (item.id === "ghostShroom") {
-        itemImage = ghostShroomImage;
-      } else if (item.id === "springBoots") {
-        itemImage = springBootsImage;
-      } else if (item.id === "miniNuke") {
-        itemImage = miniNukeImage;
-      } else if (item.id === "nuke") {
-        itemImage = nukeImage;
-      } else if (item.id === "goldNuke") {
-        itemImage = goldNukeImage;
-      } else if (item.id === "energyCape") {
-        itemImage = energyCapeImage;
-      }
-
-      if (itemImage && itemImage.complete && itemImage.naturalWidth > 0) {
-        // Draw item image
-        const imageSize = isMobile ? 36 : 42; // Quite a bit bigger than before (was 24/28)
-        const imageX = x + itemSize / 2 - imageSize / 2;
-        const imageY = y + itemSize / 2 - imageSize / 2;
-        ctx.drawImage(itemImage, imageX, imageY, imageSize, imageSize);
-      } else {
-        // Fallback to emoji if image not loaded
-        ctx.fillStyle = "#fff";
-        ctx.font = isMobile ? "32px Arial" : "36px Arial";
-        ctx.textAlign = "center";
-        const iconText = item.name.split(" ")[0]; // Get the emoji part
-        ctx.fillText(
-          iconText,
-          x + itemSize / 2,
-          y + itemSize / 2 + (isMobile ? 10 : 12)
-        );
-      }
-
-      // Draw item name below the box
-      ctx.fillStyle = "#fff";
-      ctx.font = isMobile ? "10px Arial" : "12px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(
-        item.name.substring(2), // Remove emoji from name
-        x + itemSize / 2,
-        y + itemSize + 15
-      );
-
-      // Draw price below name
-      ctx.font = isMobile ? "9px Arial" : "10px Arial";
-      ctx.fillText(`💰 ${item.price}`, x + itemSize / 2, y + itemSize + 28);
-
-      // Draw status indicator
-      if (isOwned) {
-        ctx.fillStyle = "#4CAF50";
-        ctx.font = isMobile ? "8px Arial" : "9px Arial";
-        let statusText = "✓ Owned";
-        if (item.id === "magnet") {
-          statusText = `✓ ${state.magnetRoundsLeft} left`;
-        } else if (item.id === "goldMagnet") {
-          statusText = `✓ ${state.goldMagnetRoundsLeft} left`;
-        } else if (item.id === "ghostShroom") {
-          statusText = `✓ ${state.ghostShroomCount} left`;
-        } else if (item.id === "springBoots") {
-          statusText = `✓ ${state.springBootsCount} left`;
-        } else if (item.id === "miniNuke") {
-          statusText = `✓ ${state.miniNukeCount} left`;
-        } else if (item.id === "nuke") {
-          statusText = `✓ ${state.nukeCount} left`;
-        } else if (item.id === "energyCape") {
-          statusText = `✓ ${state.energyCapeRoundsLeft} left`;
-        } else if (item.id === "goldNuke") {
-          statusText = `✓ ${state.goldNukeCount} left`;
-        }
-        ctx.fillText(statusText, x + itemSize / 2, y + itemSize + 40);
-      } else if (!canAfford) {
-        ctx.fillStyle = "#FF6B6B";
-        ctx.font = isMobile ? "8px Arial" : "9px Arial";
-        ctx.fillText("Need more coins", x + itemSize / 2, y + itemSize + 40);
-      }
-    }
-
-    ctx.font = "18px Arial";
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    if (isMobile) {
-      ctx.fillText("Tap an item to buy", canvas.width / 2, canvas.height - 50);
+    // Draw item box background with better colors
+    if (isOwned) {
+      ctx.fillStyle = "#4CAF50"; // Green if owned
+    } else if (canAfford) {
+      ctx.fillStyle = "#2196F3"; // Blue if affordable
     } else {
+      ctx.fillStyle = "#424242"; // Dark gray if can't afford
+    }
+    ctx.fillRect(x, y, itemSize, itemSize);
+
+    // Draw selection/status border
+    if (isOwned) {
+      ctx.strokeStyle = "#4CAF50";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x - 2, y - 2, itemSize + 4, itemSize + 4);
+    } else if (canAfford) {
+      ctx.strokeStyle = "#FFD700"; // Gold border if can afford
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x - 1, y - 1, itemSize + 2, itemSize + 2);
+    } else {
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, itemSize, itemSize);
+    }
+
+    // Draw item icon (image instead of emoji when available)
+    let itemImage = null;
+    if (item.id === "magnet") {
+      itemImage = redMagnetImage;
+    } else if (item.id === "goldMagnet") {
+      itemImage = goldMagnetImage;
+    } else if (item.id === "ghostShroom") {
+      itemImage = ghostShroomImage;
+    } else if (item.id === "springBoots") {
+      itemImage = springBootsImage;
+    } else if (item.id === "miniNuke") {
+      itemImage = miniNukeImage;
+    } else if (item.id === "nuke") {
+      itemImage = nukeImage;
+    } else if (item.id === "goldNuke") {
+      itemImage = goldNukeImage;
+    } else if (item.id === "energyCape") {
+      itemImage = energyCapeImage;
+    }
+
+    if (itemImage && itemImage.complete && itemImage.naturalWidth > 0) {
+      // Draw item image
+      const imageSize = isMobile ? 36 : 42; // Quite a bit bigger than before (was 24/28)
+      const imageX = x + itemSize / 2 - imageSize / 2;
+      const imageY = y + itemSize / 2 - imageSize / 2;
+      ctx.drawImage(itemImage, imageX, imageY, imageSize, imageSize);
+    } else {
+      // Fallback to emoji if image not loaded
+      ctx.fillStyle = "#fff";
+      ctx.font = isMobile ? "32px Arial" : "36px Arial";
+      ctx.textAlign = "center";
+      const iconText = item.name.split(" ")[0]; // Get the emoji part
       ctx.fillText(
-        "Click an item to buy",
-        canvas.width / 2,
-        canvas.height - 50
+        iconText,
+        x + itemSize / 2,
+        y + itemSize / 2 + (isMobile ? 10 : 12),
       );
     }
-    ctx.textAlign = "left";
+
+    // Draw item name below the box
+    ctx.fillStyle = "#fff";
+    ctx.font = isMobile ? "10px Arial" : "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      item.name.substring(2), // Remove emoji from name
+      x + itemSize / 2,
+      y + itemSize + 15,
+    );
+
+    // Draw price below name
+    ctx.font = isMobile ? "9px Arial" : "10px Arial";
+    ctx.fillText(`💰 ${item.price}`, x + itemSize / 2, y + itemSize + 28);
+
+    // Draw status indicator
+    if (isOwned) {
+      ctx.fillStyle = "#4CAF50";
+      ctx.font = isMobile ? "8px Arial" : "9px Arial";
+      let statusText = "✓ Owned";
+      if (item.id === "magnet") {
+        statusText = `✓ ${state.magnetRoundsLeft} left`;
+      } else if (item.id === "goldMagnet") {
+        statusText = `✓ ${state.goldMagnetRoundsLeft} left`;
+      } else if (item.id === "ghostShroom") {
+        statusText = `✓ ${state.ghostShroomCount} left`;
+      } else if (item.id === "springBoots") {
+        statusText = `✓ ${state.springBootsCount} left`;
+      } else if (item.id === "miniNuke") {
+        statusText = `✓ ${state.miniNukeCount} left`;
+      } else if (item.id === "nuke") {
+        statusText = `✓ ${state.nukeCount} left`;
+      } else if (item.id === "energyCape") {
+        statusText = `✓ ${state.energyCapeRoundsLeft} left`;
+      } else if (item.id === "goldNuke") {
+        statusText = `✓ ${state.goldNukeCount} left`;
+      }
+      ctx.fillText(statusText, x + itemSize / 2, y + itemSize + 40);
+    } else if (!canAfford) {
+      ctx.fillStyle = "#FF6B6B";
+      ctx.font = isMobile ? "8px Arial" : "9px Arial";
+      ctx.fillText("Need more coins", x + itemSize / 2, y + itemSize + 40);
+    }
   }
+
+  ctx.font = "18px Arial";
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  if (isMobile) {
+    ctx.fillText("Tap an item to buy", canvas.width / 2, canvas.height - 50);
+  } else {
+    ctx.fillText("Click an item to buy", canvas.width / 2, canvas.height - 50);
+  }
+  ctx.textAlign = "left";
+}
 
 function drawColorPaletteOverlay() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#fff";
-    ctx.font = "24px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("🎨 COLOR PALETTE 🎨", canvas.width / 2, 50);
+  ctx.fillStyle = "#fff";
+  ctx.font = "24px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("🎨 COLOR PALETTE 🎨", canvas.width / 2, 50);
 
-    // Draw close button (X) in top right corner - bigger for mobile
-    const closeButtonSize = isMobile ? 50 : 30; // Even bigger for mobile
-    const closeButtonX = canvas.width - closeButtonSize - 10;
-    const closeButtonY = 10;
+  // Draw close button (X) in top right corner - bigger for mobile
+  const closeButtonSize = isMobile ? 50 : 30; // Even bigger for mobile
+  const closeButtonX = canvas.width - closeButtonSize - 10;
+  const closeButtonY = 10;
 
-    // Store close button coordinates for click detection
-    state.closeButtonCoords = {
-      x: closeButtonX,
-      y: closeButtonY,
-      size: closeButtonSize,
-    };
+  // Store close button coordinates for click detection
+  state.closeButtonCoords = {
+    x: closeButtonX,
+    y: closeButtonY,
+    size: closeButtonSize,
+  };
 
-    // Close button background
-    ctx.fillStyle = "#ff4444";
-    ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
+  // Close button background
+  ctx.fillStyle = "#ff4444";
+  ctx.fillRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
 
-    // Close button border
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(
-      closeButtonX,
-      closeButtonY,
-      closeButtonSize,
-      closeButtonSize
-    );
+  // Close button border
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(closeButtonX, closeButtonY, closeButtonSize, closeButtonSize);
 
-    // Close button X
-    ctx.fillStyle = "#fff";
-    ctx.font = isMobile ? "30px Arial" : "20px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(
-      "✕",
-      closeButtonX + closeButtonSize / 2,
-      closeButtonY + closeButtonSize / 2 + (isMobile ? 10 : 7)
-    );
+  // Close button X
+  ctx.fillStyle = "#fff";
+  ctx.font = isMobile ? "30px Arial" : "20px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText(
+    "✕",
+    closeButtonX + closeButtonSize / 2,
+    closeButtonY + closeButtonSize / 2 + (isMobile ? 10 : 7),
+  );
 
-    ctx.font = "16px Arial";
-    ctx.fillText("Choose your cat color", canvas.width / 2, 80);
+  ctx.font = "16px Arial";
+  ctx.fillText("Choose your cat color", canvas.width / 2, 80);
 
-    // Draw color grid with fixed positioning for consistent coordinates
-    const colorsPerRow = 4;
+  // Draw color grid with fixed positioning for consistent coordinates
+  const colorsPerRow = 4;
 
-    // Use fixed canvas dimensions for calculation (mobile = 400px wide)
-    const baseCanvasWidth = isMobile ? 400 : canvas.width;
-    const colorSize = isMobile ? 65 : 60;
-    const spacing = isMobile ? 85 : 80;
-    const touchPadding = isMobile ? 15 : 5; // Generous touch area on mobile
+  // Use fixed canvas dimensions for calculation (mobile = 400px wide)
+  const baseCanvasWidth = isMobile ? 400 : canvas.width;
+  const colorSize = isMobile ? 65 : 60;
+  const spacing = isMobile ? 85 : 80;
+  const touchPadding = isMobile ? 15 : 5; // Generous touch area on mobile
 
-    // Calculate grid positioning based on logical canvas size
-    const totalGridWidth = colorsPerRow * spacing;
-    const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacing / 2;
-    const startY = 120;
+  // Calculate grid positioning based on logical canvas size
+  const totalGridWidth = colorsPerRow * spacing;
+  const startX = baseCanvasWidth / 2 - totalGridWidth / 2 + spacing / 2;
+  const startY = 120;
 
-    // Clear the color grid coordinates array
-    state.colorGridCoords = [];
+  // Clear the color grid coordinates array
+  state.colorGridCoords = [];
 
-    for (let i = 0; i < availableColors.length; i++) {
-      const color = availableColors[i];
-      const row = Math.floor(i / colorsPerRow);
-      const col = i % colorsPerRow;
+  for (let i = 0; i < availableColors.length; i++) {
+    const color = availableColors[i];
+    const row = Math.floor(i / colorsPerRow);
+    const col = i % colorsPerRow;
 
-      // Calculate exact positions
-      const x = startX + col * spacing - colorSize / 2;
-      const y = startY + row * spacing - colorSize / 2;
+    // Calculate exact positions
+    const x = startX + col * spacing - colorSize / 2;
+    const y = startY + row * spacing - colorSize / 2;
 
-      // Store coordinates for click detection with larger touch area
-      state.colorGridCoords.push({
-        color: color.name,
-        x: x - touchPadding,
-        y: y - touchPadding,
-        width: colorSize + touchPadding * 2,
-        height: colorSize + touchPadding * 2,
-      });
+    // Store coordinates for click detection with larger touch area
+    state.colorGridCoords.push({
+      color: color.name,
+      x: x - touchPadding,
+      y: y - touchPadding,
+      width: colorSize + touchPadding * 2,
+      height: colorSize + touchPadding * 2,
+    });
 
-      // Draw color preview box
-      if (catImages[color.name] && catImages[color.name].complete) {
-        // Draw cat image as preview
-        ctx.drawImage(catImages[color.name], x, y, colorSize, colorSize);
-      } else {
-        // Fallback colored rectangle
-        ctx.fillStyle = getColorHex(color.name);
-        ctx.fillRect(x, y, colorSize, colorSize);
-      }
-
-      // Draw selection border
-      if (state.selectedCatColor === color.name) {
-        ctx.strokeStyle = "#FFD700";
-        ctx.lineWidth = 4;
-        ctx.strokeRect(x - 2, y - 2, colorSize + 4, colorSize + 4);
-      } else {
-        ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, colorSize, colorSize);
-      }
-
-      // Draw color name
-      ctx.fillStyle = "#fff";
-      ctx.font = isMobile ? "12px Arial" : "12px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText(color.displayName, x + colorSize / 2, y + colorSize + 15);
+    // Draw color preview box
+    if (catImages[color.name] && catImages[color.name].complete) {
+      // Draw cat image as preview
+      ctx.drawImage(catImages[color.name], x, y, colorSize, colorSize);
+    } else {
+      // Fallback colored rectangle
+      ctx.fillStyle = getColorHex(color.name);
+      ctx.fillRect(x, y, colorSize, colorSize);
     }
 
-    ctx.font = "18px Arial";
+    // Draw selection border
+    if (state.selectedCatColor === color.name) {
+      ctx.strokeStyle = "#FFD700";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x - 2, y - 2, colorSize + 4, colorSize + 4);
+    } else {
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, colorSize, colorSize);
+    }
+
+    // Draw color name
+    ctx.fillStyle = "#fff";
+    ctx.font = isMobile ? "12px Arial" : "12px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("Tap a color to select", canvas.width / 2, canvas.height - 50);
-    ctx.textAlign = "left";
+    ctx.fillText(color.displayName, x + colorSize / 2, y + colorSize + 15);
   }
+
+  ctx.font = "18px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("Tap a color to select", canvas.width / 2, canvas.height - 50);
+  ctx.textAlign = "left";
+}

@@ -366,11 +366,17 @@ export async function initializeGameData() {
 
   try {
     // Load player data using session token
-    state.totalCoinsWallet = await loadPlayerWallet(state.currentSession.sessionToken);
-    state.playerHighScore = await getPlayerHighScore(state.currentSession.sessionToken);
+    state.totalCoinsWallet = await loadPlayerWallet(
+      state.currentSession.sessionToken,
+    );
+    state.playerHighScore = await getPlayerHighScore(
+      state.currentSession.sessionToken,
+    );
 
     // Load inventory to get magnet rounds
-    const inventory = await loadPlayerInventory(state.currentSession.sessionToken);
+    const inventory = await loadPlayerInventory(
+      state.currentSession.sessionToken,
+    );
     state.magnetRoundsLeft = inventory.magnetRoundsLeft || 0;
     state.hasMagnet = state.magnetRoundsLeft > 0; // Set hasMagnet based on rounds left
 
@@ -393,7 +399,9 @@ export async function initializeGameData() {
     state.hasEnergyCape = state.energyCapeRoundsLeft > 0; // Set hasEnergyCape based on rounds left
 
     // Load color preference
-    state.selectedCatColor = await getPlayerColor(state.currentSession.sessionToken);
+    state.selectedCatColor = await getPlayerColor(
+      state.currentSession.sessionToken,
+    );
 
     // Load leaderboard
     state.leaderboard = await loadLeaderboard();
@@ -433,7 +441,7 @@ export async function startHeartbeat(sessionToken) {
         "Updating onlineCount from",
         state.onlineCount,
         "to",
-        result.onlineCount
+        result.onlineCount,
       );
       state.onlineCount = result.onlineCount;
       console.log("onlineCount is now:", state.onlineCount);
@@ -443,24 +451,27 @@ export async function startHeartbeat(sessionToken) {
   }
 
   // Send heartbeat every 2 minutes
-  heartbeatInterval = setInterval(async () => {
-    try {
-      console.log("Sending periodic heartbeat...");
-      const result = await apiRequest("/api/heartbeat", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
-      });
-      console.log("Periodic heartbeat successful:", result);
-      // Update online count from heartbeat response
-      if (result.onlineCount !== undefined) {
-        state.onlineCount = result.onlineCount;
+  heartbeatInterval = setInterval(
+    async () => {
+      try {
+        console.log("Sending periodic heartbeat...");
+        const result = await apiRequest("/api/heartbeat", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sessionToken}`,
+          },
+        });
+        console.log("Periodic heartbeat successful:", result);
+        // Update online count from heartbeat response
+        if (result.onlineCount !== undefined) {
+          state.onlineCount = result.onlineCount;
+        }
+      } catch (error) {
+        console.error("Heartbeat failed:", error);
       }
-    } catch (error) {
-      console.error("Heartbeat failed:", error);
-    }
-  }, 2 * 60 * 1000); // 2 minutes
+    },
+    2 * 60 * 1000,
+  ); // 2 minutes
 }
 
 function stopHeartbeat() {

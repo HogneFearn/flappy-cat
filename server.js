@@ -12,7 +12,9 @@ const TEST_ADMIN_USER = process.env.TEST_ADMIN_USER || "";
 // Serve the Vite production build from `dist/` when it exists, otherwise fall
 // back to `public/` (e.g. before the first `npm run build`).
 const DIST_DIR = path.join(__dirname, "dist");
-const STATIC_DIR = fs.existsSync(DIST_DIR) ? DIST_DIR : path.join(__dirname, "public");
+const STATIC_DIR = fs.existsSync(DIST_DIR)
+  ? DIST_DIR
+  : path.join(__dirname, "public");
 
 // Middleware
 app.use(cors());
@@ -74,10 +76,10 @@ function initDatabase() {
       } else {
         // Insert default high score if it doesn't exist
         db.run(
-          `INSERT OR IGNORE INTO high_scores (score_type, score) VALUES ('obstacle', 0)`
+          `INSERT OR IGNORE INTO high_scores (score_type, score) VALUES ('obstacle', 0)`,
         );
       }
-    }
+    },
   );
 
   // Player inventory table
@@ -94,7 +96,7 @@ function initDatabase() {
     `ALTER TABLE player_inventory ADD COLUMN mini_nuke_count INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
-    }
+    },
   );
 
   // Add nuke_count column to existing tables (migration)
@@ -102,7 +104,7 @@ function initDatabase() {
     `ALTER TABLE player_inventory ADD COLUMN nuke_count INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
-    }
+    },
   );
 
   // Add gold_nuke_count column to existing tables (migration)
@@ -110,7 +112,7 @@ function initDatabase() {
     `ALTER TABLE player_inventory ADD COLUMN gold_nuke_count INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
-    }
+    },
   );
 
   // Add gold_magnet_rounds_left column to existing tables (migration)
@@ -118,7 +120,7 @@ function initDatabase() {
     `ALTER TABLE player_inventory ADD COLUMN gold_magnet_rounds_left INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
-    }
+    },
   );
 
   // Add ghost_shroom_count column to existing tables (migration)
@@ -126,7 +128,7 @@ function initDatabase() {
     `ALTER TABLE player_inventory ADD COLUMN ghost_shroom_count INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
-    }
+    },
   );
 
   // Add energy_cape_rounds_left column to existing tables (migration)
@@ -134,7 +136,7 @@ function initDatabase() {
     `ALTER TABLE player_inventory ADD COLUMN energy_cape_rounds_left INTEGER DEFAULT 0`,
     (err) => {
       // Ignore error if column already exists
-    }
+    },
   );
 
   // Player high scores table
@@ -231,7 +233,7 @@ function authenticateRequest(req, res, next, trackOnline) {
       }
 
       next();
-    }
+    },
   );
 }
 
@@ -239,7 +241,6 @@ function authenticateRequest(req, res, next, trackOnline) {
 function validateSession(req, res, next) {
   authenticateRequest(req, res, next, false);
 }
-
 
 // Track online users
 let onlineUsers = new Map(); // sessionToken -> { username, lastSeen }
@@ -258,7 +259,7 @@ setInterval(() => {
   }
   if (cleanedCount > 0) {
     console.log(
-      `Cleaned up ${cleanedCount} offline users. Currently online: ${onlineUsers.size}`
+      `Cleaned up ${cleanedCount} offline users. Currently online: ${onlineUsers.size}`,
     );
   }
 }, 60000); // Check every minute
@@ -333,11 +334,11 @@ app.post("/api/auth/signup", (req, res) => {
           ]);
           db.run(
             "INSERT INTO player_inventory (player_name, magnet_rounds_left, mini_nuke_count, nuke_count, gold_magnet_rounds_left) VALUES (?, 0, 0, 0, 0)",
-            [username]
+            [username],
           );
           db.run(
             "INSERT INTO player_high_scores (player_name, high_score) VALUES (?, 0)",
-            [username]
+            [username],
           );
 
           res.json({
@@ -346,9 +347,9 @@ app.post("/api/auth/signup", (req, res) => {
             username,
             message: "Account created successfully",
           });
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -388,7 +389,7 @@ app.post("/api/auth/login", (req, res) => {
         if (userData.username === row.username) {
           onlineUsers.delete(token);
           console.log(
-            `Removed existing online session for user: ${row.username}`
+            `Removed existing online session for user: ${row.username}`,
           );
         }
       }
@@ -396,7 +397,7 @@ app.post("/api/auth/login", (req, res) => {
       // Also clean up old sessions from database (optional - keeps DB clean)
       db.run(
         "DELETE FROM sessions WHERE user_id = ? AND expires_at < datetime('now')",
-        [row.id]
+        [row.id],
       );
 
       db.run(
@@ -413,9 +414,9 @@ app.post("/api/auth/login", (req, res) => {
             username: row.username,
             message: "Login successful",
           });
-        }
+        },
       );
-    }
+    },
   );
 });
 
@@ -444,7 +445,7 @@ app.post("/api/auth/validate", (req, res) => {
         success: true,
         username: row.username,
       });
-    }
+    },
   );
 });
 
@@ -500,7 +501,7 @@ app.get("/api/player/wallet", validateSessionAndTrackOnline, (req, res) => {
           return;
         }
         res.json({ wallet: testWalletAmount });
-      }
+      },
     );
     return;
   }
@@ -527,10 +528,10 @@ app.get("/api/player/wallet", validateSessionAndTrackOnline, (req, res) => {
               return;
             }
             res.json({ wallet: 0 });
-          }
+          },
         );
       }
-    }
+    },
   );
 });
 
@@ -548,7 +549,7 @@ app.post("/api/player/wallet", validateSessionAndTrackOnline, (req, res) => {
         return;
       }
       res.json({ success: true, wallet: wallet });
-    }
+    },
   );
 });
 
@@ -592,10 +593,10 @@ app.get("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
               goldMagnetRoundsLeft: 0,
               ghostShroomCount: 0,
             });
-          }
+          },
         );
       }
-    }
+    },
   );
 });
 
@@ -630,7 +631,7 @@ app.post("/api/player/inventory", validateSessionAndTrackOnline, (req, res) => {
         return;
       }
       res.json({ success: true, magnetRoundsLeft: magnetRoundsLeft });
-    }
+    },
   );
 });
 
@@ -649,7 +650,7 @@ app.get("/api/player/highscore", validateSessionAndTrackOnline, (req, res) => {
       } else {
         res.json({ highScore: row ? row.high_score : 0 });
       }
-    }
+    },
   );
 });
 
@@ -667,7 +668,7 @@ app.get("/api/player/color", validateSessionAndTrackOnline, (req, res) => {
       } else {
         res.json({ selectedColor: row ? row.selected_color : "gray" });
       }
-    }
+    },
   );
 });
 
@@ -710,7 +711,7 @@ app.post("/api/player/color", validateSessionAndTrackOnline, (req, res) => {
       } else {
         res.json({ success: true, selectedColor });
       }
-    }
+    },
   );
 });
 
@@ -728,7 +729,7 @@ app.post("/api/player/highscore", validateSessionAndTrackOnline, (req, res) => {
         return;
       }
       res.json({ success: true, score: score });
-    }
+    },
   );
 });
 
@@ -746,7 +747,7 @@ app.post("/api/player/:name/highscore", (req, res) => {
         return;
       }
       res.json({ success: true, score: score });
-    }
+    },
   );
 });
 
@@ -771,9 +772,9 @@ app.get("/api/leaderboard", (req, res) => {
           name: row.player_name,
           score: row.score,
           color: row.selected_color,
-        }))
+        })),
       );
-    }
+    },
   );
 });
 
@@ -822,9 +823,9 @@ app.post(
         }
         console.log("Score added successfully:", { playerName, score });
         res.json({ success: true });
-      }
+      },
     );
-  }
+  },
 );
 
 // Get high score
@@ -840,7 +841,7 @@ app.get("/api/highscore/:type", (req, res) => {
         return;
       }
       res.json({ score: row ? row.score : 0 });
-    }
+    },
   );
 });
 
@@ -858,7 +859,7 @@ app.post("/api/highscore/:type", (req, res) => {
         return;
       }
       res.json({ success: true });
-    }
+    },
   );
 });
 

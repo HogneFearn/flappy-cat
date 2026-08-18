@@ -14,6 +14,7 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
+.fallow/
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -35,4 +36,5 @@ deployment-package/
 # ignore deployment package and database
 deployment-package
 game.db
-cloudpanel-pw.rtffallow-report.json
+cloudpanel-pw.rtf
+fallow-report.json

@@ -1,13 +1,15 @@
 import { state } from "./state";
 
-export const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+export const canvas = document.getElementById(
+  "gameCanvas",
+) as HTMLCanvasElement;
 export const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 // Responsive canvas sizing
 function resizeCanvas() {
   const isMobileDevice =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
 
   if (isMobileDevice) {

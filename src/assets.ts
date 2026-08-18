@@ -144,5 +144,5 @@ energyCapeImage.src = "energy_cape.png";
 // Mobile detection
 export const isMobile =
   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
+    navigator.userAgent,
   );
