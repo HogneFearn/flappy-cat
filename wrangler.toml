@@ -1,0 +1,16 @@
+name = "flappy-cat"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-09-23"
+
+# D1 database binding. After running `wrangler d1 create flappy-cat-db`, paste
+# the printed database_id below (and set the same binding in the Pages
+# dashboard under Settings > Bindings for production).
+[[d1_databases]]
+binding = "DB"
+database_name = "flappy-cat-db"
+database_id = "91ade009-6483-4892-bab9-3b262d3e3026"
+
+[vars]
+# Username that always receives a 1,000,000 wallet and is excluded from the
+# leaderboard. Leave empty to disable. Override per-environment in the dashboard.
+TEST_ADMIN_USER = ""

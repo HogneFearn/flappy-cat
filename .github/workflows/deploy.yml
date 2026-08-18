@@ -1,0 +1,39 @@
+name: Deploy to Cloudflare Pages
+
+# Only runs on direct pushes to main (and manual runs). It deliberately does
+# NOT run on pull_request, so fork PRs can never access the Cloudflare secrets.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: the job only needs to read the repo.
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Project name + D1 binding + vars all come from wrangler.toml.
+          command: pages deploy --branch=main
