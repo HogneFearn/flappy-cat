@@ -1,14 +1,15 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+import { state } from "./state";
 
-// Declare groundY before resizeCanvas function
-let groundY = 520; // Default value, will be updated by resizeCanvas
+export const canvas = document.getElementById(
+  "gameCanvas",
+) as HTMLCanvasElement;
+export const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 // Responsive canvas sizing
 function resizeCanvas() {
   const isMobileDevice =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
+      navigator.userAgent,
     );
 
   if (isMobileDevice) {
@@ -44,7 +45,7 @@ function resizeCanvas() {
   }
 
   // Update ground position based on canvas height (not CSS height)
-  groundY = canvas.height - 80;
+  state.groundY = canvas.height - 80;
 }
 
 // Initialize canvas size
@@ -54,7 +55,7 @@ resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 // Helper function to get accurate canvas coordinates from screen coordinates
-function getCanvasCoordinates(clientX, clientY) {
+export function getCanvasCoordinates(clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
 
   // Calculate the scale factors
